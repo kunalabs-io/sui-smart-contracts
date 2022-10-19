@@ -1,5 +1,6 @@
 import { Coin, GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
 import { SuiWalletAdapter } from '@mysten/wallet-adapter-all-wallets'
+import { getWalletAddress } from './util'
 
 interface CoinInfo {
   objectID: string
@@ -9,7 +10,7 @@ interface CoinInfo {
 }
 
 export async function getUserCoins(provider: JsonRpcProvider, wallet: SuiWalletAdapter) {
-  const addr = (await wallet.getAccounts())[0]
+  const addr = await getWalletAddress(wallet)
   const coinInfos = (await provider.getObjectsOwnedByAddress(addr)).filter(Coin.isCoin)
   const coins = await provider.getObjectBatch(coinInfos.map(obj => obj.objectId))
 
@@ -94,7 +95,7 @@ export async function getOrCreateCoinOfExactBalance(
     )
   }
 
-  const addr = (await wallet.getAccounts())[0]
+  const addr = await getWalletAddress(wallet)
   const res = await wallet.signAndExecuteTransaction({
     kind: 'pay',
     data: {

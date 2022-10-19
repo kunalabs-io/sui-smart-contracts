@@ -10,6 +10,7 @@ import {
 import { SuiWalletAdapter } from '@mysten/wallet-adapter-all-wallets'
 import { ceilDiv, min } from './bigint-math'
 import { getOrCreateCoinOfExactBalance } from './coin'
+import { getWalletAddress } from './util'
 
 /* ============================== constants ================================= */
 
@@ -190,7 +191,7 @@ export async function getUserLpCoins(
   provider: JsonRpcProvider,
   wallet: SuiWalletAdapter
 ): Promise<GetObjectDataResponse[]> {
-  const addr = (await wallet.getAccounts())[0]
+  const addr = await getWalletAddress(wallet)
   const infos = (await provider.getObjectsOwnedByAddress(addr)).filter(info =>
     typeIsLpCoin(info.type)
   )
