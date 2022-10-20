@@ -188,7 +188,7 @@ module 0x0::amm {
 
     /// Creates a new Pool with provided initial balances. Returns the initial LP coins
     /// and the PoolAdminCap.
-    public fun new_pool<A, B>(
+    public fun create_pool<A, B>(
         init_a: Balance<A>,
         init_b: Balance<B>,
         lp_fee_bps: u64,
@@ -227,14 +227,14 @@ module 0x0::amm {
 
     /// Entry function. Creates a new Pool with provided initial balances. Transfers
     /// the initial LP coins and the PoolAdminCap to the sender.
-    public entry fun new_pool_<A, B>(
+    public entry fun create_pool_<A, B>(
         init_a: Coin<A>,
         init_b: Coin<B>,
         lp_fee_bps: u64,
         admin_fee_pct: u64,
         ctx: &mut TxContext,
     ) {
-        let (cap, lp_coin) = new_pool(
+        let (cap, lp_coin) = create_pool(
             coin::into_balance(init_a),
             coin::into_balance(init_b),
             lp_fee_bps,

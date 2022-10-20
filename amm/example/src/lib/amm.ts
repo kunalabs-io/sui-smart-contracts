@@ -209,7 +209,7 @@ export function getLpCoinBalance(lpCoin: GetObjectDataResponse): bigint {
 
 /* =========================== smart contract calls ========================= */
 
-export interface NewPoolParams {
+export interface CreatePoolParams {
   typeA: string
   initAmountA: bigint
   typeB: string
@@ -218,10 +218,10 @@ export interface NewPoolParams {
   adminFeePct: number
 }
 
-export async function newPool(
+export async function createPool(
   provider: JsonRpcProvider,
   wallet: SuiWalletAdapter,
-  params: NewPoolParams
+  params: CreatePoolParams
 ) {
   const [inputA, inputB] = await Promise.all([
     getOrCreateCoinOfExactBalance(provider, wallet, params.typeA, params.initAmountA),
@@ -234,7 +234,7 @@ export async function newPool(
     data: {
       packageObjectId: AMM_PACKAGE_ID,
       module: 'amm',
-      function: 'new_pool_',
+      function: 'create_pool_',
       typeArguments: [params.typeA, params.typeB],
       arguments: [Coin.getID(inputA), Coin.getID(inputB), params.lpFeeBps, params.adminFeePct],
       gasBudget: 10000,

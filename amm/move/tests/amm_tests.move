@@ -36,14 +36,14 @@ module 0x0::amm_tests {
         let init_a = mint_coin<A>(init_a, ctx);
         let init_b = mint_coin<B>(init_b, ctx);
 
-        amm::new_pool_(init_a, init_b, lp_fee_bps, admin_fee_pct, ctx)
+        amm::create_pool_(init_a, init_b, lp_fee_bps, admin_fee_pct, ctx)
     }
 
-    /* ================= new_pool tests ================= */
+    /* ================= create_pool tests ================= */
 
     #[test]
     #[expected_failure(abort_code = 1)]
-    fun test_new_pool_fails_on_init_a_zero() {
+    fun test_create_pool_fails_on_init_a_zero() {
         let scenario_val = test_scenario::begin(ADMIN);
         let scenario = &mut scenario_val;
         {
@@ -52,7 +52,7 @@ module 0x0::amm_tests {
             let init_a = coin::zero<A>(ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::new_pool_(init_a, init_b, 0, 0, ctx);
+            amm::create_pool_(init_a, init_b, 0, 0, ctx);
         };
 
         test_scenario::end(scenario_val);
@@ -60,7 +60,7 @@ module 0x0::amm_tests {
 
     #[test]
     #[expected_failure(abort_code = 1)]
-    fun test_new_pool_fails_on_init_b_zero() {
+    fun test_create_pool_fails_on_init_b_zero() {
         let scenario_val = test_scenario::begin(ADMIN);
         let scenario = &mut scenario_val;
         {
@@ -69,7 +69,7 @@ module 0x0::amm_tests {
             let init_a = mint_coin<A>(100, ctx);
             let init_b = coin::zero<B>(ctx);
 
-            amm::new_pool_(init_a, init_b, 0, 0, ctx);
+            amm::create_pool_(init_a, init_b, 0, 0, ctx);
         };
 
         test_scenario::end(scenario_val);
@@ -77,7 +77,7 @@ module 0x0::amm_tests {
 
     #[test]
     #[expected_failure(abort_code = 4)]
-    fun test_new_pool_fails_on_invalid_lp_fee() {
+    fun test_create_pool_fails_on_invalid_lp_fee() {
         let scenario_val = test_scenario::begin(ADMIN);
         let scenario = &mut scenario_val;
         {
@@ -86,7 +86,7 @@ module 0x0::amm_tests {
             let init_a = mint_coin<A>(100, ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::new_pool_(init_a, init_b, 10001, 0, ctx);
+            amm::create_pool_(init_a, init_b, 10001, 0, ctx);
         };
 
         test_scenario::end(scenario_val);
@@ -94,7 +94,7 @@ module 0x0::amm_tests {
 
     #[test]
     #[expected_failure(abort_code = 4)]
-    fun test_new_pool_fails_on_invalid_admin_fee() {
+    fun test_create_pool_fails_on_invalid_admin_fee() {
         let scenario_val = test_scenario::begin(ADMIN);
         let scenario = &mut scenario_val;
         {
@@ -103,14 +103,14 @@ module 0x0::amm_tests {
             let init_a = mint_coin<A>(100, ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::new_pool_(init_a, init_b, 30, 101, ctx);
+            amm::create_pool_(init_a, init_b, 30, 101, ctx);
         };
 
         test_scenario::end(scenario_val);
     }
 
     #[test]
-    fun test_new_pool() {
+    fun test_create_pool() {
         let scenario_val = test_scenario::begin(ADMIN);
         let scenario = &mut scenario_val;
         {
@@ -119,7 +119,7 @@ module 0x0::amm_tests {
             let init_a = mint_coin<A>(200, ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::new_pool_(init_a, init_b, 30, 10, ctx);
+            amm::create_pool_(init_a, init_b, 30, 10, ctx);
         };
 
         test_scenario::next_tx(scenario, ADMIN);

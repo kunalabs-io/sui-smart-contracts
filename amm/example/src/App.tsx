@@ -5,6 +5,7 @@ import {
   calcPoolLpValue,
   calcPoolOtherDepositAmount,
   calcSwapAmountOut,
+  createPool,
   deposit,
   getLpCoinBalance,
   getLpCoinPoolId,
@@ -15,7 +16,6 @@ import {
   getPoolsUniqueCoinTypeArgs,
   getPossibleSecondCoinTypeArgs,
   getUserLpCoins,
-  newPool,
   selectPoolForPair,
   swap,
   withdraw,
@@ -123,7 +123,7 @@ function App() {
       return
     }
 
-    await newPool(provider, wallet, {
+    await createPool(provider, wallet, {
       typeA: firstCoinType,
       initAmountA: 10_000n, // make it based on amount input field
       typeB: secondCoinType,
