@@ -29,6 +29,10 @@ export function objectIsPool(obj: GetObjectDataResponse): boolean {
 }
 
 export async function getPools(provider: JsonRpcProvider): Promise<GetObjectDataResponse[]> {
+  // hard code for now because the below doesn't work
+  return await provider.getObjectBatch(['0xc3c57ce29dc191e0bd2a10bfc7932797dc7a529c'])
+
+  /*
   // there's currently no way to fetch shared objects directly so this is a hacky way to do it
   const events = await provider.getEventsByModule(AMM_PACKAGE_ID, 'amm')
   const createdObjIDs = events.flatMap(event_ => {
@@ -41,6 +45,7 @@ export async function getPools(provider: JsonRpcProvider): Promise<GetObjectData
   const createdObjs = await provider.getObjectBatch(createdObjIDs)
 
   return createdObjs.filter(objectIsPool)
+  */
 }
 
 export function getPoolCoinTypeArgs(obj: GetObjectDataResponse): [string, string] {
