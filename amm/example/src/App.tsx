@@ -24,11 +24,13 @@ import { SuiWalletAdapter } from '@mysten/wallet-adapter-all-wallets'
 import { Coin, GetObjectDataResponse, getObjectId, JsonRpcProvider } from '@mysten/sui.js'
 import { getUniqueCoinTypes, getUserCoins } from './lib/coin'
 
-const provider = new JsonRpcProvider('https://fullnode.devnet.sui.io:443')
+const provider = new JsonRpcProvider(import.meta.env.VITE_SUI_RPC_URL || 'https://fullnode.devnet.sui.io:443')
 const wallet = new SuiWalletAdapter()
 
 const SUI_COIN_TYPE_ARG = '0x2::sui::SUI'
-const EXAMPLE_COIN_TYPE_ARG = '0x4e8cdf16871b38ee82535022f18186dad0894b0c::example_coin::EXAMPLE_COIN'
+const EXAMPLE_COIN_PACKAGE_ID =
+  import.meta.env.VITE_EXAMPLE_COIN_PACKAGE_ID || '0xbe0a47f0dfca0699e8ed8d7e22d07d11004df4e6'
+const EXAMPLE_COIN_TYPE_ARG = `${EXAMPLE_COIN_PACKAGE_ID}::example_coin::EXAMPLE_COIN`
 
 function App() {
   const [count, setCount] = useState(0)

@@ -14,7 +14,8 @@ import { getWalletAddress } from './util'
 
 /* ============================== constants ================================= */
 
-const AMM_PACKAGE_ID = '0x590b61bea0178cc3edbba57b75e35575261aed22'
+const AMM_PACKAGE_ID =
+  import.meta.env.VITE_AMM_PACKAGE_ID || '0x427cede53c84b01f5a74c673c5f85e2a9ab6570b'
 
 const POOL_TYPE_REGEX = new RegExp(`^${AMM_PACKAGE_ID}::amm::Pool<(.+), (.+)>$`)
 const LP_COIN_TYPE_REGEX = new RegExp(`^${AMM_PACKAGE_ID}::amm::LPCoin<(.+), (.+)>$`)
