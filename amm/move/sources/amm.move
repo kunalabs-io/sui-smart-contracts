@@ -5,6 +5,7 @@ module 0x0::amm {
     use sui::balance::{create_supply};
     use sui::tx_context::{Self, TxContext};
     use sui::transfer;
+    use sui::event;
     use 0x0::math_u128::{sqrt as sqrt_u128, ceil_div as ceil_div_u128};
     use 0x0::math_u256 as u256;
 
@@ -22,6 +23,12 @@ module 0x0::amm {
     const EInvalidFeeParam: u64 = 4;
     /// The provided admin capability doesn't belong to this pool.
     const EInvalidAdminCap: u64 = 5;
+
+    /* ================= events ================= */
+
+    struct PoolCreationEvent has copy, drop {
+        pool_id: ID,
+    }
 
     /* ================= constants ================= */
 
@@ -221,7 +228,9 @@ module 0x0::amm {
             pool_id: object::uid_to_inner(&pool.id)
         };
 
+        event::emit(PoolCreationEvent { pool_id: object::id(&pool) });
         transfer::share_object(pool);
+
         (cap, lp_coin)
     }
 
