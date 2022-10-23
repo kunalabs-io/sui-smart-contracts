@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { getPoolBalances, getPoolCoinTypeArgs, getPools } from './lib/amm'
 import { WalletStandardAdapterProvider } from '@mysten/wallet-adapter-all-wallets'
 import { Coin, GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
 import { WalletProvider } from '@mysten/wallet-adapter-react'
-import Box from '@mui/material/Box'
 import { SwapAndCreatePool } from './components/Swap/SwapAndCreatePool'
+import { Pools } from './components/Pools/Pools'
+import { Box, Divider } from '@mui/material'
 import { CONFIG } from './lib/config'
 
 const provider = new JsonRpcProvider(CONFIG.rpcUrl)
@@ -14,8 +15,10 @@ const supportedWallets = [
   new WalletStandardAdapterProvider(),
 ]
 
-const SUI_COIN_TYPE_ARG = '0x2::sui::SUI'
-const EXAMPLE_COIN_TYPE_ARG = `${CONFIG.exampleCoinPackageId}::example_coin::EXAMPLE_COIN`
+// const SUI_COIN_TYPE_ARG = '0x2::sui::SUI'
+// const EXAMPLE_COIN_PACKAGE_ID =
+//   import.meta.env.VITE_EXAMPLE_COIN_PACKAGE_ID || '0xbe0a47f0dfca0699e8ed8d7e22d07d11004df4e6'
+// const EXAMPLE_COIN_TYPE_ARG = `${EXAMPLE_COIN_PACKAGE_ID}::example_coin::EXAMPLE_COIN`
 
 function App() {
   const [count, setCount] = useState(0)
@@ -40,13 +43,15 @@ function App() {
     getPools(provider, wallet)
       .then(pools => setPools(pools.reverse()))
       .catch(console.error)
-  }, [])
+  }, [count])
 
   const onPoolsChange = (newPools: GetObjectDataResponse[]) => {
     setPools(newPools)
   }
 
-  console.log({ pools })
+  const getUpdatedPools = useCallback(() => {
+    setCount(count => count + 1)
+  }, [])
   /* =========== swap tab ========== */
 
   // first dropdown list
@@ -80,7 +85,7 @@ function App() {
   // }, [])
 
   // calculate swap result (display on second form field)
-  const [outputAmount, setOutputAmount] = useState<bigint>()
+  // const [outputAmount, setOutputAmount] = useState<bigint>()
   // useEffect(() => {
   //   if (pool === undefined || inputAmount === undefined) {
   //     return
@@ -193,9 +198,16 @@ function App() {
   // }, [pools])
 
   return (
-    <Box display="flex" justifyContent="center">
+    <Box>
       <WalletProvider adapters={supportedWallets}>
-        <SwapAndCreatePool pools={pools} provider={provider} onPoolsChange={onPoolsChange} />
+        <SwapAndCreatePool
+          pools={pools}
+          provider={provider}
+          onPoolsChange={onPoolsChange}
+          getUpdatedPools={getUpdatedPools}
+        />
+        <Divider />
+        <Pools pools={pools} provider={provider} getUpdatedPools={getUpdatedPools} />
       </WalletProvider>
     </Box>
   )

@@ -1,7 +1,7 @@
 import { useState, ChangeEvent, useEffect } from 'react'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
-import Box from '@mui/material/Box'
+import { Box } from '@mui/material'
 import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
@@ -26,6 +26,7 @@ interface Props {
   pools: GetObjectDataResponse[]
   provider: JsonRpcProvider
   onPoolsChange: (newPools: GetObjectDataResponse[]) => void
+  getUpdatedPools: () => void
 }
 
 interface CoinTypeOption {
@@ -40,7 +41,7 @@ enum TabValue {
   CreatePool = 1,
 }
 
-export const SwapAndCreatePool = ({ pools, provider, onPoolsChange }: Props) => {
+export const SwapAndCreatePool = ({ pools, provider, onPoolsChange, getUpdatedPools }: Props) => {
   const [tabValue, setTabValue] = useState(TabValue.Swap)
 
   const { wallet, connected } = useWallet()
@@ -125,6 +126,7 @@ export const SwapAndCreatePool = ({ pools, provider, onPoolsChange }: Props) => 
       }
       await swap(provider, wallet, pool, firstCoinType, BigInt(firstCoinValue), 0)
       resetValues()
+      getUpdatedPools()
     }
   }
 
@@ -167,7 +169,9 @@ export const SwapAndCreatePool = ({ pools, provider, onPoolsChange }: Props) => 
     !firstCoinValue || !secondCoinValue || !firstCoinType || !secondCoinType || firstCoinType === secondCoinType
 
   return (
-    <Box sx={{ width: 500, boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.5)', borderRadius: '16px;', m: 3 }}>
+    <Box
+      sx={{ width: 500, boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.5)', borderRadius: '16px;', my: 3, mx: 'auto' }}
+    >
       <Box sx={{ borderBottom: 1, borderColor: 'black' }}>
         <Tabs value={tabValue} onChange={handleTabChange} centered variant="fullWidth">
           <Tab label="Swap" />
