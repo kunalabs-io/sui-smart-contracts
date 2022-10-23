@@ -10,15 +10,13 @@ import {
 import { SuiWalletAdapter } from '@mysten/wallet-adapter-all-wallets'
 import { ceilDiv, min } from './bigint-math'
 import { getOrCreateCoinOfLargeEnoughBalance } from './coin'
+import { CONFIG } from './config'
 import { getWalletAddress } from './util'
 
 /* ============================== constants ================================= */
 
-const AMM_PACKAGE_ID =
-  import.meta.env.VITE_AMM_PACKAGE_ID || '0x88bbd38f27daaf1ac6ee362147865ca500da5d8'
-
-const POOL_TYPE_REGEX = new RegExp(`^${AMM_PACKAGE_ID}::amm::Pool<(.+), (.+)>$`)
-const LP_COIN_TYPE_REGEX = new RegExp(`^${AMM_PACKAGE_ID}::amm::LPCoin<(.+), (.+)>$`)
+const POOL_TYPE_REGEX = new RegExp(`^${CONFIG.ammPackageId}::amm::Pool<(.+), (.+)>$`)
+const LP_COIN_TYPE_REGEX = new RegExp(`^${CONFIG.ammPackageId}::amm::LPCoin<(.+), (.+)>$`)
 
 const BPS_IN_100_PCT = 100_00
 
@@ -30,7 +28,7 @@ export function objectIsPool(obj: GetObjectDataResponse): boolean {
 
 export async function getPools(provider: JsonRpcProvider): Promise<GetObjectDataResponse[]> {
   // hard code for now because the below doesn't work
-  return await provider.getObjectBatch(['0x81de257f41e61e6bd70a3e9adf37f68fbcfc2e07'])
+  return await provider.getObjectBatch(CONFIG.ammDefaultPools)
 
   /*
   // there's currently no way to fetch shared objects directly so this is a hacky way to do it
@@ -238,7 +236,7 @@ export async function createPool(
   const res = await wallet.signAndExecuteTransaction({
     kind: 'moveCall',
     data: {
-      packageObjectId: AMM_PACKAGE_ID,
+      packageObjectId: CONFIG.ammPackageId,
       module: 'periphery',
       function: 'maybe_split_then_create_pool',
       typeArguments: [params.typeA, params.typeB],
@@ -300,7 +298,7 @@ export async function swap(
   const res = await wallet.signAndExecuteTransaction({
     kind: 'moveCall',
     data: {
-      packageObjectId: AMM_PACKAGE_ID,
+      packageObjectId: CONFIG.ammPackageId,
       module: 'periphery',
       function: direction === 'A_TO_B' ? 'maybe_split_then_swap_a' : 'maybe_split_then_swap_b',
       typeArguments: poolTypeArgs,
@@ -338,7 +336,7 @@ export async function deposit(
   const res = await wallet.signAndExecuteTransaction({
     kind: 'moveCall',
     data: {
-      packageObjectId: AMM_PACKAGE_ID,
+      packageObjectId: CONFIG.ammPackageId,
       module: 'periphery',
       function: 'maybe_split_then_deposit',
       typeArguments: poolTypeArgs,
@@ -375,7 +373,7 @@ export async function withdraw(
   const res = await wallet.signAndExecuteTransaction({
     kind: 'moveCall',
     data: {
-      packageObjectId: AMM_PACKAGE_ID,
+      packageObjectId: CONFIG.ammPackageId,
       module: 'amm',
       function: 'withdraw_',
       typeArguments: getPoolCoinTypeArgs(pool),
