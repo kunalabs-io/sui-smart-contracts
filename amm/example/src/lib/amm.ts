@@ -8,7 +8,7 @@ import {
   JsonRpcProvider,
 } from '@mysten/sui.js'
 import { SuiWalletAdapter } from '@mysten/wallet-adapter-all-wallets'
-import { ceilDiv, min } from './bigint-math'
+import { ceilDiv, min, sqrt } from './bigint-math'
 import { getOrCreateCoinOfLargeEnoughBalance } from './coin'
 import { CONFIG } from './config'
 import { getWalletAddress } from './util'
@@ -318,15 +318,20 @@ export async function deposit(
   slippagePct: number
 ) {
   const poolTypeArgs = getPoolCoinTypeArgs(pool)
-
   const poolBalances = getPoolBalances(pool)
+
   // TODO: calc min out more precisely (based on price slippage and not lp out slippage)
-  const expLpOutBasedOnA = (amountA * poolBalances[2]) / poolBalances[0]
-  const expLpOutBasedOnB = (amountB * poolBalances[2]) / poolBalances[1]
-  const minOut = min(
-    (expLpOutBasedOnA * BigInt(100 - slippagePct)) / 100n,
-    (expLpOutBasedOnB * BigInt(100 - slippagePct)) / 100n
-  )
+  let minOut: bigint
+  if (poolBalances[0] === 0n && poolBalances[1] === 0n) {
+    minOut = (sqrt(amountA * amountB) * BigInt(100 - slippagePct)) / 100n
+  } else {
+    const expLpOutBasedOnA = (amountA * poolBalances[2]) / poolBalances[0]
+    const expLpOutBasedOnB = (amountB * poolBalances[2]) / poolBalances[1]
+    minOut = min(
+      (expLpOutBasedOnA * BigInt(100 - slippagePct)) / 100n,
+      (expLpOutBasedOnB * BigInt(100 - slippagePct)) / 100n
+    )
+  }
 
   const [coinA, coinB] = await Promise.all([
     getOrCreateCoinOfLargeEnoughBalance(provider, wallet, poolTypeArgs[0], amountA),
