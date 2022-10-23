@@ -9,13 +9,13 @@ import {
 } from '@mysten/sui.js'
 import { SuiWalletAdapter } from '@mysten/wallet-adapter-all-wallets'
 import { ceilDiv, min } from './bigint-math'
-import { getOrCreateCoinOfExactBalance } from './coin'
+import { getOrCreateCoinOfLargeEnoughBalance } from './coin'
 import { getWalletAddress } from './util'
 
 /* ============================== constants ================================= */
 
 const AMM_PACKAGE_ID =
-  import.meta.env.VITE_AMM_PACKAGE_ID || '0x427cede53c84b01f5a74c673c5f85e2a9ab6570b'
+  import.meta.env.VITE_AMM_PACKAGE_ID || '0x88bbd38f27daaf1ac6ee362147865ca500da5d8'
 
 const POOL_TYPE_REGEX = new RegExp(`^${AMM_PACKAGE_ID}::amm::Pool<(.+), (.+)>$`)
 const LP_COIN_TYPE_REGEX = new RegExp(`^${AMM_PACKAGE_ID}::amm::LPCoin<(.+), (.+)>$`)
@@ -30,7 +30,7 @@ export function objectIsPool(obj: GetObjectDataResponse): boolean {
 
 export async function getPools(provider: JsonRpcProvider): Promise<GetObjectDataResponse[]> {
   // hard code for now because the below doesn't work
-  return await provider.getObjectBatch(['0xc3c57ce29dc191e0bd2a10bfc7932797dc7a529c'])
+  return await provider.getObjectBatch(['0x81de257f41e61e6bd70a3e9adf37f68fbcfc2e07'])
 
   /*
   // there's currently no way to fetch shared objects directly so this is a hacky way to do it
@@ -230,8 +230,8 @@ export async function createPool(
   params: CreatePoolParams
 ) {
   const [inputA, inputB] = await Promise.all([
-    getOrCreateCoinOfExactBalance(provider, wallet, params.typeA, params.initAmountA),
-    getOrCreateCoinOfExactBalance(provider, wallet, params.typeB, params.initAmountB),
+    getOrCreateCoinOfLargeEnoughBalance(provider, wallet, params.typeA, params.initAmountA),
+    getOrCreateCoinOfLargeEnoughBalance(provider, wallet, params.typeB, params.initAmountB),
   ])
 
   // create pool
@@ -239,10 +239,17 @@ export async function createPool(
     kind: 'moveCall',
     data: {
       packageObjectId: AMM_PACKAGE_ID,
-      module: 'amm',
-      function: 'create_pool_',
+      module: 'periphery',
+      function: 'maybe_split_then_create_pool',
       typeArguments: [params.typeA, params.typeB],
-      arguments: [Coin.getID(inputA), Coin.getID(inputB), params.lpFeeBps, params.adminFeePct],
+      arguments: [
+        Coin.getID(inputA),
+        params.initAmountA.toString(),
+        Coin.getID(inputB),
+        params.initAmountB.toString(),
+        params.lpFeeBps,
+        params.adminFeePct,
+      ],
       gasBudget: 10000,
     },
   })
@@ -261,8 +268,12 @@ export async function swap(
   const poolBalances = getPoolBalances(pool)
   const poolLpFees = getPoolFees(pool)[0]
 
-  const inputCoin = await getOrCreateCoinOfExactBalance(provider, wallet, inputCoinTypeArg, amount)
-  const inputAmount = amount
+  const inputCoin = await getOrCreateCoinOfLargeEnoughBalance(
+    provider,
+    wallet,
+    inputCoinTypeArg,
+    amount
+  )
 
   let direction: 'A_TO_B' | 'B_TO_A'
   let inputPoolBalance: bigint
@@ -279,6 +290,7 @@ export async function swap(
     throw new Error('invalid input coin for pool')
   }
 
+  const inputAmount = amount
   const inputAmountAfterFees =
     inputAmount - ceilDiv(inputAmount * BigInt(poolLpFees), BigInt(BPS_IN_100_PCT))
   const minOut =
@@ -289,10 +301,10 @@ export async function swap(
     kind: 'moveCall',
     data: {
       packageObjectId: AMM_PACKAGE_ID,
-      module: 'amm',
-      function: direction === 'A_TO_B' ? 'swap_a_' : 'swap_b_',
+      module: 'periphery',
+      function: direction === 'A_TO_B' ? 'maybe_split_then_swap_a' : 'maybe_split_then_swap_b',
       typeArguments: poolTypeArgs,
-      arguments: [getObjectId(pool), getObjectId(inputCoin), minOut.toString()],
+      arguments: [getObjectId(pool), getObjectId(inputCoin), amount.toString(), minOut.toString()],
       gasBudget: 10000,
     },
   })
@@ -319,18 +331,25 @@ export async function deposit(
   )
 
   const [coinA, coinB] = await Promise.all([
-    getOrCreateCoinOfExactBalance(provider, wallet, poolTypeArgs[0], amountA),
-    getOrCreateCoinOfExactBalance(provider, wallet, poolTypeArgs[1], amountB),
+    getOrCreateCoinOfLargeEnoughBalance(provider, wallet, poolTypeArgs[0], amountA),
+    getOrCreateCoinOfLargeEnoughBalance(provider, wallet, poolTypeArgs[1], amountB),
   ])
 
   const res = await wallet.signAndExecuteTransaction({
     kind: 'moveCall',
     data: {
       packageObjectId: AMM_PACKAGE_ID,
-      module: 'amm',
-      function: 'deposit_',
+      module: 'periphery',
+      function: 'maybe_split_then_deposit',
       typeArguments: poolTypeArgs,
-      arguments: [getObjectId(pool), getObjectId(coinA), getObjectId(coinB), minOut.toString()],
+      arguments: [
+        getObjectId(pool),
+        getObjectId(coinA),
+        amountA.toString(),
+        getObjectId(coinB),
+        amountB.toString(),
+        minOut.toString(),
+      ],
       gasBudget: 10000,
     },
   })

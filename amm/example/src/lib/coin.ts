@@ -65,19 +65,25 @@ export function getCoinBalances(coins: Array<GetObjectDataResponse>): Map<string
   return ret
 }
 
+function getAllCoinsOfType(
+  coins: GetObjectDataResponse[],
+  typeArg: string
+): GetObjectDataResponse[] {
+  const parts = partitionCoinsByType(coins)
+  return parts.get(typeArg) || []
+}
+
 export async function getOrCreateCoinOfExactBalance(
   provider: JsonRpcProvider,
   wallet: SuiWalletAdapter,
   coinType: string,
   balance: bigint
 ): Promise<GetObjectDataResponse> {
-  const coinsPart = partitionCoinsByType(await getUserCoins(provider, wallet))
-  const symbol = Coin.getCoinSymbol(coinType)
-
   // select appropriate coins
-  const coins = coinsPart.get(coinType)
-  if (coins === undefined) {
-    throw new Error(`${symbol} Coin not found in wallet!`)
+  const coins = getAllCoinsOfType(await getUserCoins(provider, wallet), coinType)
+  const symbol = Coin.getCoinSymbol(coinType)
+  if (coins.length === 0) {
+    throw new Error(`No ${symbol} Coins found in wallet!`)
   }
 
   // check whether an exact coin already exists and return if it does
@@ -111,4 +117,39 @@ export async function getOrCreateCoinOfExactBalance(
   console.debug(res)
 
   return exactCoin
+}
+
+export async function getOrCreateCoinOfLargeEnoughBalance(
+  provider: JsonRpcProvider,
+  wallet: SuiWalletAdapter,
+  coinType: string,
+  balance: bigint
+): Promise<GetObjectDataResponse> {
+  const coins = getAllCoinsOfType(await getUserCoins(provider, wallet), coinType)
+  if (Coin.totalBalance(coins) < balance) {
+    const symbol = Coin.getCoinSymbol(coinType)
+    throw new Error(
+      `Balances of ${symbol} Coins in the wallet don't amount to ${balance.toString()}`
+    )
+  }
+
+  const coin = Coin.selectCoinWithBalanceGreaterThanOrEqual(coins, balance)
+  if (coin !== undefined) {
+    return coin as GetObjectDataResponse
+  }
+
+  const inputCoins = Coin.selectCoinsWithBalanceGreaterThanOrEqual(coins, balance)
+  const addr = await getWalletAddress(wallet)
+  const res = await wallet.signAndExecuteTransaction({
+    kind: 'pay',
+    data: {
+      inputCoins: inputCoins.map(Coin.getID),
+      recipients: [addr],
+      amounts: [Number(balance)],
+      gasBudget: 10000,
+    },
+  })
+
+  const createdId = res.effects.created![0].reference.objectId
+  return await provider.getObject(createdId)
 }
