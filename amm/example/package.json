@@ -11,8 +11,11 @@
   "dependencies": {
     "@emotion/react": "^11.10.4",
     "@emotion/styled": "^11.10.4",
+    "@mui/icons-material": "^5.10.9",
+    "@mui/material": "^5.10.10",
     "@mysten/sui.js": "^0.13.0",
     "@mysten/wallet-adapter-all-wallets": "^0.2.1",
+    "@mysten/wallet-adapter-react": "^4.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

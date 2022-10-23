@@ -9,7 +9,7 @@ import {
   JsonRpcProvider,
   normalizeSuiAddress,
 } from '@mysten/sui.js'
-import { SuiWalletAdapter } from '@mysten/wallet-adapter-all-wallets'
+import { WalletAdapter } from '@mysten/wallet-adapter-base'
 import { ceilDiv, min, sqrt } from './bigint-math'
 import { getOrCreateCoinOfLargeEnoughBalance } from './coin'
 import { CONFIG } from './config'
@@ -221,7 +221,7 @@ export function getLpCoinTypeArgs(obj: GetObjectDataResponse): [string, string] 
 
 export async function getUserLpCoins(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter
+  wallet: WalletAdapter
 ): Promise<GetObjectDataResponse[]> {
   const addr = await getWalletAddress(wallet)
   const infos = (await provider.getObjectsOwnedByAddress(addr)).filter(info =>
@@ -252,7 +252,7 @@ export interface CreatePoolParams {
 
 export async function createPool(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter,
+  wallet: WalletAdapter,
   params: CreatePoolParams
 ) {
   const [inputA, inputB] = await Promise.all([
@@ -261,7 +261,7 @@ export async function createPool(
   ])
 
   // create pool
-  const res = await wallet.signAndExecuteTransaction({
+  const res = await wallet.signAndExecuteTransaction?.({
     kind: 'moveCall',
     data: {
       packageObjectId: CONFIG.ammPackageId,
@@ -284,7 +284,7 @@ export async function createPool(
 
 export async function swap(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter,
+  wallet: WalletAdapter,
   pool: GetObjectDataResponse,
   inputCoinTypeArg: string,
   amount: bigint,
@@ -323,7 +323,7 @@ export async function swap(
     (inputAmountAfterFees * outputPoolBalance * BigInt(100 - maxSlippagePct)) /
     ((inputPoolBalance + inputAmountAfterFees) * BigInt(100))
 
-  const res = await wallet.signAndExecuteTransaction({
+  const res = await wallet.signAndExecuteTransaction?.({
     kind: 'moveCall',
     data: {
       packageObjectId: CONFIG.ammPackageId,
@@ -339,7 +339,7 @@ export async function swap(
 
 export async function deposit(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter,
+  wallet: WalletAdapter,
   pool: GetObjectDataResponse,
   amountA: bigint,
   amountB: bigint,
@@ -366,7 +366,7 @@ export async function deposit(
     getOrCreateCoinOfLargeEnoughBalance(provider, wallet, poolTypeArgs[1], amountB),
   ])
 
-  const res = await wallet.signAndExecuteTransaction({
+  const res = await wallet.signAndExecuteTransaction?.({
     kind: 'moveCall',
     data: {
       packageObjectId: CONFIG.ammPackageId,
@@ -389,7 +389,7 @@ export async function deposit(
 
 export async function withdraw(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter,
+  wallet: WalletAdapter,
   lpCoin: GetObjectDataResponse,
   slippagePct: number
 ) {
@@ -403,7 +403,7 @@ export async function withdraw(
   const minB =
     (lpCoinBalance * poolBalances[1] * BigInt(100 - slippagePct)) / (poolBalances[2] * 100n)
 
-  const res = await wallet.signAndExecuteTransaction({
+  const res = await wallet.signAndExecuteTransaction?.({
     kind: 'moveCall',
     data: {
       packageObjectId: CONFIG.ammPackageId,
