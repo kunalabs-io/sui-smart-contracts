@@ -26,12 +26,21 @@ export function objectIsPool(obj: GetObjectDataResponse): boolean {
   return !!getMoveObjectType(obj)?.match(POOL_TYPE_REGEX)
 }
 
-export async function getPools(provider: JsonRpcProvider): Promise<GetObjectDataResponse[]> {
-  // hard code for now because the below doesn't work
-  return await provider.getObjectBatch(CONFIG.ammDefaultPools)
+export async function getPools(
+  provider: JsonRpcProvider,
+  wallet: SuiWalletAdapter
+): Promise<GetObjectDataResponse[]> {
+  // fetch pools via user LP coins because events are flaky on the devnet
+  const lpCoins = await getUserLpCoins(provider, wallet)
+
+  const poolIdSet = new Set<string>()
+  lpCoins.forEach(pool => poolIdSet.add((pool as any).details.data.fields.pool_id))
+  CONFIG.ammDefaultPools.forEach(id => poolIdSet.add(id))
+
+  return await provider.getObjectBatch(Array.from(poolIdSet))
 
   /*
-  // there's currently no way to fetch shared objects directly so this is a hacky way to do it
+  // fetch pools via events
   const events = await provider.getEventsByModule(AMM_PACKAGE_ID, 'amm')
   const createdObjIDs = events.flatMap(event_ => {
     const event = event_.event

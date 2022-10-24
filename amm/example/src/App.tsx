@@ -50,7 +50,7 @@ function App() {
 
   const [pools, setPools] = useState<GetObjectDataResponse[]>([])
   useEffect(() => {
-    getPools(provider)
+    getPools(provider, wallet)
       .then(pools => setPools(pools.reverse()))
       .catch(console.error)
   }, [])
@@ -134,7 +134,7 @@ function App() {
     })
 
     // update pool list
-    setPools(await getPools(provider))
+    setPools(await getPools(provider, wallet))
   }, [firstCoinType, secondCoinType])
 
   /* =========== My LP Positions section ========== */
