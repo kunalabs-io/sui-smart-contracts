@@ -25,7 +25,7 @@ import { Coin, GetObjectDataResponse, getObjectId, JsonRpcProvider } from '@myst
 import { getUniqueCoinTypes, getUserCoins } from './lib/coin'
 import { CONFIG } from './lib/config'
 
-const provider = new JsonRpcProvider(import.meta.env.VITE_SUI_RPC_URL || 'https://fullnode.devnet.sui.io:443')
+const provider = new JsonRpcProvider(CONFIG.rpcUrl)
 const wallet = new SuiWalletAdapter()
 
 const SUI_COIN_TYPE_ARG = '0x2::sui::SUI'
