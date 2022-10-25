@@ -67,7 +67,7 @@ module 0x0::amm {
     }
 
     /// Take out `value` from the provided LP coin and put it into a new coin.
-    public fun lp_coin_split<A, B>( self: &mut LPCoin<A, B>, value: u64, ctx: &mut TxContext): LPCoin<A, B> {
+    public fun lp_coin_split<A, B>(self: &mut LPCoin<A, B>, value: u64, ctx: &mut TxContext): LPCoin<A, B> {
         LPCoin<A, B> {
             id: object::new(ctx),
             pool_id: self.pool_id,
