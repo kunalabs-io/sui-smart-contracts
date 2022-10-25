@@ -7,7 +7,7 @@ import TwitterIcon from '@mui/icons-material/Twitter'
 import GitHubIcon from '@mui/icons-material/GitHub'
 
 import { getPools } from './lib/amm'
-import { SwapAndCreatePool } from './components/Swap/SwapAndCreatePool'
+import { SwapAndCreatePool } from './components/SwapAndCreatePool/SwapAndCreatePool'
 import { Pools } from './components/Pools/Pools'
 import { MyLPPositions } from './components/MyLPPositions/MyLPPositions'
 import { CONFIG } from './lib/config'
