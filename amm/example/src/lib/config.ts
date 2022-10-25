@@ -8,8 +8,8 @@ export interface Config {
 export const CONFIG: Config = {
   rpcUrl: 'https://fullnode.devnet.sui.io:443',
 
-  ammPackageId: '0x88bbd38f27daaf1ac6ee362147865ca500da5d8',
-  exampleCoinPackageId: '0xbe0a47f0dfca0699e8ed8d7e22d07d11004df4e6',
+  ammPackageId: '0x9d9635aab271ffe3f091734ec3d4cbba913cda81',
+  exampleCoinPackageId: '0xa68c2da53dd13519ef829ffbf557adcf21ba2c84',
 
-  ammDefaultPools: ['0x81de257f41e61e6bd70a3e9adf37f68fbcfc2e07'],
+  ammDefaultPools: ['0xd89ae379d092c75f5ceb2491f9613a0c50271df7'],
 }

@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
+  bcs,
   Coin,
   getMoveObjectType,
   GetObjectDataResponse,
   getObjectId,
   JsonRpcProvider,
+  normalizeSuiAddress,
 } from '@mysten/sui.js'
 import { SuiWalletAdapter } from '@mysten/wallet-adapter-all-wallets'
 import { ceilDiv, min, sqrt } from './bigint-math'
@@ -18,6 +20,8 @@ import { getWalletAddress } from './util'
 const POOL_TYPE_REGEX = new RegExp(`^${CONFIG.ammPackageId}::amm::Pool<(.+), (.+)>$`)
 const LP_COIN_TYPE_REGEX = new RegExp(`^${CONFIG.ammPackageId}::amm::LPCoin<(.+), (.+)>$`)
 
+const POOL_CREATION_EVENT = `${CONFIG.ammPackageId}::amm::PoolCreationEvent`
+
 const BPS_IN_100_PCT = 100_00
 
 /* =========================== helper functions ============================= */
@@ -26,33 +30,48 @@ export function objectIsPool(obj: GetObjectDataResponse): boolean {
   return !!getMoveObjectType(obj)?.match(POOL_TYPE_REGEX)
 }
 
-export async function getPools(
+async function fetchPoolsViaEvents(provider: JsonRpcProvider): Promise<string[]> {
+  const poolIds: string[] = []
+
+  const events = await provider.getEventsByMoveEventStructName(POOL_CREATION_EVENT)
+  bcs.registerStructType(POOL_CREATION_EVENT, { pool_id: bcs.ADDRESS })
+  events.forEach(event => {
+    const dec = bcs.de(POOL_CREATION_EVENT, (event.event as any).moveEvent.bcs, 'base64')
+    poolIds.push(normalizeSuiAddress(dec.pool_id))
+  })
+
+  return poolIds
+}
+
+async function fetchPoolsViaLpCoins(
   provider: JsonRpcProvider,
   wallet: SuiWalletAdapter
-): Promise<GetObjectDataResponse[]> {
-  // fetch pools via user LP coins because events are flaky on the devnet
+): Promise<string[]> {
   const lpCoins = await getUserLpCoins(provider, wallet)
 
   const poolIdSet = new Set<string>()
   lpCoins.forEach(pool => poolIdSet.add((pool as any).details.data.fields.pool_id))
-  CONFIG.ammDefaultPools.forEach(id => poolIdSet.add(id))
 
-  return await provider.getObjectBatch(Array.from(poolIdSet))
+  return Array.from(poolIdSet)
+}
 
-  /*
-  // fetch pools via events
-  const events = await provider.getEventsByModule(AMM_PACKAGE_ID, 'amm')
-  const createdObjIDs = events.flatMap(event_ => {
-    const event = event_.event
-    if ('newObject' in event) {
-      return event.newObject.objectId
-    }
-    return []
+export async function getPools(
+  provider: JsonRpcProvider,
+  wallet: SuiWalletAdapter
+): Promise<GetObjectDataResponse[]> {
+  const poolIds = [...CONFIG.ammDefaultPools]
+  const have = new Set<string>(poolIds)
+
+  const [viaEvents, viaLpCoins] = await Promise.all([
+    fetchPoolsViaEvents(provider),
+    fetchPoolsViaLpCoins(provider, wallet),
+  ])
+  viaLpCoins.concat(viaEvents).forEach(id => {
+    if (have.has(id)) return
+    poolIds.push(id)
   })
-  const createdObjs = await provider.getObjectBatch(createdObjIDs)
 
-  return createdObjs.filter(objectIsPool)
-  */
+  return await provider.getObjectBatch(poolIds)
 }
 
 export function getPoolCoinTypeArgs(obj: GetObjectDataResponse): [string, string] {
