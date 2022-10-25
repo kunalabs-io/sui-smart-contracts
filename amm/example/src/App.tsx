@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { WalletStandardAdapterProvider } from '@mysten/wallet-adapter-all-wallets'
 import { GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
 import { WalletProvider } from '@mysten/wallet-adapter-react'
-import { Box, Divider } from '@mui/material'
+import { Box, IconButton, Typography } from '@mui/material'
+import TwitterIcon from '@mui/icons-material/Twitter'
+import GitHubIcon from '@mui/icons-material/GitHub'
 
 import { getPools } from './lib/amm'
 import { SwapAndCreatePool } from './components/Swap/SwapAndCreatePool'
@@ -32,43 +34,30 @@ function App() {
     setCount(count => count + 1)
   }, [])
 
-  /* =========== My LP Positions section ========== */
-
-  // const [userLpCoins, setUserLpCoins] = useState<GetObjectDataResponse[]>([])
-  // useEffect(() => {
-  //   getUserLpCoins(provider, wallet).then(setUserLpCoins).catch(console.error)
-  // }, [])
-
-  // list positions (each lpCoin represents a position)
-  // userLpCoins.forEach(lpCoin => {
-  //   const [coinTypeA, coinTypeB] = getLpCoinTypeArgs(lpCoin)
-  //   const symbolA = Coin.getCoinSymbol(coinTypeA)
-  //   const symbolB = Coin.getCoinSymbol(coinTypeB)
-  //   const lpAmount = getLpCoinBalance(lpCoin)
-
-  //   // find pool corresponding to the lp coin
-  //   const lpCoinPoolId = getLpCoinPoolId(lpCoin)
-  //   const pool = pools.find(pool => getObjectId(pool) === lpCoinPoolId)
-  //   if (pool === undefined) return
-
-  //   const [amountA, amountB] = calcPoolLpValue(pool, lpAmount)
-
-  //   // display this on UI
-  //   console.log(`LP amount: ${lpAmount}`)
-  //   console.log(`${symbolA} value: ${amountA}`)
-  //   console.log(`${symbolB} value: ${amountB}`)
-  // })
-
-  // const onWithdraw = useCallback(async () => {
-  //   const lpCoin = userLpCoins[0] // (hard coded - make it based on button click)
-  //   await withdraw(provider, wallet, lpCoin, 0)
-
-  //   // update position list
-  //   getUserLpCoins(provider, wallet).then(setUserLpCoins).catch(console.error)
-  // }, [userLpCoins])
-
   return (
     <Box>
+      <Box display="flex" justifyContent="center" alignItems="center">
+        <Typography variant="h4" mr={2}>
+          Kuna Labs
+        </Typography>
+        <IconButton
+          sx={{ color: '#1DA1F2' }}
+          component="a"
+          href="https://twitter.com/kuna_labs"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <TwitterIcon sx={{ width: 32, height: 32 }} />
+        </IconButton>
+        <IconButton
+          component="a"
+          href="https://github.com/kunalabs-io/sui-smart-contracts/tree/master/amm"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <GitHubIcon sx={{ width: 32, height: 32 }} />
+        </IconButton>
+      </Box>
       <WalletProvider adapters={supportedWallets}>
         <SwapAndCreatePool
           pools={pools}
@@ -76,9 +65,7 @@ function App() {
           onPoolsChange={onPoolsChange}
           getUpdatedPools={getUpdatedPools}
         />
-        <Divider sx={{ width: 500, mx: 'auto' }} />
         <MyLPPositions pools={pools} provider={provider} />
-        <Divider sx={{ width: 500, mx: 'auto' }} />
         <Pools pools={pools} provider={provider} getUpdatedPools={getUpdatedPools} />
       </WalletProvider>
     </Box>
