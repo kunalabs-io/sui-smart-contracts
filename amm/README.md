@@ -3,6 +3,7 @@
 A UniswapV2-style AMM implementation for Sui.
 
 **Features:**
+
 - constant product curve ( $A \cdot B = k$ )
 - swap between any `Coin<A>` and `Coin<B>`
 - deposit and withdraw liquidity
@@ -26,18 +27,22 @@ The limitation of 1. though is that there can be only one `Pool` per token pair.
 
 Once https://github.com/MystenLabs/sui/issues/4202 lands to devnet I will implement LP tokens to be `Coin`. Additionally, once https://github.com/MystenLabs/sui/issues/4203 becomes available, I will implement the pool uniqueness checks using dynamic child object loading APIs in order to avoid any potential issues with `VecMap` when then number of pools is large as `VecMap` is `O(n)`.
 
+### Periphery
+
+`periphery.move` contains `maybe_split_then...` functions which enable the pool functions be called with Coin objects which have a different (larger) value than desired. This is helpful because otherwise the client-side code would have to create two transactions for each operation -- first split the Coin to desired value and then call the pool function. This is a bit cumbersome because it requires the user to sign two transactions for each call.
+
 ### u128 and u256 math
 
 I've included `u128` and `u256` math libraries which are needed for some operations. Those will be removed as `u256` lands in Move (https://github.com/move-language/move/pull/547) and `u128`/`u256` math functions become available in Move / Sui standard library.
-
 
 ### Prover Specs
 
 I haven't included any Prover specs since the Prover isn't yet available on Sui. I will do once it does.
 
-
 ## TODO
-- [ ] TypeScript SDK 
+
+- [ ] TypeScript SDK
 - [ ] implement LP tokens as `Coin` instead of the special `LPCoin` type (requires reflection / dynamic child object loading)
 - [ ] make it possible for admin to change fees after pool creation
 - [ ] internal price oracle
+- [ ] flash lending / swaps
