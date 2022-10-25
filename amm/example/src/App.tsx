@@ -76,9 +76,9 @@ function App() {
           onPoolsChange={onPoolsChange}
           getUpdatedPools={getUpdatedPools}
         />
-        <Divider color="black" />
+        <Divider sx={{ width: 500, mx: 'auto' }} />
         <MyLPPositions pools={pools} provider={provider} />
-        <Divider color="black" />
+        <Divider sx={{ width: 500, mx: 'auto' }} />
         <Pools pools={pools} provider={provider} getUpdatedPools={getUpdatedPools} />
       </WalletProvider>
     </Box>

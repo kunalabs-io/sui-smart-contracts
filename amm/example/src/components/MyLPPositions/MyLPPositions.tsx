@@ -41,6 +41,17 @@ export const MyLPPositions = ({ pools, provider }: Props) => {
     }
   }
 
+  if (!userLpCoins.length) {
+    return (
+      <Box sx={{ mx: 'auto', width: 500, mt: 3 }}>
+        <Typography variant="h5" sx={{ mb: 2 }}>
+          My LP Positions
+        </Typography>
+        <Typography variant="body1">List is empty</Typography>
+      </Box>
+    )
+  }
+
   return (
     <Box sx={{ mx: 'auto', width: 500, mt: 3 }}>
       <Typography variant="h5" sx={{ mb: 2 }}>
@@ -66,7 +77,9 @@ export const MyLPPositions = ({ pools, provider }: Props) => {
             key={`${symbolA}-${symbolB}`}
             sx={{ boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.5)', borderRadius: '16px;', p: 3, mb: 3 }}
           >
-            <Typography variant="body1" color="primary">{`${symbolA}-${symbolB}`}</Typography>
+            <Typography variant="body1" color="primary">
+              {symbolA}&nbsp;<span style={{ color: '#46505A' }}>-</span>&nbsp;{symbolB}
+            </Typography>
             <Typography variant="body2">{`LP amount: ${lpAmount}`}</Typography>
             <Typography variant="body2">{`${symbolA} value: ${amountA}`}</Typography>
             <Typography variant="body2">{`${symbolB} value: ${amountB}`}</Typography>

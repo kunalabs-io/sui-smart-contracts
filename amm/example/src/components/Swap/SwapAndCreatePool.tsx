@@ -1,7 +1,7 @@
 import { useState, ChangeEvent, useEffect } from 'react'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
-import { Box } from '@mui/material'
+import { Box, FormHelperText } from '@mui/material'
 import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
@@ -20,7 +20,8 @@ import {
   swap,
 } from '../../lib/amm'
 import { ConnectWalletModal } from '../Wallet/ConnectWalletModal'
-import { getUniqueCoinTypes, getUserCoins } from '../../lib/coin'
+import { getCoinBalances, getUniqueCoinTypes, getUserCoins } from '../../lib/coin'
+import { isSubmitFormDisabled } from '../../utils'
 
 interface Props {
   pools: GetObjectDataResponse[]
@@ -55,16 +56,17 @@ export const SwapAndCreatePool = ({ pools, provider, onPoolsChange, getUpdatedPo
   const [secondCoinValue, setSecondCoinValue] = useState('')
 
   const [pool, setPool] = useState<GetObjectDataResponse>()
-
-  // create pool tab user coins
+  const [coinBalances, setCoinBalances] = useState<Map<string, bigint>>()
   const [userCoins, setUserCoins] = useState<CoinTypeOption[]>([])
 
+  // create pool tab user coins
   useEffect(() => {
     if (wallet) {
       getUserCoins(provider, wallet)
         .then(coins => {
           const newCoins = getUniqueCoinTypes(coins).map(arg => ({ value: arg, label: Coin.getCoinSymbol(arg) }))
           setUserCoins(newCoins)
+          setCoinBalances(getCoinBalances(coins))
         })
         .catch(console.error)
     }
@@ -165,9 +167,6 @@ export const SwapAndCreatePool = ({ pools, provider, onPoolsChange, getUpdatedPo
     resetValues()
   }
 
-  const submitDisabled =
-    !firstCoinValue || !secondCoinValue || !firstCoinType || !secondCoinType || firstCoinType === secondCoinType
-
   return (
     <Box
       sx={{ width: 500, boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.5)', borderRadius: '16px;', my: 3, mx: 'auto' }}
@@ -207,6 +206,9 @@ export const SwapAndCreatePool = ({ pools, provider, onPoolsChange, getUpdatedPo
                 ))}
           </TextField>
         </Box>
+        <FormHelperText sx={{ position: 'absolute' }}>
+          {coinBalances ? `Max: ${coinBalances.get(firstCoinType)?.toString()}` : ''}
+        </FormHelperText>
 
         <Box p={2} textAlign="center">
           {tabValue === TabValue.Swap ? (
@@ -226,7 +228,7 @@ export const SwapAndCreatePool = ({ pools, provider, onPoolsChange, getUpdatedPo
           )}
         </Box>
 
-        <Box sx={{ display: 'flex', mb: 4 }}>
+        <Box sx={{ display: 'flex' }}>
           <TextField
             value={secondCoinValue}
             sx={{ display: 'block' }}
@@ -256,6 +258,10 @@ export const SwapAndCreatePool = ({ pools, provider, onPoolsChange, getUpdatedPo
                 ))}
           </TextField>
         </Box>
+        <FormHelperText sx={{ position: 'absolute' }}>
+          {coinBalances && secondCoinType ? `Max: ${coinBalances.get(secondCoinType)?.toString()}` : ''}
+        </FormHelperText>
+        <Box height={48} />
         <Box>
           {connected && wallet ? (
             <Button
@@ -263,7 +269,13 @@ export const SwapAndCreatePool = ({ pools, provider, onPoolsChange, getUpdatedPo
               fullWidth
               variant="contained"
               onClick={tabValue === TabValue.Swap ? onSwap : onCreatePool}
-              disabled={submitDisabled}
+              disabled={isSubmitFormDisabled({
+                firstCoinType,
+                firstCoinValue,
+                secondCoinType,
+                secondCoinValue,
+                coinBalances,
+              })}
             >
               {tabValue === TabValue.Swap ? 'Swap' : 'Add liquidity '}
             </Button>

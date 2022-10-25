@@ -1,11 +1,23 @@
-import { ChangeEvent, useState } from 'react'
+import { ChangeEvent, useEffect, useState } from 'react'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, TextField } from '@mui/material/'
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormHelperText,
+  IconButton,
+  TextField,
+} from '@mui/material/'
 import { Coin, GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
 import CloseIcon from '@mui/icons-material/Close'
 import { useWallet } from '@mysten/wallet-adapter-react'
 
 import { calcPoolOtherDepositAmount, deposit, getPoolCoinTypeArgs } from '../../lib/amm'
+import { getCoinBalances, getUserCoins } from '../../lib/coin'
+import { isSubmitFormDisabled } from '../../utils'
 
 interface Props {
   isOpen: boolean
@@ -18,12 +30,23 @@ interface Props {
 export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }: Props) => {
   const [firstCoinValue, setFirstCoinValue] = useState('')
   const [secondCoinValue, setSecondCoinValue] = useState('')
+  const [coinBalances, setCoinBalances] = useState<Map<string, bigint>>()
+
+  const { wallet } = useWallet()
+
+  useEffect(() => {
+    if (wallet) {
+      getUserCoins(provider, wallet)
+        .then(coins => {
+          setCoinBalances(getCoinBalances(coins))
+        })
+        .catch(console.error)
+    }
+  }, [wallet, provider])
 
   const [coinTypeA, coinTypeB] = getPoolCoinTypeArgs(pool)
   const symbolA = Coin.getCoinSymbol(coinTypeA)
   const symbolB = Coin.getCoinSymbol(coinTypeB)
-
-  const { wallet } = useWallet()
 
   const handleFirstCoinValueChange = (event: ChangeEvent<HTMLInputElement>) => {
     const newFirstCoinValue = event.target.value
@@ -81,6 +104,9 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
             />
             <TextField label="Token" value={symbolA} sx={{ width: 150 }} disabled />
           </Box>
+          <FormHelperText sx={{ position: 'absolute' }}>
+            {coinBalances ? `Max: ${coinBalances.get(coinTypeA)?.toString()}` : ''}
+          </FormHelperText>
           <Box p={2} textAlign="center">
             <AddCircleOutlineIcon
               fontSize="large"
@@ -90,7 +116,7 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
             />
           </Box>
         </Box>
-        <Box sx={{ display: 'flex', mb: 4 }}>
+        <Box sx={{ display: 'flex' }}>
           <TextField
             value={secondCoinValue}
             sx={{ display: 'block' }}
@@ -101,9 +127,25 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
           />
           <TextField label="Token" value={symbolB} sx={{ width: 150 }} disabled />
         </Box>
+        <FormHelperText sx={{ position: 'absolute' }}>
+          {coinBalances ? `Max: ${coinBalances.get(coinTypeB)?.toString()}` : ''}
+        </FormHelperText>
+        <Box height={32} />
       </DialogContent>
       <DialogActions>
-        <Button autoFocus onClick={onDeposit} fullWidth variant="contained">
+        <Button
+          autoFocus
+          onClick={onDeposit}
+          fullWidth
+          variant="contained"
+          disabled={isSubmitFormDisabled({
+            firstCoinType: coinTypeA,
+            firstCoinValue,
+            secondCoinType: coinTypeB,
+            secondCoinValue,
+            coinBalances,
+          })}
+        >
           Deposit
         </Button>
       </DialogActions>
