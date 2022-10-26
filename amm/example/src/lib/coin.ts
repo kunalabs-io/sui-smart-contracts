@@ -121,7 +121,7 @@ export async function getOrCreateCoinOfExactBalance(
 
 export async function getOrCreateCoinOfLargeEnoughBalance(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter,
+  wallet: WalletAdapter,
   coinType: string,
   balance: bigint
 ): Promise<GetObjectDataResponse> {
@@ -140,7 +140,7 @@ export async function getOrCreateCoinOfLargeEnoughBalance(
 
   const inputCoins = Coin.selectCoinsWithBalanceGreaterThanOrEqual(coins, balance)
   const addr = await getWalletAddress(wallet)
-  const res = await wallet.signAndExecuteTransaction({
+  const res = await wallet.signAndExecuteTransaction?.({
     kind: 'pay',
     data: {
       inputCoins: inputCoins.map(Coin.getID),
@@ -150,6 +150,6 @@ export async function getOrCreateCoinOfLargeEnoughBalance(
     },
   })
 
-  const createdId = res.effects.created![0].reference.objectId
+  const createdId = res!.effects.created![0].reference.objectId
   return await provider.getObject(createdId)
 }
