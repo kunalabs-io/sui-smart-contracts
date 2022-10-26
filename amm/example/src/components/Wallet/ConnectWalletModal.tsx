@@ -5,8 +5,6 @@ import { useWallet } from '@mysten/wallet-adapter-react'
 export const ConnectWalletModal = () => {
   const { connected } = useWallet()
 
-  console.log({ connected })
-
   const [open, setOpen] = useState(false)
 
   const handleClickOpen = () => {
