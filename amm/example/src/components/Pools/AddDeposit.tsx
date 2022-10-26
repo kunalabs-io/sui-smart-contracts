@@ -17,7 +17,8 @@ import { useWallet } from '@mysten/wallet-adapter-react'
 
 import { calcPoolOtherDepositAmount, deposit, getPoolCoinTypeArgs } from '../../lib/amm'
 import { getCoinBalances, getUserCoins } from '../../lib/coin'
-import { isSubmitFormDisabled } from '../../utils'
+import { ONLY_NUMBERS_REGEX } from '../../utils/regex'
+import { isSubmitFormDisabled } from '../../utils/checkSubmittingForm'
 
 interface Props {
   isOpen: boolean
@@ -32,17 +33,17 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
   const [secondCoinValue, setSecondCoinValue] = useState('')
   const [coinBalances, setCoinBalances] = useState<Map<string, bigint>>()
 
-  const { wallet } = useWallet()
+  const { wallet, connected } = useWallet()
 
   useEffect(() => {
-    if (wallet) {
+    if (wallet && connected) {
       getUserCoins(provider, wallet)
         .then(coins => {
           setCoinBalances(getCoinBalances(coins))
         })
         .catch(console.error)
     }
-  }, [wallet, provider])
+  }, [wallet, provider, connected])
 
   const [coinTypeA, coinTypeB] = getPoolCoinTypeArgs(pool)
   const symbolA = Coin.getCoinSymbol(coinTypeA)
@@ -50,12 +51,14 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
 
   const handleFirstCoinValueChange = (event: ChangeEvent<HTMLInputElement>) => {
     const newFirstCoinValue = event.target.value
-    setFirstCoinValue(newFirstCoinValue)
-    setSecondCoinValue(calcPoolOtherDepositAmount(pool, BigInt(newFirstCoinValue), coinTypeA).toString())
+    if (newFirstCoinValue === '' || ONLY_NUMBERS_REGEX.test(newFirstCoinValue)) {
+      setFirstCoinValue(newFirstCoinValue)
+      setSecondCoinValue(calcPoolOtherDepositAmount(pool, BigInt(newFirstCoinValue), coinTypeA).toString())
+    }
   }
 
   const onDeposit = async () => {
-    if (wallet) {
+    if (wallet && connected) {
       try {
         const amountA = BigInt(firstCoinValue)
         const amountB = calcPoolOtherDepositAmount(pool, amountA, coinTypeA)

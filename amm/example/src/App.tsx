@@ -26,10 +26,6 @@ function App() {
       .catch(console.error)
   }, [count])
 
-  const onPoolsChange = (newPools: GetObjectDataResponse[]) => {
-    setPools(newPools)
-  }
-
   const getUpdatedPools = useCallback(() => {
     setCount(count => count + 1)
   }, [])
@@ -59,13 +55,8 @@ function App() {
         </IconButton>
       </Box>
       <WalletProvider adapters={supportedWallets}>
-        <SwapAndCreatePool
-          pools={pools}
-          provider={provider}
-          onPoolsChange={onPoolsChange}
-          getUpdatedPools={getUpdatedPools}
-        />
-        <MyLPPositions pools={pools} provider={provider} />
+        <SwapAndCreatePool pools={pools} provider={provider} getUpdatedPools={getUpdatedPools} count={count} />
+        <MyLPPositions pools={pools} provider={provider} count={count} getUpdatedPools={getUpdatedPools} />
         <Pools pools={pools} provider={provider} getUpdatedPools={getUpdatedPools} />
       </WalletProvider>
     </Box>

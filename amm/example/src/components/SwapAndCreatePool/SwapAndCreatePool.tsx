@@ -13,7 +13,6 @@ import { useWallet } from '@mysten/wallet-adapter-react'
 import {
   calcSwapAmountOut,
   createPool,
-  getPools,
   getPoolsUniqueCoinTypeArgs,
   getPossibleSecondCoinTypeArgs,
   selectPoolForPair,
@@ -21,13 +20,14 @@ import {
 } from '../../lib/amm'
 import { ConnectWalletModal } from '../Wallet/ConnectWalletModal'
 import { getCoinBalances, getUniqueCoinTypes, getUserCoins } from '../../lib/coin'
-import { isSubmitFormDisabled } from '../../utils'
+import { ONLY_NUMBERS_REGEX } from '../../utils/regex'
+import { isSubmitFormDisabled } from '../../utils/checkSubmittingForm'
 
 interface Props {
   pools: GetObjectDataResponse[]
   provider: JsonRpcProvider
-  onPoolsChange: (newPools: GetObjectDataResponse[]) => void
   getUpdatedPools: () => void
+  count: number
 }
 
 interface CoinTypeOption {
@@ -42,7 +42,7 @@ enum TabValue {
   CreatePool = 1,
 }
 
-export const SwapAndCreatePool = ({ pools, provider, onPoolsChange, getUpdatedPools }: Props) => {
+export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: Props) => {
   const [tabValue, setTabValue] = useState(TabValue.Swap)
 
   const { wallet, connected } = useWallet()
@@ -61,7 +61,7 @@ export const SwapAndCreatePool = ({ pools, provider, onPoolsChange, getUpdatedPo
 
   // create pool tab user coins
   useEffect(() => {
-    if (wallet) {
+    if (wallet && connected) {
       getUserCoins(provider, wallet)
         .then(coins => {
           const newCoins = getUniqueCoinTypes(coins).map(arg => ({ value: arg, label: Coin.getCoinSymbol(arg) }))
@@ -70,7 +70,7 @@ export const SwapAndCreatePool = ({ pools, provider, onPoolsChange, getUpdatedPo
         })
         .catch(console.error)
     }
-  }, [provider, wallet])
+  }, [provider, wallet, connected, count])
 
   useEffect(() => {
     if (firstCoinType && secondCoinType) {
@@ -110,19 +110,24 @@ export const SwapAndCreatePool = ({ pools, provider, onPoolsChange, getUpdatedPo
 
   const handleFirstCoinValueChange = (event: ChangeEvent<HTMLInputElement>) => {
     const newFirstCoinValue = event.target.value
-    setFirstCoinValue(newFirstCoinValue)
-    if (pool === undefined || tabValue === TabValue.CreatePool) {
-      return
+
+    if (newFirstCoinValue === '' || ONLY_NUMBERS_REGEX.test(newFirstCoinValue)) {
+      setFirstCoinValue(newFirstCoinValue)
+      if (pool === undefined || tabValue === TabValue.CreatePool) {
+        return
+      }
+      setSecondCoinValue(calcSwapAmountOut(pool, firstCoinType, BigInt(newFirstCoinValue)).toString())
     }
-    setSecondCoinValue(calcSwapAmountOut(pool, firstCoinType, BigInt(newFirstCoinValue)).toString())
   }
 
   const handleSecondCoinValueChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSecondCoinValue(event.target.value)
+    if (event.target.value === '' || ONLY_NUMBERS_REGEX.test(event.target.value)) {
+      setSecondCoinValue(event.target.value)
+    }
   }
 
   const onSwap = async () => {
-    if (wallet) {
+    if (wallet && connected) {
       if (!secondCoinType || !firstCoinValue || !pool) {
         return
       }
@@ -133,7 +138,7 @@ export const SwapAndCreatePool = ({ pools, provider, onPoolsChange, getUpdatedPo
   }
 
   const onCreatePool = async () => {
-    if (!firstCoinType || !secondCoinType || !wallet) {
+    if (!firstCoinType || !secondCoinType || !wallet || !connected) {
       return
     }
 
@@ -147,8 +152,7 @@ export const SwapAndCreatePool = ({ pools, provider, onPoolsChange, getUpdatedPo
         adminFeePct: 10,
       })
 
-      // update pool list
-      onPoolsChange(await getPools(provider))
+      getUpdatedPools()
       resetValues()
     } catch (e) {
       console.error(e)

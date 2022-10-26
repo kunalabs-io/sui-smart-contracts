@@ -17,9 +17,11 @@ import { ConnectWalletModal } from '../Wallet/ConnectWalletModal'
 interface Props {
   pools: GetObjectDataResponse[]
   provider: JsonRpcProvider
+  count: number
+  getUpdatedPools: () => void
 }
 
-export const MyLPPositions = ({ pools, provider }: Props) => {
+export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props) => {
   const [expanded, setExpanded] = useState(true)
 
   const [userLpCoins, setUserLpCoins] = useState<GetObjectDataResponse[]>([])
@@ -27,21 +29,20 @@ export const MyLPPositions = ({ pools, provider }: Props) => {
   const { wallet, connected } = useWallet()
 
   useEffect(() => {
-    if (wallet) {
+    if (wallet && connected) {
       getUserLpCoins(provider, wallet).then(setUserLpCoins).catch(console.error)
     }
-  }, [provider, wallet])
+  }, [provider, wallet, connected, count])
 
   const handleChange = (_event: React.SyntheticEvent, newExpanded: boolean) => {
     setExpanded(newExpanded)
   }
 
   const onWithdraw = async (lpCoin: GetObjectDataResponse) => {
-    if (wallet) {
+    if (wallet && connected) {
       try {
         await withdraw(provider, wallet, lpCoin, 0)
-        const newUserLpCoins = await getUserLpCoins(provider, wallet)
-        setUserLpCoins(newUserLpCoins)
+        getUpdatedPools()
       } catch (e) {
         console.error(e)
       }
@@ -61,12 +62,12 @@ export const MyLPPositions = ({ pools, provider }: Props) => {
 
   return (
     <Box sx={{ mx: 'auto', width: 500, mt: 3 }}>
-      <Accordion expanded={expanded} onChange={handleChange}>
+      <Accordion expanded={expanded} onChange={handleChange} elevation={0}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
           <Typography variant="h5">My LP Positions</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          {userLpCoins.map(lpCoin => {
+          {userLpCoins.map((lpCoin, index) => {
             const [coinTypeA, coinTypeB] = getLpCoinTypeArgs(lpCoin)
             const symbolA = Coin.getCoinSymbol(coinTypeA)
             const symbolB = Coin.getCoinSymbol(coinTypeB)
@@ -83,7 +84,7 @@ export const MyLPPositions = ({ pools, provider }: Props) => {
 
             return (
               <Box
-                key={`${symbolA}-${symbolB}`}
+                key={`${symbolA}-${symbolB}-${index}`}
                 sx={{ boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.5)', borderRadius: '16px;', p: 3, mb: 3 }}
               >
                 <Typography variant="body1" color="primary">

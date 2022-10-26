@@ -51,19 +51,19 @@ export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
 
   return (
     <Box sx={{ mx: 'auto', width: 500, mt: 3 }}>
-      <Accordion expanded={expanded} onChange={handleChange}>
+      <Accordion expanded={expanded} onChange={handleChange} elevation={0}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
           <Typography variant="h5">Pool List</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          {pools.map(pool => {
+          {pools.map((pool, index) => {
             const [coinTypeA, coinTypeB] = getPoolCoinTypeArgs(pool)
             const symbolA = Coin.getCoinSymbol(coinTypeA)
             const symbolB = Coin.getCoinSymbol(coinTypeB)
             const [balanceA, balanceB, lpSupply] = getPoolBalances(pool)
             return (
               <Box
-                key={`${symbolA}-${symbolB}`}
+                key={`${symbolA}-${symbolB}-${index}`}
                 sx={{ boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.5)', borderRadius: '16px;', p: 3, mb: 3 }}
               >
                 <Typography variant="body1" color="primary">
