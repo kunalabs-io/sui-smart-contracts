@@ -45,7 +45,7 @@ async function fetchPoolsViaEvents(provider: JsonRpcProvider): Promise<string[]>
 
 async function fetchPoolsViaLpCoins(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter
+  wallet: WalletAdapter
 ): Promise<string[]> {
   const lpCoins = await getUserLpCoins(provider, wallet)
 
@@ -57,7 +57,7 @@ async function fetchPoolsViaLpCoins(
 
 export async function getPools(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter
+  wallet: WalletAdapter
 ): Promise<GetObjectDataResponse[]> {
   const poolIds = [...CONFIG.ammDefaultPools]
   const have = new Set<string>(poolIds)

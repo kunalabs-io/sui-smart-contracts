@@ -1,6 +1,6 @@
-import { SuiWalletAdapter } from '@mysten/wallet-adapter-all-wallets'
+import { WalletAdapter } from '@mysten/wallet-adapter-base'
 
-export async function getWalletAddress(wallet: SuiWalletAdapter): Promise<string> {
+export async function getWalletAddress(wallet: WalletAdapter): Promise<string> {
   const accs = await wallet.getAccounts()
   return accs[0]
 }
