@@ -231,7 +231,9 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
           </TextField>
         </Box>
         <FormHelperText sx={{ position: 'absolute' }}>
-          {coinBalances ? `Max: ${coinBalances.get(firstCoinType)?.toString()}` : ''}
+          {coinBalances && coinBalances.get(firstCoinType)
+            ? `Max: ${coinBalances.get(firstCoinType)?.toString()}`
+            : 'Max: 0'}
         </FormHelperText>
 
         <Box p={2} textAlign="center">
@@ -283,7 +285,9 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
           </TextField>
         </Box>
         <FormHelperText sx={{ position: 'absolute' }}>
-          {coinBalances && secondCoinType ? `Max: ${coinBalances.get(secondCoinType)?.toString()}` : ''}
+          {coinBalances && secondCoinType && coinBalances.get(secondCoinType)
+            ? `Max: ${coinBalances.get(secondCoinType)?.toString()}`
+            : 'Max: 0'}
         </FormHelperText>
         <Box height={48} />
         <Box>

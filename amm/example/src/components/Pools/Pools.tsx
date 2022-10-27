@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Accordion, AccordionDetails, AccordionSummary, Box } from '@mui/material'
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Snackbar } from '@mui/material'
 import { Typography } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import Button from '@mui/material/Button'
@@ -19,6 +19,8 @@ interface Props {
 export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
   const { wallet, connected } = useWallet()
 
+  const [errorSnackbar, setErrorSnackbar] = useState({ open: false, message: '' })
+  const [successSnackbar, setSuccessSnackbar] = useState({ open: false, message: '' })
   const [expanded, setExpanded] = useState(true)
 
   const [isOpenAddDeposit, setIsOpenAddDeposit] = useState(false)
@@ -36,6 +38,19 @@ export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
 
   const handleChange = (_event: React.SyntheticEvent, newExpanded: boolean) => {
     setExpanded(newExpanded)
+  }
+
+  const handleSnackbarClose = () => {
+    setErrorSnackbar({ open: false, message: '' })
+    setSuccessSnackbar({ open: false, message: '' })
+  }
+
+  const showSuccessSnackbar = () => {
+    setSuccessSnackbar({ open: true, message: 'Add Deposit Success' })
+  }
+
+  const showErrorSnackbar = () => {
+    setErrorSnackbar({ open: true, message: 'Add Deposit Error' })
   }
 
   if (!pools.length) {
@@ -109,8 +124,30 @@ export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
           pool={activePool}
           provider={provider}
           getUpdatedPools={getUpdatedPools}
+          showSuccessSnackbar={showSuccessSnackbar}
+          showErrorSnackbar={showErrorSnackbar}
         />
       )}
+      <Snackbar
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        open={successSnackbar.open}
+        onClose={handleSnackbarClose}
+        autoHideDuration={4000}
+      >
+        <Alert elevation={6} variant="filled" severity="success" sx={{ width: '200px' }}>
+          {successSnackbar.message}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        open={errorSnackbar.open}
+        onClose={handleSnackbarClose}
+        autoHideDuration={4000}
+      >
+        <Alert elevation={6} variant="filled" severity="error" sx={{ width: '200px' }}>
+          {errorSnackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

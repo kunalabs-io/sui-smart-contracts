@@ -1,7 +1,6 @@
 import { ChangeEvent, useEffect, useState } from 'react'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import {
-  Alert,
   Box,
   Button,
   Dialog,
@@ -10,7 +9,6 @@ import {
   DialogTitle,
   FormHelperText,
   IconButton,
-  Snackbar,
   TextField,
 } from '@mui/material/'
 import { Coin, GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
@@ -29,15 +27,22 @@ interface Props {
   pool: GetObjectDataResponse
   provider: JsonRpcProvider
   getUpdatedPools: () => void
+  showSuccessSnackbar: () => void
+  showErrorSnackbar: () => void
 }
 
-export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }: Props) => {
+export const AddDeposit = ({
+  isOpen,
+  onClose,
+  pool,
+  provider,
+  getUpdatedPools,
+  showSuccessSnackbar,
+  showErrorSnackbar,
+}: Props) => {
   const [firstCoinValue, setFirstCoinValue] = useState('')
   const [secondCoinValue, setSecondCoinValue] = useState('')
   const [coinBalances, setCoinBalances] = useState<Map<string, bigint>>()
-
-  const [errorSnackbar, setErrorSnackbar] = useState({ open: false, message: '' })
-  const [successSnackbar, setSuccessSnackbar] = useState({ open: false, message: '' })
 
   const { wallet, connected } = useWallet()
 
@@ -75,11 +80,6 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
     }
   }
 
-  const handleSnackbarClose = () => {
-    setErrorSnackbar({ open: false, message: '' })
-    setSuccessSnackbar({ open: false, message: '' })
-  }
-
   const onDeposit = async () => {
     if (!wallet || !connected) {
       return
@@ -91,10 +91,10 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
       await deposit(provider, wallet, pool, amountA, amountB, 0)
       getUpdatedPools()
       onClose()
-      setSuccessSnackbar({ open: true, message: 'Add Deposit Success' })
+      showSuccessSnackbar()
     } catch (e) {
       console.error(e)
-      setErrorSnackbar({ open: true, message: 'Add Deposit Error' })
+      showErrorSnackbar()
     }
   }
 
@@ -134,7 +134,7 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
             <TextField label="Token" value={symbolA} sx={{ width: 150 }} disabled />
           </Box>
           <FormHelperText sx={{ position: 'absolute' }}>
-            {coinBalances ? `Max: ${coinBalances.get(coinTypeA)?.toString()}` : ''}
+            {coinBalances && coinBalances.get(coinTypeA) ? `Max: ${coinBalances.get(coinTypeA)?.toString()}` : 'Max: 0'}
           </FormHelperText>
           <Box p={2} textAlign="center">
             <AddCircleOutlineIcon
@@ -158,7 +158,7 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
           <TextField label="Token" value={symbolB} sx={{ width: 150 }} disabled />
         </Box>
         <FormHelperText sx={{ position: 'absolute' }}>
-          {coinBalances ? `Max: ${coinBalances.get(coinTypeB)?.toString()}` : ''}
+          {coinBalances && coinBalances.get(coinTypeB) ? `Max: ${coinBalances.get(coinTypeB)?.toString()}` : 'Max: 0'}
         </FormHelperText>
         <Box height={32} />
       </DialogContent>
@@ -179,26 +179,6 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
           Deposit
         </Button>
       </DialogActions>
-      <Snackbar
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        open={successSnackbar.open}
-        onClose={handleSnackbarClose}
-        autoHideDuration={4000}
-      >
-        <Alert elevation={6} variant="filled" severity="success" sx={{ width: '200px' }}>
-          {successSnackbar.message}
-        </Alert>
-      </Snackbar>
-      <Snackbar
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        open={errorSnackbar.open}
-        onClose={handleSnackbarClose}
-        autoHideDuration={4000}
-      >
-        <Alert elevation={6} variant="filled" severity="error" sx={{ width: '200px' }}>
-          {errorSnackbar.message}
-        </Alert>
-      </Snackbar>
     </Dialog>
   )
 }
