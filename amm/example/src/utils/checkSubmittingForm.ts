@@ -11,6 +11,10 @@ export const isSubmitFormDisabled = (args: {
     return true
   }
 
+  if (BigInt(firstCoinValue) === 0n || BigInt(secondCoinValue) === 0n) {
+    return true
+  }
+
   if (coinBalances) {
     const firstCoinBalance = coinBalances.get(firstCoinType)
     const secondCoinBalance = coinBalances.get(secondCoinType)

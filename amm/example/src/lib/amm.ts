@@ -255,13 +255,17 @@ export async function createPool(
   wallet: WalletAdapter,
   params: CreatePoolParams
 ) {
+  if (wallet.signAndExecuteTransaction === undefined) {
+    throw new Error('Wallet not supported')
+  }
+
   const [inputA, inputB] = await Promise.all([
     getOrCreateCoinOfLargeEnoughBalance(provider, wallet, params.typeA, params.initAmountA),
     getOrCreateCoinOfLargeEnoughBalance(provider, wallet, params.typeB, params.initAmountB),
   ])
 
   // create pool
-  const res = await wallet.signAndExecuteTransaction?.({
+  const res = await wallet.signAndExecuteTransaction({
     kind: 'moveCall',
     data: {
       packageObjectId: CONFIG.ammPackageId,
@@ -290,6 +294,10 @@ export async function swap(
   amount: bigint,
   maxSlippagePct: number
 ) {
+  if (wallet.signAndExecuteTransaction === undefined) {
+    throw new Error('Wallet not supported')
+  }
+
   const poolTypeArgs = getPoolCoinTypeArgs(pool)
   const poolBalances = getPoolBalances(pool)
   const poolLpFees = getPoolFees(pool)[0]
@@ -323,7 +331,7 @@ export async function swap(
     (inputAmountAfterFees * outputPoolBalance * BigInt(100 - maxSlippagePct)) /
     ((inputPoolBalance + inputAmountAfterFees) * BigInt(100))
 
-  const res = await wallet.signAndExecuteTransaction?.({
+  const res = await wallet.signAndExecuteTransaction({
     kind: 'moveCall',
     data: {
       packageObjectId: CONFIG.ammPackageId,
@@ -345,6 +353,10 @@ export async function deposit(
   amountB: bigint,
   slippagePct: number
 ) {
+  if (wallet.signAndExecuteTransaction === undefined) {
+    throw new Error('Wallet not supported')
+  }
+
   const poolTypeArgs = getPoolCoinTypeArgs(pool)
   const poolBalances = getPoolBalances(pool)
 
@@ -366,7 +378,7 @@ export async function deposit(
     getOrCreateCoinOfLargeEnoughBalance(provider, wallet, poolTypeArgs[1], amountB),
   ])
 
-  const res = await wallet.signAndExecuteTransaction?.({
+  const res = await wallet.signAndExecuteTransaction({
     kind: 'moveCall',
     data: {
       packageObjectId: CONFIG.ammPackageId,
@@ -393,6 +405,10 @@ export async function withdraw(
   lpCoin: GetObjectDataResponse,
   slippagePct: number
 ) {
+  if (wallet.signAndExecuteTransaction === undefined) {
+    throw new Error('Wallet not supported')
+  }
+
   const poolId = getLpCoinPoolId(lpCoin)
   const pool = await provider.getObject(poolId)
   const poolBalances = getPoolBalances(pool)
@@ -403,7 +419,7 @@ export async function withdraw(
   const minB =
     (lpCoinBalance * poolBalances[1] * BigInt(100 - slippagePct)) / (poolBalances[2] * 100n)
 
-  const res = await wallet.signAndExecuteTransaction?.({
+  const res = await wallet.signAndExecuteTransaction({
     kind: 'moveCall',
     data: {
       packageObjectId: CONFIG.ammPackageId,

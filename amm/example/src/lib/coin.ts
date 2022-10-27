@@ -79,6 +79,10 @@ export async function getOrCreateCoinOfExactBalance(
   coinType: string,
   balance: bigint
 ): Promise<GetObjectDataResponse> {
+  if (wallet.signAndExecuteTransaction === undefined) {
+    throw new Error('Wallet not supported')
+  }
+
   // select appropriate coins
   const coins = getAllCoinsOfType(await getUserCoins(provider, wallet), coinType)
   const symbol = Coin.getCoinSymbol(coinType)
@@ -102,7 +106,7 @@ export async function getOrCreateCoinOfExactBalance(
   }
 
   const addr = await getWalletAddress(wallet)
-  const res = await wallet.signAndExecuteTransaction?.({
+  const res = await wallet.signAndExecuteTransaction({
     kind: 'pay',
     data: {
       inputCoins: inputCoins.map(Coin.getID),
@@ -125,6 +129,10 @@ export async function getOrCreateCoinOfLargeEnoughBalance(
   coinType: string,
   balance: bigint
 ): Promise<GetObjectDataResponse> {
+  if (wallet.signAndExecuteTransaction === undefined) {
+    throw new Error('Wallet not supported')
+  }
+
   const coins = getAllCoinsOfType(await getUserCoins(provider, wallet), coinType)
   if (Coin.totalBalance(coins) < balance) {
     const symbol = Coin.getCoinSymbol(coinType)
@@ -140,7 +148,7 @@ export async function getOrCreateCoinOfLargeEnoughBalance(
 
   const inputCoins = Coin.selectCoinsWithBalanceGreaterThanOrEqual(coins, balance)
   const addr = await getWalletAddress(wallet)
-  const res = await wallet.signAndExecuteTransaction?.({
+  const res = await wallet.signAndExecuteTransaction({
     kind: 'pay',
     data: {
       inputCoins: inputCoins.map(Coin.getID),

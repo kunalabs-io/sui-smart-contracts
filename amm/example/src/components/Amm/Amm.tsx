@@ -19,11 +19,12 @@ export const Amm = () => {
   const [pools, setPools] = useState<GetObjectDataResponse[]>([])
 
   useEffect(() => {
-    if (wallet && connected) {
-      getPools(provider, wallet)
-        .then(pools => setPools(pools.reverse()))
-        .catch(console.error)
+    if (!wallet || !connected) {
+      return
     }
+    getPools(provider, wallet)
+      .then(pools => setPools(pools.reverse()))
+      .catch(console.error)
   }, [count, wallet, connected])
 
   const getUpdatedPools = useCallback(() => {

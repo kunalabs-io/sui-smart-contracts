@@ -32,6 +32,9 @@ function App() {
         >
           <GitHubIcon sx={{ width: 32, height: 32 }} />
         </IconButton>
+        <IconButton component="a" href="https://discord.gg/nTth43SUxJ" target="_blank" rel="noopener noreferrer">
+          <img src="/discord-icon.svg" alt="Discord icon" style={{ width: 32, height: 32 }} />
+        </IconButton>
       </Box>
       <WalletProvider adapters={supportedWallets}>
         <Amm />

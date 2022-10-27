@@ -1,6 +1,7 @@
 import { ChangeEvent, useEffect, useState } from 'react'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import {
+  Alert,
   Box,
   Button,
   Dialog,
@@ -9,6 +10,7 @@ import {
   DialogTitle,
   FormHelperText,
   IconButton,
+  Snackbar,
   TextField,
 } from '@mui/material/'
 import { Coin, GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
@@ -19,6 +21,7 @@ import { calcPoolOtherDepositAmount, deposit, getPoolCoinTypeArgs } from '../../
 import { getCoinBalances, getUserCoins } from '../../lib/coin'
 import { ONLY_NUMBERS_REGEX } from '../../utils/regex'
 import { isSubmitFormDisabled } from '../../utils/checkSubmittingForm'
+import { checkIfPoolIsEmpty } from '../../lib/util'
 
 interface Props {
   isOpen: boolean
@@ -33,42 +36,65 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
   const [secondCoinValue, setSecondCoinValue] = useState('')
   const [coinBalances, setCoinBalances] = useState<Map<string, bigint>>()
 
+  const [errorSnackbar, setErrorSnackbar] = useState({ open: false, message: '' })
+  const [successSnackbar, setSuccessSnackbar] = useState({ open: false, message: '' })
+
   const { wallet, connected } = useWallet()
 
   useEffect(() => {
-    if (wallet && connected) {
-      getUserCoins(provider, wallet)
-        .then(coins => {
-          setCoinBalances(getCoinBalances(coins))
-        })
-        .catch(console.error)
+    if (!wallet || !connected) {
+      return
     }
+    getUserCoins(provider, wallet)
+      .then(coins => {
+        setCoinBalances(getCoinBalances(coins))
+      })
+      .catch(console.error)
   }, [wallet, provider, connected])
 
   const [coinTypeA, coinTypeB] = getPoolCoinTypeArgs(pool)
   const symbolA = Coin.getCoinSymbol(coinTypeA)
   const symbolB = Coin.getCoinSymbol(coinTypeB)
 
+  const isEmptyPool = checkIfPoolIsEmpty(pool)
+
   const handleFirstCoinValueChange = (event: ChangeEvent<HTMLInputElement>) => {
     const newFirstCoinValue = event.target.value
     if (newFirstCoinValue === '' || ONLY_NUMBERS_REGEX.test(newFirstCoinValue)) {
       setFirstCoinValue(newFirstCoinValue)
-      setSecondCoinValue(calcPoolOtherDepositAmount(pool, BigInt(newFirstCoinValue), coinTypeA).toString())
+      if (!isEmptyPool) {
+        setSecondCoinValue(calcPoolOtherDepositAmount(pool, BigInt(newFirstCoinValue), coinTypeA).toString())
+      }
     }
   }
 
-  const onDeposit = async () => {
-    if (wallet && connected) {
-      try {
-        const amountA = BigInt(firstCoinValue)
-        const amountB = calcPoolOtherDepositAmount(pool, amountA, coinTypeA)
+  const handleSecondCoinValueChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const newSecondCoinValue = event.target.value
+    if (newSecondCoinValue === '' || ONLY_NUMBERS_REGEX.test(newSecondCoinValue)) {
+      setSecondCoinValue(newSecondCoinValue)
+    }
+  }
 
-        await deposit(provider, wallet, pool, amountA, amountB, 0)
-        getUpdatedPools()
-        onClose()
-      } catch (e) {
-        console.error(e)
-      }
+  const handleSnackbarClose = () => {
+    setErrorSnackbar({ open: false, message: '' })
+    setSuccessSnackbar({ open: false, message: '' })
+  }
+
+  const onDeposit = async () => {
+    if (!wallet || !connected) {
+      return
+    }
+    try {
+      const amountA = BigInt(firstCoinValue)
+      const amountB = calcPoolOtherDepositAmount(pool, amountA, coinTypeA)
+
+      await deposit(provider, wallet, pool, amountA, amountB, 0)
+      getUpdatedPools()
+      onClose()
+      setSuccessSnackbar({ open: true, message: 'Add Deposit Success' })
+    } catch (e) {
+      console.error(e)
+      setErrorSnackbar({ open: true, message: 'Add Deposit Error' })
     }
   }
 
@@ -126,7 +152,8 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
             label="Input"
             variant="outlined"
             fullWidth
-            disabled
+            onChange={handleSecondCoinValueChange}
+            disabled={!isEmptyPool}
           />
           <TextField label="Token" value={symbolB} sx={{ width: 150 }} disabled />
         </Box>
@@ -152,6 +179,26 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
           Deposit
         </Button>
       </DialogActions>
+      <Snackbar
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        open={successSnackbar.open}
+        onClose={handleSnackbarClose}
+        autoHideDuration={4000}
+      >
+        <Alert elevation={6} variant="filled" severity="success" sx={{ width: '200px' }}>
+          {successSnackbar.message}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        open={errorSnackbar.open}
+        onClose={handleSnackbarClose}
+        autoHideDuration={4000}
+      >
+        <Alert elevation={6} variant="filled" severity="error" sx={{ width: '200px' }}>
+          {errorSnackbar.message}
+        </Alert>
+      </Snackbar>
     </Dialog>
   )
 }

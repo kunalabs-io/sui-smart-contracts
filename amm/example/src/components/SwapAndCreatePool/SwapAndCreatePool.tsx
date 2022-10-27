@@ -1,7 +1,7 @@
 import { useState, ChangeEvent, useEffect } from 'react'
 import Tabs from '@mui/material/Tabs'
 import Tab from '@mui/material/Tab'
-import { Box, FormHelperText } from '@mui/material'
+import { Alert, Box, FormHelperText, Snackbar } from '@mui/material'
 import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
@@ -9,6 +9,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import Button from '@mui/material/Button'
 import { Coin, GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
 import { useWallet } from '@mysten/wallet-adapter-react'
+import MuiAlert, { AlertProps } from '@mui/material/Alert'
 
 import {
   calcSwapAmountOut,
@@ -44,6 +45,8 @@ enum TabValue {
 
 export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: Props) => {
   const [tabValue, setTabValue] = useState(TabValue.Swap)
+  const [errorSnackbar, setErrorSnackbar] = useState({ open: false, message: '' })
+  const [successSnackbar, setSuccessSnackbar] = useState({ open: false, message: '' })
 
   const { wallet, connected } = useWallet()
   // Swap first coin options
@@ -61,15 +64,16 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
 
   // create pool tab user coins
   useEffect(() => {
-    if (wallet && connected) {
-      getUserCoins(provider, wallet)
-        .then(coins => {
-          const newCoins = getUniqueCoinTypes(coins).map(arg => ({ value: arg, label: Coin.getCoinSymbol(arg) }))
-          setUserCoins(newCoins)
-          setCoinBalances(getCoinBalances(coins))
-        })
-        .catch(console.error)
+    if (!wallet || !connected) {
+      return
     }
+    getUserCoins(provider, wallet)
+      .then(coins => {
+        const newCoins = getUniqueCoinTypes(coins).map(arg => ({ value: arg, label: Coin.getCoinSymbol(arg) }))
+        setUserCoins(newCoins)
+        setCoinBalances(getCoinBalances(coins))
+      })
+      .catch(console.error)
   }, [provider, wallet, connected, count])
 
   useEffect(() => {
@@ -126,14 +130,27 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
     }
   }
 
+  const handleSnackbarClose = () => {
+    setErrorSnackbar({ open: false, message: '' })
+    setSuccessSnackbar({ open: false, message: '' })
+  }
+
   const onSwap = async () => {
-    if (wallet && connected) {
-      if (!secondCoinType || !firstCoinValue || !pool) {
-        return
-      }
-      await swap(provider, wallet, pool, firstCoinType, BigInt(firstCoinValue), 0)
+    if (!wallet || !connected) {
+      return
+    }
+    if (!secondCoinType || !firstCoinValue || !pool) {
+      return
+    }
+
+    try {
+      await swap(provider, wallet, pool, firstCoinType, BigInt(firstCoinValue), 1)
       resetValues()
       getUpdatedPools()
+      setSuccessSnackbar({ open: true, message: 'Swap Success' })
+    } catch (e) {
+      console.error(e)
+      setErrorSnackbar({ open: true, message: 'Swap Error' })
     }
   }
 
@@ -154,8 +171,10 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
 
       getUpdatedPools()
       resetValues()
+      setSuccessSnackbar({ open: true, message: 'Create Pool Success' })
     } catch (e) {
       console.error(e)
+      setErrorSnackbar({ open: true, message: 'Create Pool Error' })
     }
   }
 
@@ -164,6 +183,7 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
     setSecondCoinType('')
     setFirstCoinValue('')
     setSecondCoinValue('')
+    handleSnackbarClose()
   }
 
   const handleTabChange = (_e: React.SyntheticEvent, newValue: TabValue) => {
@@ -281,13 +301,33 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
                 coinBalances,
               })}
             >
-              {tabValue === TabValue.Swap ? 'Swap' : 'Add liquidity '}
+              {tabValue === TabValue.Swap ? 'Swap' : 'Create pool'}
             </Button>
           ) : (
             <ConnectWalletModal />
           )}
         </Box>
       </Box>
+      <Snackbar
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        open={successSnackbar.open}
+        onClose={handleSnackbarClose}
+        autoHideDuration={4000}
+      >
+        <Alert elevation={6} variant="filled" severity="success" sx={{ width: '200px' }}>
+          {successSnackbar.message}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        open={errorSnackbar.open}
+        onClose={handleSnackbarClose}
+        autoHideDuration={4000}
+      >
+        <Alert elevation={6} variant="filled" severity="error" sx={{ width: '200px' }}>
+          {errorSnackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

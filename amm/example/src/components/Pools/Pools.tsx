@@ -3,7 +3,7 @@ import { Accordion, AccordionDetails, AccordionSummary, Box } from '@mui/materia
 import { Typography } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import Button from '@mui/material/Button'
-import { Coin, GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
+import { Coin, GetObjectDataResponse, getObjectId, JsonRpcProvider } from '@mysten/sui.js'
 import { useWallet } from '@mysten/wallet-adapter-react'
 
 import { getPoolBalances, getPoolCoinTypeArgs } from '../../lib/amm'
@@ -50,7 +50,7 @@ export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
   }
 
   return (
-    <Box sx={{ mx: 'auto', width: 500, mt: 3 }}>
+    <Box sx={{ mx: 'auto', width: 532, mt: 3 }}>
       <Accordion expanded={expanded} onChange={handleChange} elevation={0}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel1a-content" id="panel1a-header">
           <Typography variant="h5">Pool List</Typography>
@@ -61,13 +61,24 @@ export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
             const symbolA = Coin.getCoinSymbol(coinTypeA)
             const symbolB = Coin.getCoinSymbol(coinTypeB)
             const [balanceA, balanceB, lpSupply] = getPoolBalances(pool)
+            const poolId = getObjectId(pool)
             return (
               <Box
-                key={`${symbolA}-${symbolB}-${index}`}
+                key={`pools-${poolId}-${index}`}
                 sx={{ boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.5)', borderRadius: '16px;', p: 3, mb: 3 }}
               >
                 <Typography variant="body1" color="primary">
-                  {symbolA}&nbsp;<span style={{ color: '#46505A' }}>-</span>&nbsp;{symbolB}
+                  {symbolA}&nbsp;<span style={{ color: '#46505A' }}>-</span>&nbsp;{symbolB}&nbsp;
+                  <Typography
+                    component="a"
+                    color="primary"
+                    href={`https://explorer.devnet.sui.io/objects/${poolId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variant="body2"
+                  >
+                    {`(${poolId.substring(0, 7)}...${poolId.substring(poolId.length - 5)})`}
+                  </Typography>
                 </Typography>
                 <Typography variant="body2">{`${symbolA} balance: ${balanceA}`}</Typography>
                 <Typography variant="body2">{`${symbolB} balance: ${balanceB}`}</Typography>
