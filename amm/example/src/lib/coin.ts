@@ -1,5 +1,5 @@
 import { Coin, GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
-import { SuiWalletAdapter } from '@mysten/wallet-adapter-all-wallets'
+import { WalletAdapter } from '@mysten/wallet-adapter-base'
 import { getWalletAddress } from './util'
 
 interface CoinInfo {
@@ -9,7 +9,7 @@ interface CoinInfo {
   balance: bigint
 }
 
-export async function getUserCoins(provider: JsonRpcProvider, wallet: SuiWalletAdapter) {
+export async function getUserCoins(provider: JsonRpcProvider, wallet: WalletAdapter) {
   const addr = await getWalletAddress(wallet)
   const coinInfos = (await provider.getObjectsOwnedByAddress(addr)).filter(Coin.isCoin)
   const coins = await provider.getObjectBatch(coinInfos.map(obj => obj.objectId))
@@ -75,10 +75,14 @@ function getAllCoinsOfType(
 
 export async function getOrCreateCoinOfExactBalance(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter,
+  wallet: WalletAdapter,
   coinType: string,
   balance: bigint
 ): Promise<GetObjectDataResponse> {
+  if (wallet.signAndExecuteTransaction === undefined) {
+    throw new Error('Wallet not supported')
+  }
+
   // select appropriate coins
   const coins = getAllCoinsOfType(await getUserCoins(provider, wallet), coinType)
   const symbol = Coin.getCoinSymbol(coinType)
@@ -111,8 +115,8 @@ export async function getOrCreateCoinOfExactBalance(
       gasBudget: 10000,
     },
   })
-  const createdId = res.effects.created![0].reference.objectId
-  const exactCoin = await provider.getObject(createdId)
+  const createdId = res?.effects.created![0].reference.objectId
+  const exactCoin = await provider.getObject(createdId!)
 
   console.debug(res)
 
@@ -121,10 +125,14 @@ export async function getOrCreateCoinOfExactBalance(
 
 export async function getOrCreateCoinOfLargeEnoughBalance(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter,
+  wallet: WalletAdapter,
   coinType: string,
   balance: bigint
 ): Promise<GetObjectDataResponse> {
+  if (wallet.signAndExecuteTransaction === undefined) {
+    throw new Error('Wallet not supported')
+  }
+
   const coins = getAllCoinsOfType(await getUserCoins(provider, wallet), coinType)
   if (Coin.totalBalance(coins) < balance) {
     const symbol = Coin.getCoinSymbol(coinType)
@@ -150,6 +158,6 @@ export async function getOrCreateCoinOfLargeEnoughBalance(
     },
   })
 
-  const createdId = res.effects.created![0].reference.objectId
+  const createdId = res!.effects.created![0].reference.objectId
   return await provider.getObject(createdId)
 }

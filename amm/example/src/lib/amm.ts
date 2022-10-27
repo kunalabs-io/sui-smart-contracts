@@ -9,7 +9,7 @@ import {
   JsonRpcProvider,
   normalizeSuiAddress,
 } from '@mysten/sui.js'
-import { SuiWalletAdapter } from '@mysten/wallet-adapter-all-wallets'
+import { WalletAdapter } from '@mysten/wallet-adapter-base'
 import { ceilDiv, min, sqrt } from './bigint-math'
 import { getOrCreateCoinOfLargeEnoughBalance } from './coin'
 import { CONFIG } from './config'
@@ -45,7 +45,7 @@ async function fetchPoolsViaEvents(provider: JsonRpcProvider): Promise<string[]>
 
 async function fetchPoolsViaLpCoins(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter
+  wallet: WalletAdapter
 ): Promise<string[]> {
   const lpCoins = await getUserLpCoins(provider, wallet)
 
@@ -57,7 +57,7 @@ async function fetchPoolsViaLpCoins(
 
 export async function getPools(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter
+  wallet: WalletAdapter
 ): Promise<GetObjectDataResponse[]> {
   const poolIds = [...CONFIG.ammDefaultPools]
   const have = new Set<string>(poolIds)
@@ -221,7 +221,7 @@ export function getLpCoinTypeArgs(obj: GetObjectDataResponse): [string, string] 
 
 export async function getUserLpCoins(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter
+  wallet: WalletAdapter
 ): Promise<GetObjectDataResponse[]> {
   const addr = await getWalletAddress(wallet)
   const infos = (await provider.getObjectsOwnedByAddress(addr)).filter(info =>
@@ -252,9 +252,13 @@ export interface CreatePoolParams {
 
 export async function createPool(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter,
+  wallet: WalletAdapter,
   params: CreatePoolParams
 ) {
+  if (wallet.signAndExecuteTransaction === undefined) {
+    throw new Error('Wallet not supported')
+  }
+
   const [inputA, inputB] = await Promise.all([
     getOrCreateCoinOfLargeEnoughBalance(provider, wallet, params.typeA, params.initAmountA),
     getOrCreateCoinOfLargeEnoughBalance(provider, wallet, params.typeB, params.initAmountB),
@@ -284,12 +288,16 @@ export async function createPool(
 
 export async function swap(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter,
+  wallet: WalletAdapter,
   pool: GetObjectDataResponse,
   inputCoinTypeArg: string,
   amount: bigint,
   maxSlippagePct: number
 ) {
+  if (wallet.signAndExecuteTransaction === undefined) {
+    throw new Error('Wallet not supported')
+  }
+
   const poolTypeArgs = getPoolCoinTypeArgs(pool)
   const poolBalances = getPoolBalances(pool)
   const poolLpFees = getPoolFees(pool)[0]
@@ -339,12 +347,16 @@ export async function swap(
 
 export async function deposit(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter,
+  wallet: WalletAdapter,
   pool: GetObjectDataResponse,
   amountA: bigint,
   amountB: bigint,
   slippagePct: number
 ) {
+  if (wallet.signAndExecuteTransaction === undefined) {
+    throw new Error('Wallet not supported')
+  }
+
   const poolTypeArgs = getPoolCoinTypeArgs(pool)
   const poolBalances = getPoolBalances(pool)
 
@@ -389,10 +401,14 @@ export async function deposit(
 
 export async function withdraw(
   provider: JsonRpcProvider,
-  wallet: SuiWalletAdapter,
+  wallet: WalletAdapter,
   lpCoin: GetObjectDataResponse,
   slippagePct: number
 ) {
+  if (wallet.signAndExecuteTransaction === undefined) {
+    throw new Error('Wallet not supported')
+  }
+
   const poolId = getLpCoinPoolId(lpCoin)
   const pool = await provider.getObject(poolId)
   const poolBalances = getPoolBalances(pool)
