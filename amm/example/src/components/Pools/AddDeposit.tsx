@@ -86,7 +86,7 @@ export const AddDeposit = ({ isOpen, onClose, pool, provider, getUpdatedPools }:
     }
     try {
       const amountA = BigInt(firstCoinValue)
-      const amountB = calcPoolOtherDepositAmount(pool, amountA, coinTypeA)
+      const amountB = BigInt(secondCoinValue)
 
       await deposit(provider, wallet, pool, amountA, amountB, 0)
       getUpdatedPools()
