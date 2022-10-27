@@ -196,6 +196,10 @@ export function calcPoolOtherDepositAmount(
 
 export function calcPoolLpValue(pool: GetObjectDataResponse, lpAmount: bigint): [bigint, bigint] {
   const [balanceA, balanceB, poolLpAmount] = getPoolBalances(pool)
+  if (balanceA === 0n || balanceB === 0n || poolLpAmount === 0n) {
+    return [0n, 0n]
+  }
+
   const amountA = (balanceA * lpAmount) / poolLpAmount
   const amountB = (balanceB * lpAmount) / poolLpAmount
 
