@@ -41,8 +41,6 @@ export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
   }
 
   const handleSnackbarClose = () => {
-    console.log('pozvan')
-
     setErrorSnackbar({ open: false, message: '' })
     setSuccessSnackbar({ open: false, message: '' })
   }
