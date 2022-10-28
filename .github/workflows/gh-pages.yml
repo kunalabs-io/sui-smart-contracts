@@ -3,7 +3,7 @@ name: AMM Example UI
 on:
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 env:
