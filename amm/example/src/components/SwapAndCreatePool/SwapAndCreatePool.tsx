@@ -9,7 +9,6 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import Button from '@mui/material/Button'
 import { Coin, GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
 import { useWallet } from '@mysten/wallet-adapter-react'
-import MuiAlert, { AlertProps } from '@mui/material/Alert'
 
 import {
   calcSwapAmountOut,
@@ -50,7 +49,9 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
 
   const { wallet, connected } = useWallet()
   // Swap first coin options
-  const [firstCoinOptions, setFirstCoinOptions] = useState<CoinTypeOption[]>([])
+  const [firstCoinOptions, setFirstCoinOptions] = useState<CoinTypeOption[]>([
+    { value: SUI_COIN_TYPE_ARG, label: 'SUI' },
+  ])
   // Swap second coin options
   const [secondCoinOptions, setSecondCoinOptions] = useState<CoinTypeOption[]>([])
   const [firstCoinType, setFirstCoinType] = useState(SUI_COIN_TYPE_ARG)
