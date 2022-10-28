@@ -13,7 +13,7 @@ function App() {
     <Box>
       <Box display="flex" justifyContent="center" alignItems="center">
         <Typography variant="h4" mr={2}>
-          Kuna Labs AMM UI Example
+          Kuna Labs
         </Typography>
         <IconButton
           sx={{ color: '#1DA1F2' }}
