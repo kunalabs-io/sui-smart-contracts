@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  EXAMPLE_UI_DIR: ./amm/example
+  EXAMPLE_UI_DIR: ./amm/example-ui
 
 jobs:
   deploy:
