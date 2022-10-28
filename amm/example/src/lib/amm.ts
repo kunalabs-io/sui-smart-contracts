@@ -59,19 +59,17 @@ export async function getPools(
   provider: JsonRpcProvider,
   wallet: WalletAdapter
 ): Promise<GetObjectDataResponse[]> {
-  const poolIds = [...CONFIG.ammDefaultPools]
-  const have = new Set<string>(poolIds)
+  const poolIdSet = new Set<string>(...CONFIG.ammDefaultPools)
 
   const [viaEvents, viaLpCoins] = await Promise.all([
     fetchPoolsViaEvents(provider),
     fetchPoolsViaLpCoins(provider, wallet),
   ])
   viaLpCoins.concat(viaEvents).forEach(id => {
-    if (have.has(id)) return
-    poolIds.push(id)
+    poolIdSet.add(id)
   })
 
-  return await provider.getObjectBatch(poolIds)
+  return await provider.getObjectBatch(Array.from(poolIdSet.values()))
 }
 
 export function getPoolCoinTypeArgs(obj: GetObjectDataResponse): [string, string] {
