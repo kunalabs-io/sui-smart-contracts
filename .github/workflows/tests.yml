@@ -1,0 +1,40 @@
+name: AMM Example UI Tests
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  EXAMPLE_UI_DIR: ./amm/example
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: "yarn"
+          cache-dependency-path: ${{env.EXAMPLE_UI_DIR}}/yarn.lock
+
+      - name: Install
+        working-directory: ${{env.EXAMPLE_UI_DIR}}
+        run: yarn install --frozen-lockfile
+
+      - name: Check
+        working-directory: ${{env.EXAMPLE_UI_DIR}}
+        run: yarn run check
+
+      - name: Lint
+        working-directory: ${{env.EXAMPLE_UI_DIR}}
+        run: yarn run lint
