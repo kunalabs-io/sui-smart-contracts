@@ -13,6 +13,7 @@ import {
   withdraw,
 } from '../../lib/amm'
 import { ConnectWalletModal } from '../Wallet/ConnectWalletModal'
+import { ellipsizeAddress } from '../../lib/util'
 
 interface Props {
   pools: GetObjectDataResponse[]
@@ -94,6 +95,7 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
             const [amountA, amountB] = calcPoolLpValue(pool, lpAmount)
 
             const poolId = getObjectId(pool)
+            const lpCoinId = getObjectId(lpCoin)
 
             return (
               <Box
@@ -101,7 +103,17 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
                 sx={{ boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.5)', borderRadius: '16px;', p: 3, mb: 3 }}
               >
                 <Typography variant="body1" color="primary">
-                  {symbolA}&nbsp;<span style={{ color: '#46505A' }}>-</span>&nbsp;{symbolB}
+                  {symbolA}&nbsp;<span style={{ color: '#46505A' }}>-</span>&nbsp;{symbolB}&nbsp;
+                  <Typography
+                    component="a"
+                    color="primary"
+                    href={`https://explorer.devnet.sui.io/objects/${lpCoinId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variant="body2"
+                  >
+                    {`(${ellipsizeAddress(lpCoinId)})`}
+                  </Typography>
                 </Typography>
                 <Typography variant="body2">{`${symbolA} value: ${amountA}`}</Typography>
                 <Typography variant="body2">{`${symbolB} value: ${amountB}`}</Typography>

@@ -9,6 +9,7 @@ import { useWallet } from '@mysten/wallet-adapter-react'
 import { getPoolBalances, getPoolCoinTypeArgs } from '../../lib/amm'
 import { AddDeposit } from './AddDeposit'
 import { ConnectWalletModal } from '../Wallet/ConnectWalletModal'
+import { ellipsizeAddress } from '../../lib/util'
 
 interface Props {
   pools: GetObjectDataResponse[]
@@ -92,7 +93,7 @@ export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
                     rel="noopener noreferrer"
                     variant="body2"
                   >
-                    {`(${poolId.substring(0, 7)}...${poolId.substring(poolId.length - 5)})`}
+                    {`(${ellipsizeAddress(poolId)})`}
                   </Typography>
                 </Typography>
                 <Typography variant="body2">{`${symbolA} balance: ${balanceA}`}</Typography>
