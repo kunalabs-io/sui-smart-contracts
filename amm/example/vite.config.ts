@@ -10,5 +10,13 @@ export default defineConfig({
   },
   build: {
     target: 'ES2020',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          mui: ['@mui/material'],
+          sui: ['@mysten/sui.js'],
+        },
+      },
+    },
   },
 })
