@@ -72,7 +72,7 @@ export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
           <Typography variant="h5">Pool List</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          {pools.map((pool, index) => {
+          {pools.map(pool => {
             const [coinTypeA, coinTypeB] = getPoolCoinTypeArgs(pool)
             const symbolA = Coin.getCoinSymbol(coinTypeA)
             const symbolB = Coin.getCoinSymbol(coinTypeB)
@@ -80,7 +80,7 @@ export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
             const poolId = getObjectId(pool)
             return (
               <Box
-                key={`pools-${poolId}-${index}`}
+                key={`${poolId}`}
                 sx={{ boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.5)', borderRadius: '16px;', p: 3, mb: 3 }}
               >
                 <Typography variant="body1" color="primary">

@@ -79,7 +79,7 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
           <Typography variant="h5">My LP Positions</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          {userLpCoins.map((lpCoin, index) => {
+          {userLpCoins.map(lpCoin => {
             const [coinTypeA, coinTypeB] = getLpCoinTypeArgs(lpCoin)
             const symbolA = Coin.getCoinSymbol(coinTypeA)
             const symbolB = Coin.getCoinSymbol(coinTypeB)
@@ -99,7 +99,7 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
 
             return (
               <Box
-                key={`MyLpPositions-${poolId}-${index}`}
+                key={`${lpCoinId}`}
                 sx={{ boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.5)', borderRadius: '16px;', p: 3, mb: 3 }}
               >
                 <Typography variant="body1" color="primary">
