@@ -1,4 +1,4 @@
-import { Coin, GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
+import { bcs, Coin, GetObjectDataResponse, JsonRpcProvider, SUI_TYPE_ARG } from '@mysten/sui.js'
 import { WalletAdapter } from '@mysten/wallet-adapter-base'
 import { getWalletAddress } from './util'
 
@@ -160,4 +160,29 @@ export async function getOrCreateCoinOfLargeEnoughBalance(
 
   const createdId = res!.effects.created![0].reference.objectId
   return await provider.getObject(createdId)
+}
+
+const decimalsCache = new Map<string, number>()
+decimalsCache.set(SUI_TYPE_ARG, 9)
+
+const CURRENCY_CREATED_EVENT = '0x2::coin::CurrencyCreated'
+bcs.registerStructType(CURRENCY_CREATED_EVENT, { decimals: bcs.U8 })
+
+export async function getCoinDecimals(provider: JsonRpcProvider, type: string): Promise<number> {
+  const maybeRes = decimalsCache.get(type)
+  if (maybeRes !== undefined) {
+    return maybeRes
+  }
+
+  const event = `${CURRENCY_CREATED_EVENT}<${type}>`
+  const res = await provider.getEventsByMoveEventStructName(event, 1)
+  if (res.length === 0) {
+    throw new Error('currency creation event not found')
+  }
+
+  const dec = bcs.de(CURRENCY_CREATED_EVENT, (res[0].event as any).moveEvent.bcs, 'base64')
+  const ret: number = dec.decimals.toNumber()
+
+  decimalsCache.set(type, ret)
+  return ret
 }
