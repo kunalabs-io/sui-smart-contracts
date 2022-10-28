@@ -9,7 +9,7 @@ on:
       - master
 
 env:
-  EXAMPLE_UI_DIR: ./amm/example
+  EXAMPLE_UI_DIR: ./amm/example-ui
 
 jobs:
   check:
