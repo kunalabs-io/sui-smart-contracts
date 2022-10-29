@@ -180,6 +180,7 @@ export async function getCoinDecimals(provider: JsonRpcProvider, type: string): 
     throw new Error('currency creation event not found')
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dec = bcs.de(CURRENCY_CREATED_EVENT, (res[0].event as any).moveEvent.bcs, 'base64')
   const ret: number = dec.decimals.toNumber()
 
