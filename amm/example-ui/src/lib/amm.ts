@@ -63,7 +63,7 @@ export async function getPools(
   const poolIdSet = new Set<string>()
 
   const [viaEvents, viaLpCoins] = await Promise.all([
-    fetchPoolsViaEvents(provider),
+    CONFIG.fetchPoolsViaEvents ? fetchPoolsViaEvents(provider) : [],
     fetchPoolsViaLpCoins(provider, wallet),
   ])
   viaLpCoins
