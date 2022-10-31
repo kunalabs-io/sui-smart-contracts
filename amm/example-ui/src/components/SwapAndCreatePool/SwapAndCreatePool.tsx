@@ -167,10 +167,10 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
       await swap(provider, wallet, pool, firstCoinType, BigInt(firstCoinValue), 1)
       resetValues()
       getUpdatedPools()
-      setSuccessSnackbar({ open: true, message: 'Swap Success' })
+      setSuccessSnackbar({ open: true, message: 'Swap Successful' })
     } catch (e) {
       console.error(e)
-      setErrorSnackbar({ open: true, message: 'Swap Error' })
+      setErrorSnackbar({ open: true, message: 'Swap Failed' })
     }
   }
 
@@ -194,7 +194,7 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
       setSuccessSnackbar({ open: true, message: 'Create Pool Success' })
     } catch (e) {
       console.error(e)
-      setErrorSnackbar({ open: true, message: 'Create Pool Error' })
+      setErrorSnackbar({ open: true, message: 'Create Pool Failed' })
     }
   }
 

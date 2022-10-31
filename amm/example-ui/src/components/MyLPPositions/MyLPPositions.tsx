@@ -56,10 +56,10 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
     try {
       await withdraw(provider, wallet, lpCoin, 1)
       getUpdatedPools()
-      setSuccessSnackbar({ open: true, message: 'Withdraw Success' })
+      setSuccessSnackbar({ open: true, message: 'Withdraw Successful' })
     } catch (e) {
       console.error(e)
-      setErrorSnackbar({ open: true, message: 'Withdraw Error' })
+      setErrorSnackbar({ open: true, message: 'Withdraw Failed' })
     }
   }
 

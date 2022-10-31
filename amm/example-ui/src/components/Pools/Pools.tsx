@@ -47,11 +47,11 @@ export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
   }
 
   const showSuccessSnackbar = () => {
-    setSuccessSnackbar({ open: true, message: 'Add Deposit Success' })
+    setSuccessSnackbar({ open: true, message: 'Deposit Successful' })
   }
 
   const showErrorSnackbar = () => {
-    setErrorSnackbar({ open: true, message: 'Add Deposit Error' })
+    setErrorSnackbar({ open: true, message: 'Deposit Failed' })
   }
 
   if (!pools.length) {
