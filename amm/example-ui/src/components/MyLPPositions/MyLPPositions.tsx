@@ -35,7 +35,9 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
     if (!wallet || !connected) {
       return
     }
-    getUserLpCoins(provider, wallet).then(setUserLpCoins).catch(console.error)
+    getUserLpCoins(provider, wallet)
+      .then(lpCoins => setUserLpCoins(lpCoins.reverse()))
+      .catch(console.error)
   }, [provider, wallet, connected, count])
 
   const handleChange = (_event: React.SyntheticEvent, newExpanded: boolean) => {
