@@ -35,8 +35,6 @@ interface CoinTypeOption {
   label: string
 }
 
-const SUI_COIN_TYPE_ARG = '0x2::sui::SUI'
-
 enum TabValue {
   Swap = 0,
   CreatePool = 1,
@@ -49,12 +47,10 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
 
   const { wallet, connected } = useWallet()
   // Swap first coin options
-  const [firstCoinOptions, setFirstCoinOptions] = useState<CoinTypeOption[]>([
-    { value: SUI_COIN_TYPE_ARG, label: 'SUI' },
-  ])
+  const [firstCoinOptions, setFirstCoinOptions] = useState<CoinTypeOption[]>([])
   // Swap second coin options
   const [secondCoinOptions, setSecondCoinOptions] = useState<CoinTypeOption[]>([])
-  const [firstCoinType, setFirstCoinType] = useState(SUI_COIN_TYPE_ARG)
+  const [firstCoinType, setFirstCoinType] = useState('')
   const [secondCoinType, setSecondCoinType] = useState('')
   const [firstCoinValue, setFirstCoinValue] = useState('')
   const [secondCoinValue, setSecondCoinValue] = useState('')
@@ -77,35 +73,44 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
       .catch(console.error)
   }, [provider, wallet, connected, count])
 
+  // first coin dropdown list
   useEffect(() => {
-    if (firstCoinType && secondCoinType) {
-      setPool(selectPoolForPair(pools, [firstCoinType, secondCoinType]))
-    }
-  }, [pools, firstCoinType, secondCoinType])
-
-  useEffect(() => {
-    if (pools.length) {
-      // First dropdown list
+    if (tabValue === TabValue.Swap) {
       const uniqueCoinTypeArgs = getPoolsUniqueCoinTypeArgs(pools)
       const initialCoinOptions = uniqueCoinTypeArgs.map(arg => ({ value: arg, label: Coin.getCoinSymbol(arg) }))
       setFirstCoinOptions(initialCoinOptions)
+    } else {
+      setFirstCoinOptions(userCoins)
+    }
+  }, [pools, tabValue, userCoins])
 
-      // Second dropdown list
-      const possibleSecondCoinTypeArgs = getPossibleSecondCoinTypeArgs(pools, SUI_COIN_TYPE_ARG)
+  // second coin dropdown list
+  useEffect(() => {
+    if (tabValue === TabValue.Swap) {
+      const possibleSecondCoinTypeArgs = getPossibleSecondCoinTypeArgs(pools, firstCoinType)
       const newSecondCoinOptions = possibleSecondCoinTypeArgs.map(arg => ({
         value: arg,
         label: Coin.getCoinSymbol(arg),
       }))
       setSecondCoinOptions(newSecondCoinOptions)
+    } else {
+      setSecondCoinOptions(userCoins.filter(option => option.value !== firstCoinType))
     }
-  }, [pools])
+  }, [pools, tabValue, firstCoinType, userCoins])
+
+  // set pool based on selected coins
+  useEffect(() => {
+    if (tabValue === TabValue.CreatePool) {
+      setPool(undefined)
+    }
+    if (!firstCoinType || !secondCoinType) {
+      setPool(undefined)
+    }
+    setPool(selectPoolForPair(pools, [firstCoinType, secondCoinType]))
+  }, [pools, tabValue, firstCoinType, secondCoinType])
 
   const handleFirstCoinTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newFirstCoinType = event.target.value
-    setFirstCoinType(newFirstCoinType)
-    const possibleSecondCoinTypeArgs = getPossibleSecondCoinTypeArgs(pools, newFirstCoinType)
-    const newSecondCoinOptions = possibleSecondCoinTypeArgs.map(arg => ({ value: arg, label: Coin.getCoinSymbol(arg) }))
-    setSecondCoinOptions(newSecondCoinOptions)
+    setFirstCoinType(event.target.value)
     setSecondCoinType('')
   }
 
@@ -114,18 +119,32 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
   }
 
   const handleFirstCoinValueChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const newFirstCoinValue = event.target.value
-
-    if (newFirstCoinValue === '' || ONLY_NUMBERS_REGEX.test(newFirstCoinValue)) {
-      setFirstCoinValue(newFirstCoinValue)
-      if (pool === undefined || tabValue === TabValue.CreatePool) {
-        return
-      }
-      setSecondCoinValue(calcSwapAmountOut(pool, firstCoinType, BigInt(newFirstCoinValue)).toString())
+    if (event.target.value !== '' && !ONLY_NUMBERS_REGEX.test(event.target.value)) {
+      return
     }
+    setFirstCoinValue(event.target.value)
   }
 
+  // second coin value change effect
+  useEffect(() => {
+    if (tabValue !== TabValue.Swap) {
+      return
+    }
+    if (pool === undefined || !firstCoinValue) {
+      setSecondCoinValue('')
+      return
+    }
+    try {
+      setSecondCoinValue(calcSwapAmountOut(pool, firstCoinType, BigInt(firstCoinValue)).toString())
+    } catch {
+      return
+    }
+  }, [pool, tabValue, firstCoinType, firstCoinValue])
+
   const handleSecondCoinValueChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (tabValue !== TabValue.CreatePool) {
+      return
+    }
     if (event.target.value === '' || ONLY_NUMBERS_REGEX.test(event.target.value)) {
       setSecondCoinValue(event.target.value)
     }
@@ -180,7 +199,7 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
   }
 
   const resetValues = () => {
-    setFirstCoinType(SUI_COIN_TYPE_ARG)
+    setFirstCoinType('')
     setSecondCoinType('')
     setFirstCoinValue('')
     setSecondCoinValue('')
@@ -218,17 +237,11 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
             onChange={handleFirstCoinTypeChange}
             sx={{ width: 150 }}
           >
-            {tabValue === TabValue.Swap
-              ? firstCoinOptions.map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))
-              : userCoins.map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
+            {firstCoinOptions.map(option => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
           </TextField>
         </Box>
         <FormHelperText sx={{ position: 'absolute' }}>
@@ -268,21 +281,15 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
           <TextField
             select
             label="Token"
-            value={secondCoinType || ''}
+            value={secondCoinType}
             sx={{ width: 150 }}
             onChange={handleSecondCoinTypeChange}
           >
-            {tabValue === TabValue.Swap
-              ? secondCoinOptions.map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))
-              : userCoins.map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
+            {secondCoinOptions.map(option => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
           </TextField>
         </Box>
         <FormHelperText sx={{ position: 'absolute' }}>
