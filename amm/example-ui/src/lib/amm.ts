@@ -137,21 +137,30 @@ export function getPossibleSecondCoinTypeArgs(
 }
 
 // Provided a list of pool objects, selects one matching the pair. If there are multiple
-// valid pools for the provided pair, returns the first one from the list. The pair order
+// valid pools for the provided pair, returns the one with the highest liquidity. The pair order
 // is irreleveant (can return either Pool<A, B> or Pool<B, A> for provided pair [A, B]).
 export function selectPoolForPair(
   pools: GetObjectDataResponse[],
   pairCoinTypeArgs: [string, string]
 ): GetObjectDataResponse | undefined {
+  let selectedPool: GetObjectDataResponse | undefined = undefined
+
   for (const pool of pools) {
     const poolPair = getPoolCoinTypeArgs(pool)
     if (
       (poolPair[0] === pairCoinTypeArgs[0] && poolPair[1] === pairCoinTypeArgs[1]) ||
       (poolPair[0] === pairCoinTypeArgs[1] && poolPair[1] === pairCoinTypeArgs[0])
     ) {
-      return pool
+      if (
+        selectedPool === undefined ||
+        getPoolBalances(pool)[2] > getPoolBalances(selectedPool)[2]
+      ) {
+        selectedPool = pool
+      }
     }
   }
+
+  return selectedPool
 }
 
 export function calcSwapAmountOut(
