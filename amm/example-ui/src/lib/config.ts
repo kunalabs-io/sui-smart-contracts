@@ -7,7 +7,7 @@ export interface Config {
 
 export const CONFIG: Config = {
   rpcUrl: 'https://fullnode.devnet.sui.io:443',
-  ammPackageId: '0x667f8808bfbd566706de0e19d243fd2c5f0900e9',
+  ammPackageId: '0x1dbbcd817a74aa721ae76ebda4c9afc0a6d7c3b3',
   ammDefaultPools: [],
   fetchPoolsViaEvents: true,
 }
