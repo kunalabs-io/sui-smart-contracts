@@ -30,7 +30,7 @@ export function objectIsPool(obj: GetObjectDataResponse): boolean {
   return !!getMoveObjectType(obj)?.match(POOL_TYPE_REGEX)
 }
 
-bcs.registerStructType(POOL_CREATION_EVENT, { pool_id: bcs.ADDRESS })
+bcs.registerStructType(POOL_CREATION_EVENT, { pool_id: 'address' })
 
 async function fetchPoolsViaEvents(provider: JsonRpcProvider): Promise<string[]> {
   const poolIds: string[] = []

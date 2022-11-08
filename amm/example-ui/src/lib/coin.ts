@@ -166,7 +166,7 @@ const decimalsCache = new Map<string, number>()
 decimalsCache.set(SUI_TYPE_ARG, 9)
 
 const CURRENCY_CREATED_EVENT = '0x2::coin::CurrencyCreated'
-bcs.registerStructType(CURRENCY_CREATED_EVENT, { decimals: bcs.U8 })
+bcs.registerStructType(CURRENCY_CREATED_EVENT, { decimals: 'u8' })
 
 export async function getCoinDecimals(provider: JsonRpcProvider, type: string): Promise<number> {
   const maybeRes = decimalsCache.get(type)
