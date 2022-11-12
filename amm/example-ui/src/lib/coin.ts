@@ -174,14 +174,13 @@ export async function getCoinDecimals(provider: JsonRpcProvider, type: string): 
     return maybeRes
   }
 
-  const event = `${CURRENCY_CREATED_EVENT}<${type}>`
-  const res = await provider.getEventsByMoveEventStructName(event, 1)
-  if (res.length === 0) {
+  const res = await provider.getEvents({ MoveEvent: `${CURRENCY_CREATED_EVENT}<${type}>` }, null, 1)
+  if (res.data.length === 0) {
     throw new Error('currency creation event not found')
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const dec = bcs.de(CURRENCY_CREATED_EVENT, (res[0].event as any).moveEvent.bcs, 'base64')
+  const dec = bcs.de(CURRENCY_CREATED_EVENT, (res.data[0].event as any).moveEvent.bcs, 'base64')
   const ret: number = dec.decimals.toNumber()
 
   decimalsCache.set(type, ret)

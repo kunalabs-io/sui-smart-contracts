@@ -35,8 +35,13 @@ bcs.registerStructType(POOL_CREATION_EVENT, { pool_id: 'address' })
 async function fetchPoolsViaEvents(provider: JsonRpcProvider): Promise<string[]> {
   const poolIds: string[] = []
 
-  const events = await provider.getEventsByMoveEventStructName(POOL_CREATION_EVENT)
-  events.forEach(event => {
+  const events = await provider.getEvents(
+    { MoveEvent: POOL_CREATION_EVENT },
+    null,
+    null,
+    'descending'
+  )
+  events.data.forEach(event => {
     const dec = bcs.de(POOL_CREATION_EVENT, (event.event as any).moveEvent.bcs, 'base64')
     poolIds.push(normalizeSuiAddress(dec.pool_id))
   })
