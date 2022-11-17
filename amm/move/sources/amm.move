@@ -205,7 +205,7 @@ module 0x0::amm {
         // sanity checks
         assert!(balance::value(&init_a) > 0 && balance::value(&init_b) > 0, EZeroInput);
         assert!(lp_fee_bps < BPS_IN_100_PCT, EInvalidFeeParam);
-        assert!(admin_fee_pct < 100, EInvalidFeeParam);
+        assert!(admin_fee_pct <= 100, EInvalidFeeParam);
 
         // create pool
         let pool = Pool<A, B> {
@@ -440,8 +440,8 @@ module 0x0::amm {
         let admin_fee_in_lp = (sqrt_u128(
             muldiv_u128(
                 (pool_lp_value as u128) * (pool_lp_value as u128),
-                ((i_pool_value + i_value + admin_fee_value) as u128),
-                ((i_pool_value + i_value) as u128)
+                ((i_pool_value + i_value) as u128),
+                ((i_pool_value + i_value - admin_fee_value) as u128)
             )
         ) as u64) - pool_lp_value;
 

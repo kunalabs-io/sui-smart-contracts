@@ -2,7 +2,7 @@
 module 0x0::amm_tests {
     use sui::test_scenario;
     use sui::tx_context::TxContext;
-    use sui::balance;
+    use sui::balance::{Self, Balance};
     use sui::object;
     use sui::coin::{Self, Coin};
 
@@ -39,6 +39,11 @@ module 0x0::amm_tests {
         amm::create_pool_(init_a, init_b, lp_fee_bps, admin_fee_pct, ctx)
     }
 
+    fun assert_and_destroy_balance<T>(balance: Balance<T>, value: u64) {
+        assert!(balance::value(&balance) == value, 0);
+        balance::destroy_for_testing(balance);
+    }
+ 
     /* ================= create_pool tests ================= */
 
     #[test]
@@ -1000,6 +1005,31 @@ module 0x0::amm_tests {
 
             test_scenario::return_shared(pool);
             coin::destroy_for_testing(a_out);
+        };
+
+        test_scenario::end(scenario_val);
+    }
+
+    #[test]
+    public fun test_admin_fees_are_correct() {
+        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario = &mut scenario_val;
+        scenario_create_pool(scenario, 10_000_000, 10_000_000, 30, 100);
+
+        test_scenario::next_tx(scenario, USER);
+        {
+            let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
+
+            let out = amm::swap_a(&mut pool, balance::create_for_testing(10_000), 0);
+            assert_and_destroy_balance(out, 9960);
+
+            let (a, b, lp) = amm::pool_values(&pool);
+            assert!(a == 10_010_000, 0);
+            assert!(b == 9_990_040, 0);
+            assert!(lp == 10_000_014, 0); 
+            assert!(amm::pool_admin_fee_value(&pool) == 14, 0);
+
+            test_scenario::return_shared(pool);
         };
 
         test_scenario::end(scenario_val);
