@@ -11,14 +11,14 @@ interface CoinInfo {
 
 export async function getUserCoins(provider: JsonRpcProvider, wallet: WalletAdapter) {
   const addr = await getWalletAddress(wallet)
-  const coinInfos = (await provider.getObjectsOwnedByAddress(addr)).filter(Coin.isCoin)
+  const coinInfos = (await provider.getObjectsOwnedByAddress(addr)).filter(Coin.getCoinTypeArg)
   const coins = await provider.getObjectBatch(coinInfos.map(obj => obj.objectId))
 
   return coins
 }
 
 export function coinInfo(coin: GetObjectDataResponse): CoinInfo {
-  if (!Coin.isCoin(coin)) {
+  if (Coin.getCoinTypeArg(coin) === null) {
     throw new Error('not a coin')
   }
 

@@ -16,9 +16,9 @@
     "@emotion/styled": "^11.10.4",
     "@mui/icons-material": "^5.10.9",
     "@mui/material": "^5.10.10",
-    "@mysten/sui.js": "^0.16.0",
-    "@mysten/wallet-adapter-all-wallets": "^0.3.0",
-    "@mysten/wallet-adapter-react": "^6.0.0",
+    "@mysten/sui.js": "^0.17.1",
+    "@mysten/wallet-adapter-wallet-standard": "^0.3.3",
+    "@mysten/wallet-adapter-react": "^8.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

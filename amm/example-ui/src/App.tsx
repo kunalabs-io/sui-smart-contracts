@@ -1,4 +1,4 @@
-import { WalletStandardAdapterProvider } from '@mysten/wallet-adapter-all-wallets'
+import { WalletStandardAdapterProvider } from '@mysten/wallet-adapter-wallet-standard'
 import { WalletProvider } from '@mysten/wallet-adapter-react'
 import { Box, IconButton, Typography } from '@mui/material'
 import TwitterIcon from '@mui/icons-material/Twitter'
