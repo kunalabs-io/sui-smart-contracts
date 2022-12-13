@@ -41,45 +41,10 @@ module 0x0::amm {
     /// The number of basis points in 100%.
     const BPS_IN_100_PCT: u64 = 100 * 100;
 
-    /* ================= LPCoin ================= */
+    /* ================= LP ================= */
 
     /// Pool LP token witness.
     struct LP<phantom A, phantom B> has drop { }
-
-    /// Represents liquidity provider's share of pool balances.
-    struct LPCoin<phantom A, phantom B> has key, store {
-        id: UID,
-        pool_id: ID,
-        balance: Balance<LP<A, B>>
-    }
-
-    /// Public getter for the LP coin's value.
-    public fun lp_coin_value<A, B>(self: &LPCoin<A, B>): u64 {
-        balance::value(&self.balance)
-    }
-
-    /// Get an immutable reference to the ID of the pool the LP coin belongs to.
-    public fun lp_coin_pool_id<A, B>(self: &LPCoin<A, B>): &ID {
-        &self.pool_id
-    }
-
-    /// Create an LP coin with zero value.
-    public fun lp_coin_zero<A, B>(pool: &Pool<A, B>, ctx: &mut TxContext): LPCoin<A, B> {
-        LPCoin {
-            id: object::new(ctx),
-            pool_id: object::id(pool),
-            balance: balance::zero<LP<A, B>>()
-        }
-    }
-
-    /// Take out `value` from the provided LP coin and put it into a new coin.
-    public fun lp_coin_split<A, B>(self: &mut LPCoin<A, B>, value: u64, ctx: &mut TxContext): LPCoin<A, B> {
-        LPCoin<A, B> {
-            id: object::new(ctx),
-            pool_id: self.pool_id,
-            balance: balance::split(&mut self.balance, value)
-        }
-    }
 
     /* ================= Pool ================= */
 
@@ -232,18 +197,6 @@ module 0x0::amm {
 
     /* ================= util ================= */
 
-    /// Mints new LPCoin of `amount`.
-    fun lp_increase_supply<A, B>(
-        pool: &mut Pool<A, B>, amount: u64, ctx: &mut TxContext
-    ): LPCoin<A, B> {
-       let lp_balance = balance::increase_supply(&mut pool.lp_supply, amount);
-       LPCoin {
-            id: object::new(ctx),
-            pool_id: object::uid_to_inner(&pool.id),
-            balance: lp_balance,
-       }
-    }    
-
     /// Destroys the provided balance if zero, otherwise converts it to a `Coin`
     /// and transfers it to recipient.
     fun destroy_or_transfer_balance<T>(balance: Balance<T>, recipient: address, ctx: &mut TxContext) {
@@ -255,17 +208,6 @@ module 0x0::amm {
             coin::from_balance(balance, ctx),
             recipient
         );
-    }
-
-    /// Destroys the provided LP coin if zero, otherwise transfer's it to recipient.
-    fun destroy_or_transfer_lp_coin<A, B>(lp_coin: LPCoin<A, B>, recipient: address) {
-        if (lp_coin_value(&lp_coin) > 0) {
-            transfer::transfer(lp_coin, recipient)
-        } else {
-            let LPCoin {id, pool_id: _, balance} = lp_coin;
-            object::delete(id);
-            balance::destroy_zero(balance);
-        }
     }
 
     /* ================= main logic ================= */
@@ -287,7 +229,7 @@ module 0x0::amm {
         lp_fee_bps: u64,
         admin_fee_pct: u64,
         ctx: &mut TxContext,
-    ): LPCoin<A, B> {
+    ): Balance<LP<A, B>> {
         // sanity checks
         assert!(balance::value(&init_a) > 0 && balance::value(&init_b) > 0, EZeroInput);
         assert!(lp_fee_bps < BPS_IN_100_PCT, EInvalidFeeParam);
@@ -309,12 +251,12 @@ module 0x0::amm {
 
         // mint initial lp tokens
         let lp_amt = mulsqrt(balance::value(&pool.balance_a), balance::value(&pool.balance_b));
-        let lp_coin = lp_increase_supply(&mut pool, lp_amt, ctx);
+        let lp_balance = balance::increase_supply(&mut pool.lp_supply, lp_amt);
 
         event::emit(PoolCreationEvent { pool_id: object::id(&pool) });
         transfer::share_object(pool);
 
-        lp_coin
+        lp_balance
     }
 
     /// Entry function. Creates a new Pool with provided initial balances. Transfers
@@ -327,7 +269,7 @@ module 0x0::amm {
         admin_fee_pct: u64,
         ctx: &mut TxContext,
     ) {
-        let lp_coin = create_pool(
+        let lp_balance = create_pool(
             list,
             coin::into_balance(init_a),
             coin::into_balance(init_b),
@@ -336,7 +278,7 @@ module 0x0::amm {
             ctx
         );
         transfer::transfer(
-            lp_coin,
+            coin::from_balance(lp_balance, ctx),
             tx_context::sender(ctx)
         );
     }
@@ -351,9 +293,8 @@ module 0x0::amm {
         pool: &mut Pool<A, B>,
         input_a: Balance<A>,
         input_b: Balance<B>,
-        min_lp_out: u64,
-        ctx: &mut TxContext
-    ): (Balance<A>, Balance<B>, LPCoin<A, B>) {
+        min_lp_out: u64
+    ): (Balance<A>, Balance<B>, Balance<LP<A, B>>) {
         // sanity checks
         assert!(balance::value(&input_a) > 0, EZeroInput);
         assert!(balance::value(&input_b) > 0, EZeroInput);
@@ -415,10 +356,10 @@ module 0x0::amm {
 
         // mint lp coin
         assert!(lp_to_issue >= min_lp_out, EExcessiveSlippage);
-        let lp_coin = lp_increase_supply(pool, lp_to_issue, ctx);
+        let lp = balance::increase_supply(&mut pool.lp_supply, lp_to_issue);
 
         // return
-        (input_a, input_b, lp_coin)
+        (input_a, input_b, lp)
     }
 
     /// Entry function. Deposit liquidity into pool. The deposit will use up the maximum
@@ -434,15 +375,15 @@ module 0x0::amm {
         min_lp_out: u64,
         ctx: &mut TxContext
     ) {
-        let (remaining_a, remaining_b, lp_coin) = deposit(
-            pool, coin::into_balance(input_a), coin::into_balance(input_b), min_lp_out, ctx
+        let (remaining_a, remaining_b, lp) = deposit(
+            pool, coin::into_balance(input_a), coin::into_balance(input_b), min_lp_out
         );
 
         // transfer the output amounts to the caller (if any)
         let sender = tx_context::sender(ctx);
         destroy_or_transfer_balance(remaining_a, sender, ctx);
         destroy_or_transfer_balance(remaining_b, sender, ctx);
-        destroy_or_transfer_lp_coin(lp_coin, sender);
+        destroy_or_transfer_balance(lp, sender, ctx);
     }
 
 
@@ -451,16 +392,15 @@ module 0x0::amm {
     /// respectively.
     public fun withdraw<A, B>(
         pool: &mut Pool<A, B>,
-        lp_in: LPCoin<A, B>,
+        lp_in: Balance<LP<A, B>>,
         min_a_out: u64,
         min_b_out: u64,
     ): (Balance<A>, Balance<B>) {
         // sanity checks
-        assert!(&lp_in.pool_id == object::uid_as_inner(&pool.id), EInvalidPoolID);
-        assert!(balance::value(&lp_in.balance) > 0, EZeroInput);
+        assert!(balance::value(&lp_in) > 0, EZeroInput);
 
         // calculate output amounts
-        let lp_in_value = balance::value(&lp_in.balance);
+        let lp_in_value = balance::value(&lp_in);
         let pool_a_value = balance::value(&pool.balance_a);
         let pool_b_value = balance::value(&pool.balance_b);
         let pool_lp_value = balance::supply_value(&pool.lp_supply);
@@ -471,9 +411,7 @@ module 0x0::amm {
         assert!(b_out >= min_b_out, EExcessiveSlippage);
 
         // burn lp tokens
-        let LPCoin { id, pool_id: _, balance: lp_in_balance } = lp_in;
-        object::delete(id);
-        balance::decrease_supply(&mut pool.lp_supply, lp_in_balance);
+        balance::decrease_supply(&mut pool.lp_supply, lp_in);
 
         // return amounts
         (
@@ -488,12 +426,12 @@ module 0x0::amm {
     /// to the sender.
     public entry fun withdraw_<A, B>(
         pool: &mut Pool<A, B>,
-        lp_in: LPCoin<A, B>,
+        lp_in: Coin<LP<A, B>>,
         min_a_out: u64,
         min_b_out: u64,
         ctx: &mut TxContext
     ) {
-        let (a_out, b_out) = withdraw(pool, lp_in, min_a_out, min_b_out);
+        let (a_out, b_out) = withdraw(pool, coin::into_balance(lp_in), min_a_out, min_b_out);
 
         let sender = tx_context::sender(ctx);
         destroy_or_transfer_balance(a_out, sender, ctx);
@@ -625,15 +563,10 @@ module 0x0::amm {
     public fun admin_withdraw_fees<A, B>(
         pool: &mut Pool<A, B>,
         _: &AdminCap, 
-        amount: u64,
-        ctx: &mut TxContext
-    ): LPCoin<A, B> {
+        amount: u64
+    ): Balance<LP<A, B>> {
         if (amount == 0) amount = balance::value(&pool.admin_fee_balance);
-        LPCoin {
-            id: object::new(ctx),
-            pool_id: object::uid_to_inner(&pool.id),
-            balance: balance::split(&mut pool.admin_fee_balance, amount)
-        }
+        balance::split(&mut pool.admin_fee_balance, amount)
     }
 
     /// Entry function. Withdraw `amount` of collected admin fees by providing
@@ -645,19 +578,11 @@ module 0x0::amm {
         amount: u64,
         ctx: &mut TxContext
     ) {
-        let lp_coin = admin_withdraw_fees(pool, admin_cap, amount, ctx);
-        destroy_or_transfer_lp_coin(lp_coin, tx_context::sender(ctx));
+        let lp = admin_withdraw_fees(pool, admin_cap, amount);
+        destroy_or_transfer_balance(lp, tx_context::sender(ctx), ctx);
     }
 
     /* ================= test only ================= */
-
-    #[test_only]
-    /// Destroy an `LPCoin` with any value in it for testing purposes.
-    public fun lp_coin_destroy_for_testing<A, B>(self: LPCoin<A, B>) {
-        let LPCoin {id, pool_id: _, balance} = self;
-        object::delete(id);
-        balance::destroy_for_testing(balance);
-    }
 
     #[test_only]
     public fun init_for_testing(ctx: &mut TxContext) {

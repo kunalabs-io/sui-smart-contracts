@@ -3,10 +3,9 @@ module 0x0::amm_tests {
     use sui::test_scenario::{Self, Scenario};
     use sui::tx_context::TxContext;
     use sui::balance::{Self, Balance};
-    use sui::object;
+    //use sui::object;
     use sui::coin::{Self, Coin};
-
-    use 0x0::amm::{Self, Pool, PoolList, AdminCap, LPCoin};
+    use 0x0::amm::{Self, Pool, PoolList, AdminCap, LP};
 
     const ADMIN: address = @0xABBA;
     const USER: address = @0xB0B;
@@ -331,7 +330,7 @@ module 0x0::amm_tests {
         {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
 
-            let lp_coin = test_scenario::take_from_sender<LPCoin<A,B>>(scenario);
+            let lp_coin = test_scenario::take_from_sender<Coin<LP<A,B>>>(scenario);
             amm::withdraw_(&mut pool, lp_coin, 0, 0, test_scenario::ctx(scenario));
 
             // sanity check
@@ -364,9 +363,8 @@ module 0x0::amm_tests {
             assert!(lp == 141, 0);
 
             // lp transferred to user
-            let lp_coin = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
-            assert!(amm::lp_coin_value(&lp_coin) == 141, 0);
-            assert!(amm::lp_coin_pool_id(&lp_coin) == object::borrow_id(&pool), 0);
+            let lp_coin = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
+            assert!(coin::value(&lp_coin) == 141, 0);
 
             // coins are fully used up
             assert!(test_scenario::has_most_recent_for_sender<Coin<A>>(scenario) == false, 0);
@@ -409,9 +407,8 @@ module 0x0::amm_tests {
             assert!(lp == 210, 0);
 
             // lp transferred to user
-            let lp_coin = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
-            assert!(amm::lp_coin_value(&lp_coin) == 140, 0);
-            assert!(amm::lp_coin_pool_id(&lp_coin) == object::borrow_id(&pool), 0);
+            let lp_coin = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
+            assert!(coin::value(&lp_coin) == 140, 0);
 
             // coins are fully used up
             assert!(test_scenario::has_most_recent_for_sender<Coin<A>>(scenario) == false, 0);
@@ -419,7 +416,7 @@ module 0x0::amm_tests {
 
             // return
             test_scenario::return_shared(pool);
-            amm::lp_coin_destroy_for_testing(lp_coin);
+            coin::destroy_for_testing(lp_coin);
         };
 
         // deposit max B (slippage); (300, 150, 210) -> (400, 200, 280)
@@ -445,9 +442,8 @@ module 0x0::amm_tests {
             assert!(lp == 280, 0);
 
             // lp transferred to user
-            let lp_coin = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
-            assert!(amm::lp_coin_value(&lp_coin) == 70, 0);
-            assert!(amm::lp_coin_pool_id(&lp_coin) == object::borrow_id(&pool), 0);
+            let lp_coin = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
+            assert!(coin::value(&lp_coin) == 70, 0);
 
             // there's extra coin A
             let a_extra = test_scenario::take_from_sender<Coin<A>>(scenario);
@@ -456,7 +452,7 @@ module 0x0::amm_tests {
 
             // return
             test_scenario::return_shared(pool);
-            amm::lp_coin_destroy_for_testing(lp_coin);
+            coin::destroy_for_testing(lp_coin);
             coin::destroy_for_testing(a_extra);
         };
 
@@ -483,9 +479,8 @@ module 0x0::amm_tests {
             assert!(lp == 350, 0);
 
             // lp transferred to user
-            let lp_coin = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
-            assert!(amm::lp_coin_value(&lp_coin) == 70, 0);
-            assert!(amm::lp_coin_pool_id(&lp_coin) == object::borrow_id(&pool), 0);
+            let lp_coin = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
+            assert!(coin::value(&lp_coin) == 70, 0);
 
             // there's extra coin B
             assert!(test_scenario::has_most_recent_for_sender<Coin<A>>(scenario) == false, 0);
@@ -494,7 +489,7 @@ module 0x0::amm_tests {
 
             // return
             test_scenario::return_shared(pool);
-            amm::lp_coin_destroy_for_testing(lp_coin);
+            coin::destroy_for_testing(lp_coin);
             coin::destroy_for_testing(b_extra);
         };
 
@@ -521,7 +516,7 @@ module 0x0::amm_tests {
             assert!(lp == 350, 0);
 
             // no lp transferred to user
-            assert!(test_scenario::has_most_recent_for_sender<LPCoin<A, B>>(scenario) == false, 0);
+            assert!(test_scenario::has_most_recent_for_sender<Coin<LP<A, B>>>(scenario) == false, 0);
 
             // coins are fully used up
             assert!(test_scenario::has_most_recent_for_sender<Coin<A>>(scenario) == false, 0);
@@ -568,7 +563,7 @@ module 0x0::amm_tests {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
 
             let ctx = test_scenario::ctx(scenario);
-            let lp_coin = amm::lp_coin_zero(&pool, ctx);
+            let lp_coin = coin::zero(ctx);
             amm::withdraw_(&mut pool, lp_coin, 0, 0, ctx);
 
             test_scenario::return_shared(pool);
@@ -587,11 +582,11 @@ module 0x0::amm_tests {
         test_scenario::next_tx(scenario, ADMIN);
         {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
-            let lp_coin = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
-            assert!(amm::lp_coin_value(&lp_coin) == 36, 0); // sanity check
+            let lp_coin = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
+            assert!(coin::value(&lp_coin) == 36, 0); // sanity check
 
             let ctx = test_scenario::ctx(scenario);
-            let lp_in = amm::lp_coin_split(&mut lp_coin, 13, ctx);
+            let lp_in = coin::split(&mut lp_coin, 13, ctx);
             amm::withdraw_(&mut pool, lp_in, 36, 4, ctx);
 
             test_scenario::return_shared(pool);
@@ -622,11 +617,11 @@ module 0x0::amm_tests {
         test_scenario::next_tx(scenario, ADMIN);
         {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
-            let lp_coin = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
-            assert!(amm::lp_coin_value(&lp_coin) == 23, 0); // sanity check
+            let lp_coin = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
+            assert!(coin::value(&lp_coin) == 23, 0); // sanity check
 
             let ctx = test_scenario::ctx(scenario);
-            let lp_in = amm::lp_coin_split(&mut lp_coin, 1, ctx);
+            let lp_in = coin::split(&mut lp_coin, 1, ctx);
             amm::withdraw_(&mut pool, lp_in, 2, 0, ctx);
 
             test_scenario::return_shared(pool);
@@ -655,7 +650,7 @@ module 0x0::amm_tests {
         test_scenario::next_tx(scenario, ADMIN);
         {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
-            let lp_coin = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
+            let lp_coin = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
 
             let ctx = test_scenario::ctx(scenario);
             amm::withdraw_(&mut pool, lp_coin, 62, 9, ctx);
@@ -696,14 +691,14 @@ module 0x0::amm_tests {
         test_scenario::next_tx(scenario, ADMIN);
         {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
-            let lp_coin = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
+            let lp_coin = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
 
             let ctx = test_scenario::ctx(scenario);
-            let lp_in = amm::lp_coin_split(&mut lp_coin, 50, ctx);
+            let lp_in = coin::split(&mut lp_coin, 50, ctx);
             amm::withdraw_(&mut pool, lp_coin, 51, 50, ctx);
 
             test_scenario::return_shared(pool);
-            amm::lp_coin_destroy_for_testing(lp_in);
+            coin::destroy_for_testing(lp_in);
         };
 
         test_scenario::end(scenario_val);
@@ -719,14 +714,14 @@ module 0x0::amm_tests {
         test_scenario::next_tx(scenario, ADMIN);
         {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
-            let lp_coin = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
+            let lp_coin = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
 
             let ctx = test_scenario::ctx(scenario);
-            let lp_in = amm::lp_coin_split(&mut lp_coin, 50, ctx);
+            let lp_in = coin::split(&mut lp_coin, 50, ctx);
             amm::withdraw_(&mut pool, lp_coin, 50, 51, ctx);
 
             test_scenario::return_shared(pool);
-            amm::lp_coin_destroy_for_testing(lp_in);
+            coin::destroy_for_testing(lp_in);
         };
 
         test_scenario::end(scenario_val);
@@ -786,7 +781,7 @@ module 0x0::amm_tests {
         test_scenario::next_tx(scenario, ADMIN);
         {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
-            let lp_coin = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
+            let lp_coin = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
 
             let ctx = test_scenario::ctx(scenario);
             amm::withdraw_(&mut pool, lp_coin, 0, 0, ctx);
@@ -810,7 +805,7 @@ module 0x0::amm_tests {
         test_scenario::next_tx(scenario, ADMIN);
         {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
-            let lp_coin = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
+            let lp_coin = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
 
             let ctx = test_scenario::ctx(scenario);
             amm::withdraw_(&mut pool, lp_coin, 0, 0, ctx);
@@ -1211,14 +1206,13 @@ module 0x0::amm_tests {
         test_scenario::next_tx(scenario, ADMIN);
         {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
-            let lp_out = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
+            let lp_out = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
 
             assert!(amm::pool_admin_fee_value(&pool) == 1, 0);
-            assert!(amm::lp_coin_value(&lp_out) == 1, 0);
-            assert!(amm::lp_coin_pool_id(&lp_out) == object::borrow_id(&pool), 0);
+            assert!(coin::value(&lp_out) == 1, 0);
 
             test_scenario::return_shared(pool);
-            amm::lp_coin_destroy_for_testing(lp_out);
+            coin::destroy_for_testing(lp_out);
         };
 
         // withdraw all
@@ -1239,14 +1233,13 @@ module 0x0::amm_tests {
         test_scenario::next_tx(scenario, ADMIN);
         {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
-            let lp_out = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
+            let lp_out = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
 
             assert!(amm::pool_admin_fee_value(&pool) == 0, 0);
-            assert!(amm::lp_coin_value(&lp_out) == 1, 0);
-            assert!(amm::lp_coin_pool_id(&lp_out) == object::borrow_id(&pool), 0);
+            assert!(coin::value(&lp_out) == 1, 0);
 
             test_scenario::return_shared(pool);
-            amm::lp_coin_destroy_for_testing(lp_out);
+            coin::destroy_for_testing(lp_out);
         };
 
         test_scenario::end(scenario_val);
@@ -1265,8 +1258,8 @@ module 0x0::amm_tests {
             let cap = test_scenario::take_from_sender<AdminCap>(scenario);
 
             // destroy initial LPCoin
-            let lp_coin = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
-            amm::lp_coin_destroy_for_testing(lp_coin);
+            let lp_coin = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
+            coin::destroy_for_testing(lp_coin);
 
             // withdraw
             let ctx = test_scenario::ctx(scenario);
@@ -1278,7 +1271,7 @@ module 0x0::amm_tests {
         
         // check
         test_scenario::next_tx(scenario, ADMIN);
-        assert!(test_scenario::has_most_recent_for_sender<LPCoin<A, B>>(scenario) == false, 0);
+        assert!(test_scenario::has_most_recent_for_sender<Coin<LP<A, B>>>(scenario) == false, 0);
 
         test_scenario::end(scenario_val);
     }
