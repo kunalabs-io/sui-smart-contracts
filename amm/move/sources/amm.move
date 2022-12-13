@@ -6,8 +6,7 @@ module 0x0::amm {
     use sui::tx_context::{Self, TxContext};
     use sui::transfer;
     use sui::event;
-    use 0x0::math_u128::{sqrt as sqrt_u128, ceil_div as ceil_div_u128};
-    use 0x0::math_u256 as u256;
+    use sui::math;
 
     /* ================= errors ================= */
 
@@ -130,7 +129,7 @@ module 0x0::amm {
 
     /// Calculates (a * b) / c. Errors if result doesn't fit into u64.
     fun muldiv(a: u64, b: u64, c: u64): u64 {
-        (((a as u128) * (b as u128)) / (c as u128) as u64)
+        ((((a as u128) * (b as u128)) / (c as u128)) as u64)
     }
 
     /// Calculates ceil_div((a * b), c). Errors if result doesn't fit into u64.
@@ -140,17 +139,17 @@ module 0x0::amm {
 
     /// Calculates sqrt(a * b).
     fun mulsqrt(a: u64, b: u64): u64 {
-        (sqrt_u128((a as u128) * (b as u128)) as u64)
+        (math::sqrt_u128((a as u128) * (b as u128)) as u64)
     }
 
     /// Calculates (a * b) / c for u128. Errors if result doesn't fit into u128.
     fun muldiv_u128(a: u128, b: u128, c: u128): u128 {
-        let a = u256::from_u128(a);
-        let b = u256::from_u128(b);
-        let c = u256::from_u128(c);
+        ((((a as u256) * (b as u256)) / (c as u256)) as u128)
+    }
 
-        let res = u256::div(u256::mul(a, b), c);
-        u256::as_u128(res)
+    /// Calculates ceil(a / b).
+    fun ceil_div_u128(a: u128, b: u128): u128 {
+        if (a == 0) 0 else (a - 1) / b + 1
     }
 
     /* ================= util ================= */
@@ -437,7 +436,7 @@ module 0x0::amm {
         // calc admin fee
         let admin_fee_value = muldiv(lp_fee_value, admin_fee_pct, 100);
         // dL = L * sqrt((A + dA) / A) - L = sqrt(L^2(A + dA) / A) - L
-        let admin_fee_in_lp = (sqrt_u128(
+        let admin_fee_in_lp = (math::sqrt_u128(
             muldiv_u128(
                 (pool_lp_value as u128) * (pool_lp_value as u128),
                 ((i_pool_value + i_value) as u128),
