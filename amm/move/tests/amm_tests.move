@@ -1,12 +1,12 @@
 #[test_only]
 module 0x0::amm_tests {
-    use sui::test_scenario;
+    use sui::test_scenario::{Self, Scenario};
     use sui::tx_context::TxContext;
     use sui::balance::{Self, Balance};
     use sui::object;
     use sui::coin::{Self, Coin};
 
-    use 0x0::amm::{Self, Pool, PoolAdminCap, LPCoin};
+    use 0x0::amm::{Self, Pool, PoolList, AdminCap, LPCoin};
 
     const ADMIN: address = @0xABBA;
     const USER: address = @0xB0B;
@@ -14,6 +14,7 @@ module 0x0::amm_tests {
     // OTWs for currencies used in tests
     struct A has drop {}
     struct B has drop {}
+    struct C has drop {}
 
     fun mint_coin<T>(
         amount: u64, ctx: &mut TxContext
@@ -24,6 +25,17 @@ module 0x0::amm_tests {
         )
     }
 
+    fun scenario_init(sender: address): Scenario {
+        let scenario = test_scenario::begin(ADMIN);
+        {
+            let ctx = test_scenario::ctx(&mut scenario);
+            amm::init_for_testing(ctx);
+        };
+        test_scenario::next_tx(&mut scenario, sender);
+
+        scenario
+    }
+
     fun scenario_create_pool(
         scenario: &mut test_scenario::Scenario,
         init_a: u64,
@@ -31,12 +43,15 @@ module 0x0::amm_tests {
         lp_fee_bps: u64,
         admin_fee_pct: u64
     ) {
+        let list = test_scenario::take_shared<PoolList>(scenario);
         let ctx = test_scenario::ctx(scenario);
 
         let init_a = mint_coin<A>(init_a, ctx);
         let init_b = mint_coin<B>(init_b, ctx);
 
-        amm::create_pool_(init_a, init_b, lp_fee_bps, admin_fee_pct, ctx)
+        amm::create_pool_(&mut list, init_a, init_b, lp_fee_bps, admin_fee_pct, ctx);
+
+        test_scenario::return_shared(list);
     }
 
     fun assert_and_destroy_balance<T>(balance: Balance<T>, value: u64) {
@@ -49,15 +64,18 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
     fun test_create_pool_fails_on_init_a_zero() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         {
+            let list = test_scenario::take_shared<PoolList>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = coin::zero<A>(ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::create_pool_(init_a, init_b, 0, 0, ctx);
+            amm::create_pool_(&mut list, init_a, init_b, 0, 0, ctx);
+
+            test_scenario::return_shared(list);
         };
 
         test_scenario::end(scenario_val);
@@ -66,15 +84,18 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
     fun test_create_pool_fails_on_init_b_zero() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         {
+            let list = test_scenario::take_shared<PoolList>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = mint_coin<A>(100, ctx);
             let init_b = coin::zero<B>(ctx);
 
-            amm::create_pool_(init_a, init_b, 0, 0, ctx);
+            amm::create_pool_(&mut list, init_a, init_b, 0, 0, ctx);
+
+            test_scenario::return_shared(list);
         };
 
         test_scenario::end(scenario_val);
@@ -83,15 +104,18 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::EInvalidFeeParam)]
     fun test_create_pool_fails_on_invalid_lp_fee() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         {
+            let list = test_scenario::take_shared<PoolList>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = mint_coin<A>(100, ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::create_pool_(init_a, init_b, 10001, 0, ctx);
+            amm::create_pool_(&mut list, init_a, init_b, 10001, 0, ctx);
+
+            test_scenario::return_shared(list);
         };
 
         test_scenario::end(scenario_val);
@@ -100,15 +124,94 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::EInvalidFeeParam)]
     fun test_create_pool_fails_on_invalid_admin_fee() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         {
+            let list = test_scenario::take_shared<PoolList>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = mint_coin<A>(100, ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::create_pool_(init_a, init_b, 30, 101, ctx);
+            amm::create_pool_(&mut list, init_a, init_b, 30, 101, ctx);
+
+            test_scenario::return_shared(list);
+        };
+
+        test_scenario::end(scenario_val);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 0x0::amm::EPoolAlreadyExists)]
+    fun test_create_pool_fails_on_duplicate_pair() {
+        let scenario_val = scenario_init(ADMIN);
+        let scenario = &mut scenario_val;
+        {
+            let list = test_scenario::take_shared<PoolList>(scenario);
+            let ctx = test_scenario::ctx(scenario);
+
+            let init_a = mint_coin<A>(200, ctx);
+            let init_b = mint_coin<B>(100, ctx);
+
+            amm::create_pool_(&mut list, init_a, init_b, 30, 10, ctx);
+
+            test_scenario::return_shared(list);
+
+        };
+
+        test_scenario::next_tx(scenario, ADMIN);
+        {
+            let list = test_scenario::take_shared<PoolList>(scenario);
+            let ctx = test_scenario::ctx(scenario);
+
+            let init_a = mint_coin<A>(200, ctx);
+            let init_b = mint_coin<B>(100, ctx);
+
+            amm::create_pool_(&mut list, init_a, init_b, 30, 10, ctx); // aborts here
+
+            test_scenario::return_shared(list);
+        };
+
+        test_scenario::end(scenario_val);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 0x0::amm::EInvalidPair)]
+    fun test_create_pool_fails_on_same_currency_pair() {
+        let scenario_val = scenario_init(ADMIN);
+        let scenario = &mut scenario_val;
+        {
+            let list = test_scenario::take_shared<PoolList>(scenario);
+            let ctx = test_scenario::ctx(scenario);
+
+            let init_a = mint_coin<A>(200, ctx);
+            let init_b = mint_coin<A>(100, ctx);
+
+            amm::create_pool_(&mut list, init_a, init_b, 30, 10, ctx); // aborts here
+
+            test_scenario::return_shared(list);
+
+        };
+
+        test_scenario::end(scenario_val);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 0x0::amm::EInvalidPair)]
+    fun test_create_pool_fails_on_currency_pair_wrong_order() {
+        let scenario_val = scenario_init(ADMIN);
+        let scenario = &mut scenario_val;
+        {
+            let list = test_scenario::take_shared<PoolList>(scenario);
+            let ctx = test_scenario::ctx(scenario);
+
+            let init_a = mint_coin<B>(200, ctx);
+            let init_b = mint_coin<A>(100, ctx);
+
+            amm::create_pool_(&mut list, init_a, init_b, 30, 10, ctx); // aborts here
+
+            test_scenario::return_shared(list);
+
         };
 
         test_scenario::end(scenario_val);
@@ -116,15 +219,24 @@ module 0x0::amm_tests {
 
     #[test]
     fun test_create_pool() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         {
+            let ctx = test_scenario::ctx(scenario);
+            amm::init_for_testing(ctx);
+        };
+
+        test_scenario::next_tx(scenario, ADMIN);
+        {
+            let list = test_scenario::take_shared<PoolList>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = mint_coin<A>(200, ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::create_pool_(init_a, init_b, 30, 10, ctx);
+            amm::create_pool_(&mut list, init_a, init_b, 30, 10, ctx);
+
+            test_scenario::return_shared(list);
         };
 
         test_scenario::next_tx(scenario, ADMIN);
@@ -141,16 +253,25 @@ module 0x0::amm_tests {
             assert!(lp_fee_bps == 30, 0);
             assert!(admin_fee_pct == 10, 0);
 
-            // test admin cap
-            let admin_cap = test_scenario::take_from_sender<PoolAdminCap>(scenario);
-
-            let admin_cap_pool_id = amm::admin_cap_pool_id(&admin_cap);
-            let pool_id = object::borrow_id(&pool);
-            assert!(admin_cap_pool_id == pool_id, 0);
-
-            // return objects
             test_scenario::return_shared(pool);
+
+            // test admin cap
+            let admin_cap = test_scenario::take_from_sender<AdminCap>(scenario);
             test_scenario::return_to_sender(scenario, admin_cap);
+        };
+
+        // create another one
+        test_scenario::next_tx(scenario, ADMIN);
+        {
+            let list = test_scenario::take_shared<PoolList>(scenario);
+            let ctx = test_scenario::ctx(scenario);
+
+            let init_a = mint_coin<A>(200, ctx);
+            let init_b = mint_coin<C>(100, ctx);
+
+            amm::create_pool_(&mut list, init_a, init_b, 30, 10, ctx);
+
+            test_scenario::return_shared(list);
         };
 
         test_scenario::end(scenario_val);
@@ -162,7 +283,7 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
     fun test_deposit_fails_on_amount_a_zero() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 100, 100, 30, 10);
 
@@ -182,7 +303,7 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
     fun test_deposit_fails_on_amount_b_zero() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 100, 100, 30, 10);
 
@@ -201,7 +322,7 @@ module 0x0::amm_tests {
 
     #[test]
     fun test_deposit_on_empty_pool() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 100, 100, 30, 10);
 
@@ -261,7 +382,7 @@ module 0x0::amm_tests {
 
     #[test]
     fun test_deposit() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 100, 50, 30, 10);
 
@@ -416,7 +537,7 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::EExcessiveSlippage)]
     fun test_deposit_fails_on_min_lp_out() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 100, 100, 30, 10);
 
@@ -436,30 +557,9 @@ module 0x0::amm_tests {
     /* ================= withdraw tests ================= */
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EInvalidPoolID)]
-    fun test_withdraw_fails_on_invalid_lp_coin() {
-        let scenario_val = test_scenario::begin(ADMIN);
-        let scenario = &mut scenario_val;
-
-        scenario_create_pool(scenario, 100, 100, 30, 10);
-        test_scenario::next_tx(scenario, ADMIN);
-        let lp_coin_1 = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);
-
-        scenario_create_pool(scenario, 100, 100, 30, 10);
-        test_scenario::next_tx(scenario, ADMIN);
-
-        let pool_2 = test_scenario::take_shared<Pool<A, B>>(scenario);
-
-        amm::withdraw_(&mut pool_2, lp_coin_1, 0, 0, test_scenario::ctx(scenario));
-
-        test_scenario::return_shared(pool_2);
-        test_scenario::end(scenario_val);
-    }
-
-    #[test]
     #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
     fun test_withdraw_fails_on_zero_input() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 100, 100, 30, 10);
 
@@ -479,7 +579,7 @@ module 0x0::amm_tests {
 
     #[test]
     fun test_withdraw() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 100, 13, 30, 10);
 
@@ -589,7 +689,7 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::EExcessiveSlippage)]
     fun test_withdraw_fails_on_min_a_out() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 100, 100, 30, 10);
 
@@ -612,7 +712,7 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::EExcessiveSlippage)]
     fun test_withdraw_fails_on_min_b_out() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 100, 100, 30, 10);
 
@@ -637,7 +737,7 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
     fun test_swap_a_fails_on_zero_input_a() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 100, 100, 30, 10);
 
@@ -658,7 +758,7 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
     fun test_swap_b_fails_on_zero_input_b() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 100, 100, 30, 10);
 
@@ -679,7 +779,7 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::ENoLiquidity)]
     fun test_swap_a_fails_on_zero_pool_balances() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 100, 100, 30, 10);
 
@@ -703,7 +803,7 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::ENoLiquidity)]
     fun test_swap_b_fails_on_zero_pool_balances() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 100, 100, 30, 10);
 
@@ -726,7 +826,7 @@ module 0x0::amm_tests {
 
     #[test]
     fun test_swap_a_without_lp_fees() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 200, 100, 0, 10);
 
@@ -766,7 +866,7 @@ module 0x0::amm_tests {
 
     #[test]
     fun test_swap_b_without_lp_fees() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 200, 100, 0, 10);
 
@@ -806,7 +906,7 @@ module 0x0::amm_tests {
 
     #[test]
     fun test_swap_a_with_lp_fees() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 20000, 10000, 30, 0); // lp fee 30 bps
 
@@ -871,7 +971,7 @@ module 0x0::amm_tests {
 
     #[test]
     fun test_swap_b_with_lp_fees() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 20000, 10000, 30, 0); // lp fee 30 bps
 
@@ -936,7 +1036,7 @@ module 0x0::amm_tests {
 
     #[test]
     fun test_swap_a_with_admin_fees() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 20000, 10000, 30, 30);
 
@@ -974,7 +1074,7 @@ module 0x0::amm_tests {
 
     #[test]
     fun test_swap_b_with_admin_fees() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 20000, 10000, 30, 30);
 
@@ -1012,7 +1112,7 @@ module 0x0::amm_tests {
 
     #[test]
     public fun test_admin_fees_are_correct() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 10_000_000, 10_000_000, 30, 100);
 
@@ -1038,7 +1138,7 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::EExcessiveSlippage)]
     fun test_swap_a_fails_on_min_out() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 200, 100, 0, 10);
 
@@ -1060,7 +1160,7 @@ module 0x0::amm_tests {
     #[test]
     #[expected_failure(abort_code = 0x0::amm::EExcessiveSlippage)]
     fun test_swap_b_fails_on_min_out() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 200, 100, 0, 10);
 
@@ -1083,7 +1183,7 @@ module 0x0::amm_tests {
 
     #[test]
     fun test_admin_withdraw_fees() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 20000, 10000, 30, 30);
 
@@ -1091,7 +1191,7 @@ module 0x0::amm_tests {
         test_scenario::next_tx(scenario, ADMIN);
         {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
-            let cap = test_scenario::take_from_sender<PoolAdminCap>(scenario);
+            let cap = test_scenario::take_from_sender<AdminCap>(scenario);
 
             // generate fees
             let ctx = test_scenario::ctx(scenario);
@@ -1125,7 +1225,7 @@ module 0x0::amm_tests {
         test_scenario::next_tx(scenario, ADMIN);
         {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
-            let cap = test_scenario::take_from_sender<PoolAdminCap>(scenario);
+            let cap = test_scenario::take_from_sender<AdminCap>(scenario);
 
             // withdraw
             let ctx = test_scenario::ctx(scenario);
@@ -1153,32 +1253,8 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EInvalidAdminCap)]
-    fun test_admin_withdraw_fees_fails_on_invalid_lp_coin() {
-        let scenario_val = test_scenario::begin(ADMIN);
-        let scenario = &mut scenario_val;
-
-        scenario_create_pool(scenario, 100, 100, 30, 10);
-        test_scenario::next_tx(scenario, ADMIN);
-        let cap_1 = test_scenario::take_from_sender<PoolAdminCap>(scenario);
-
-        scenario_create_pool(scenario, 100, 100, 30, 10);
-        test_scenario::next_tx(scenario, ADMIN);
-
-        let pool_2 = test_scenario::take_shared<Pool<A, B>>(scenario);
-
-        let ctx = test_scenario::ctx(scenario);
-        amm::admin_withdraw_fees_(&mut pool_2, &cap_1, 0, ctx);
-
-        test_scenario::return_shared(pool_2);
-        test_scenario::return_to_sender(scenario, cap_1);
-
-        test_scenario::end(scenario_val);
-    }
-
-    #[test]
     fun test_admin_withdraw_fees_amount_0_and_balance_0() {
-        let scenario_val = test_scenario::begin(ADMIN);
+        let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         scenario_create_pool(scenario, 20000, 10000, 30, 30);
 
@@ -1186,7 +1262,7 @@ module 0x0::amm_tests {
         test_scenario::next_tx(scenario, ADMIN);
         {
             let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
-            let cap = test_scenario::take_from_sender<PoolAdminCap>(scenario);
+            let cap = test_scenario::take_from_sender<AdminCap>(scenario);
 
             // destroy initial LPCoin
             let lp_coin = test_scenario::take_from_sender<LPCoin<A, B>>(scenario);

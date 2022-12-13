@@ -1,4 +1,6 @@
 module 0x0::amm {
+    use std::type_name::{Self, TypeName};
+    use std::vector;
     use sui::object::{Self, UID, ID};
     use sui::balance::{Self, Balance, Supply};
     use sui::coin::{Self, Coin};
@@ -7,6 +9,7 @@ module 0x0::amm {
     use sui::transfer;
     use sui::event;
     use sui::math;
+    use sui::table::{Self, Table};
 
     /* ================= errors ================= */
 
@@ -22,6 +25,10 @@ module 0x0::amm {
     const EInvalidFeeParam: u64 = 4;
     /// The provided admin capability doesn't belong to this pool.
     const EInvalidAdminCap: u64 = 5;
+    /// Pool pair coin types must be ordered alphabetically (`A` < `B`) and mustn't be equal.
+    const EInvalidPair: u64 = 6;
+    /// Pool for this pair already exists.
+    const EPoolAlreadyExists: u64 = 7;
 
     /* ================= events ================= */
 
@@ -111,18 +118,89 @@ module 0x0::amm {
         balance::value(&pool.admin_fee_balance)
     }
 
-    /* ================= PoolAdminCap ================= */
+    /* ================= PoolList ================= */
 
-    /// Capability allowing the bearer to execute admin operations on the pool
-    /// (e.g. withdraw admin fees).
-    struct PoolAdminCap has key, store {
+    /// `PoolList` stores a table of all pools created which is used to guarantee
+    /// that only one pool per currency pair can exist.
+    struct PoolList has key, store {
         id: UID,
-        pool_id: ID
+        table: Table<PoolListItem, bool>,
     }
 
-    /// Get the reference to the pool ID this capabilty belongs to.
-    public fun admin_cap_pool_id(cap: &PoolAdminCap): &ID {
-        &cap.pool_id
+    /// An item in the `PoolList` table. Represents a pool's currency pair.
+    struct PoolListItem has copy, drop, store  {
+        a: TypeName,
+        b: TypeName
+    }
+
+    /// Creat an empty `PoolList`.
+    fun empty_list(ctx: &mut TxContext): PoolList {
+        PoolList { 
+            id: object::new(ctx),
+            table: table::new(ctx)
+        }
+    }
+
+    // returns:
+    //    0 if a < b,
+    //    1 if a == b,
+    //    2 if a > b
+    fun cmp_type_names(a: &TypeName, b: &TypeName): u8 {
+        let bytes_a = std::ascii::as_bytes(type_name::borrow_string(a));
+        let bytes_b = std::ascii::as_bytes(type_name::borrow_string(b));
+
+        let len_a = vector::length(bytes_a);
+        let len_b = vector::length(bytes_b);
+
+        let i = 0;
+        let n = math::min(len_a, len_b);
+        while (i < n) {
+            let a = *vector::borrow(bytes_a, i);
+            let b = *vector::borrow(bytes_b, i);
+
+            if (a < b) {
+                return 0
+            };
+            if (a > b) {
+                return 2
+            };
+            i = i + 1;
+        };
+
+        if (len_a == len_b) {
+            return 1
+        };
+
+        return if (len_a < len_b) {
+            0
+        } else {
+            2
+        }
+    }
+
+    /// Add a new coin type tuple (`A`, `B`) to the list. Types must be sorted alphabetically (ASCII ordered)
+    /// such that `A` < `B`. They also cannot be equal.
+    /// Aborts when coin types are the same.
+    /// Aborts when coin types are not in order (type `A` must come before `B` alphabetically).
+    /// Aborts when coin type tuple is already in the list.
+    fun list_add<A, B>(self: &mut PoolList) {
+        let a = type_name::get<A>();
+        let b = type_name::get<B>();
+        assert!(cmp_type_names(&a, &b) == 0, EInvalidPair);
+
+        let item = PoolListItem{ a, b };
+        assert!(table::contains(&self.table, item) == false, EPoolAlreadyExists);
+
+        table::add(&mut self.table, item, true)
+    }
+
+    /* ================= AdminCap ================= */
+
+    /// Capability allowing the bearer to execute admin operations on the pools
+    /// (e.g. withdraw admin fees). There's only one `AdminCap` created during module
+    /// initialization that's valid for all pools.
+    struct AdminCap has key, store {
+        id: UID,
     }
 
     /* ================= math ================= */
@@ -192,19 +270,31 @@ module 0x0::amm {
 
     /* ================= main logic ================= */
 
-    /// Creates a new Pool with provided initial balances. Returns the initial LP coins
-    /// and the PoolAdminCap.
+    /// Initializes the `PoolList` objects and shares it, and transfers `AdminCap` to sender.
+    fun init(ctx: &mut TxContext) {
+        transfer::share_object(empty_list(ctx));
+        transfer::transfer(
+            AdminCap{ id: object::new(ctx) },
+            tx_context::sender(ctx)
+        )
+    }
+
+    /// Creates a new Pool with provided initial balances. Returns the initial LP coins.
     public fun create_pool<A, B>(
+        list: &mut PoolList,
         init_a: Balance<A>,
         init_b: Balance<B>,
         lp_fee_bps: u64,
         admin_fee_pct: u64,
         ctx: &mut TxContext,
-    ): (PoolAdminCap, LPCoin<A, B>) {
+    ): LPCoin<A, B> {
         // sanity checks
         assert!(balance::value(&init_a) > 0 && balance::value(&init_b) > 0, EZeroInput);
         assert!(lp_fee_bps < BPS_IN_100_PCT, EInvalidFeeParam);
         assert!(admin_fee_pct <= 100, EInvalidFeeParam);
+
+        // add to list (guarantees that there's only one pool per currency pair)
+        list_add<A, B>(list);
 
         // create pool
         let pool = Pool<A, B> {
@@ -221,41 +311,32 @@ module 0x0::amm {
         let lp_amt = mulsqrt(balance::value(&pool.balance_a), balance::value(&pool.balance_b));
         let lp_coin = lp_increase_supply(&mut pool, lp_amt, ctx);
 
-        // create admin cap
-        let cap = PoolAdminCap {
-            id: object::new(ctx),
-            pool_id: object::uid_to_inner(&pool.id)
-        };
-
         event::emit(PoolCreationEvent { pool_id: object::id(&pool) });
         transfer::share_object(pool);
 
-        (cap, lp_coin)
+        lp_coin
     }
 
     /// Entry function. Creates a new Pool with provided initial balances. Transfers
-    /// the initial LP coins and the PoolAdminCap to the sender.
+    /// the initial LP coins to the sender.
     public entry fun create_pool_<A, B>(
+        list: &mut PoolList,
         init_a: Coin<A>,
         init_b: Coin<B>,
         lp_fee_bps: u64,
         admin_fee_pct: u64,
         ctx: &mut TxContext,
     ) {
-        let (cap, lp_coin) = create_pool(
+        let lp_coin = create_pool(
+            list,
             coin::into_balance(init_a),
             coin::into_balance(init_b),
             lp_fee_bps,
             admin_fee_pct,
             ctx
         );
-
         transfer::transfer(
             lp_coin,
-            tx_context::sender(ctx)
-        );
-        transfer::transfer(
-            cap,
             tx_context::sender(ctx)
         );
     }
@@ -543,12 +624,10 @@ module 0x0::amm {
     /// When `amount` is set to 0, it will withdraw all available fees.
     public fun admin_withdraw_fees<A, B>(
         pool: &mut Pool<A, B>,
-        admin_cap: &PoolAdminCap,
+        _: &AdminCap, 
         amount: u64,
         ctx: &mut TxContext
     ): LPCoin<A, B> {
-        assert!(admin_cap.pool_id == object::uid_to_inner(&pool.id), EInvalidAdminCap);
-
         if (amount == 0) amount = balance::value(&pool.admin_fee_balance);
         LPCoin {
             id: object::new(ctx),
@@ -562,7 +641,7 @@ module 0x0::amm {
     /// available fees. Transfers the resulting LPCoin to the sender (if any).
     public entry fun admin_withdraw_fees_<A, B>(
         pool: &mut Pool<A, B>,
-        admin_cap: &PoolAdminCap,
+        admin_cap: &AdminCap,
         amount: u64,
         ctx: &mut TxContext
     ) {
@@ -578,5 +657,98 @@ module 0x0::amm {
         let LPCoin {id, pool_id: _, balance} = self;
         object::delete(id);
         balance::destroy_for_testing(balance);
+    }
+
+    #[test_only]
+    public fun init_for_testing(ctx: &mut TxContext) {
+        init(ctx)
+    }
+
+    /* ================= tests ================= */
+
+    #[test_only]
+    struct BAR has drop {}
+    #[test_only]
+    struct FOO has drop {}
+    #[test_only]
+    struct FOOD has drop {}
+    #[test_only]
+    struct FOOd has drop {}
+
+    #[test]
+    fun test_cmp_type() {
+        assert!(cmp_type_names(&type_name::get<BAR>(), &type_name::get<FOO>()) == 0, 0);
+        assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<FOO>()) == 1, 0);
+        assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<BAR>()) == 2, 0);
+
+        assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<FOOd>()) == 0, 0);
+        assert!(cmp_type_names(&type_name::get<FOOd>(), &type_name::get<FOO>()) == 2, 0);
+
+        assert!(cmp_type_names(&type_name::get<FOOD>(), &type_name::get<FOOd>()) == 0, 0);
+        assert!(cmp_type_names(&type_name::get<FOOd>(), &type_name::get<FOOD>()) == 2, 0);
+    }
+
+    #[test_only]
+    fun destroy_empty_for_testing(list: PoolList) {
+        let PoolList { id, table } = list;
+        object::delete(id);
+        table::destroy_empty(table);
+    }
+
+    #[test_only]
+    fun remove_for_testing<A, B>(list: &mut PoolList) {
+        let a = type_name::get<A>();
+        let b = type_name::get<B>();
+        table::remove(&mut list.table, PoolListItem{ a, b });
+    }
+
+    #[test]
+    fun test_pool_list_add() {
+        let ctx = &mut tx_context::dummy();
+        let list = empty_list(ctx);
+
+        list_add<BAR, FOO>(&mut list);
+        list_add<FOO, FOOd>(&mut list);
+
+        remove_for_testing<BAR, FOO>(&mut list);
+        remove_for_testing<FOO, FOOd>(&mut list);
+        destroy_empty_for_testing(list);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = EInvalidPair)]
+    fun test_pool_list_add_aborts_when_wrong_order() {
+        let ctx = &mut tx_context::dummy();
+        let list = empty_list(ctx);
+
+        list_add<FOO, BAR>(&mut list);
+
+        remove_for_testing<FOO, BAR>(&mut list);
+        destroy_empty_for_testing(list);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = EInvalidPair)]
+    fun test_pool_list_add_aborts_when_equal() {
+        let ctx = &mut tx_context::dummy();
+        let list = empty_list(ctx);
+
+        list_add<FOO, FOO>(&mut list);
+
+        remove_for_testing<FOO, FOO>(&mut list);
+        destroy_empty_for_testing(list);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = EPoolAlreadyExists)]
+    fun test_pool_list_add_aborts_when_already_exists() {
+        let ctx = &mut tx_context::dummy();
+        let list = empty_list(ctx);
+
+        list_add<BAR, FOO>(&mut list);
+        list_add<BAR, FOO>(&mut list); // aborts here
+
+        remove_for_testing<BAR, FOO>(&mut list);
+        destroy_empty_for_testing(list);
     }
 }
