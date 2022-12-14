@@ -3,7 +3,6 @@
 import {
   bcs,
   Coin,
-  COIN_TYPE,
   getMoveObjectType,
   GetObjectDataResponse,
   getObjectId,
@@ -19,7 +18,9 @@ import { getWalletAddress } from './util'
 /* ============================== constants ================================= */
 
 const POOL_TYPE_REGEX = new RegExp(`^${CONFIG.ammPackageId}::amm::Pool<(.+), (.+)>$`)
-const LP_COIN_TYPE_REGEX = new RegExp(`^${COIN_TYPE}<${CONFIG.ammPackageId}::amm::LP<(.+), (.+)>>$`)
+const LP_COIN_TYPE_REGEX = new RegExp(
+  `^0x2::coin::Coin<${CONFIG.ammPackageId}::amm::LP<(.+), (.+)>>$`
+)
 
 const POOL_CREATION_EVENT = `${CONFIG.ammPackageId}::amm::PoolCreationEvent`
 

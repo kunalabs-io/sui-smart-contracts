@@ -16,9 +16,9 @@
     "@emotion/styled": "^11.10.4",
     "@mui/icons-material": "^5.10.9",
     "@mui/material": "^5.10.10",
-    "@mysten/sui.js": "^0.17.1",
+    "@mysten/sui.js": "^0.20.0",
+    "@mysten/wallet-adapter-react": "^11.0.0",
     "@mysten/wallet-adapter-wallet-standard": "^0.3.3",
-    "@mysten/wallet-adapter-react": "^8.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
@@ -28,7 +28,7 @@
     "@types/react-dom": "^18.0.6",
     "@typescript-eslint/eslint-plugin": "^5.40.1",
     "@typescript-eslint/parser": "^5.40.1",
-    "@vitejs/plugin-react": "^2.1.0",
+    "@vitejs/plugin-react": "^3.0.0",
     "eslint": "^8.25.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-jsx-a11y": "^6.6.1",
@@ -37,6 +37,6 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "prettier": "^2.7.1",
     "typescript": "^4.6.4",
-    "vite": "^3.1.0"
+    "vite": "^4.0.1"
   }
 }
