@@ -22,6 +22,7 @@ import { ConnectWalletModal } from '../Wallet/ConnectWalletModal'
 import { getCoinBalances, getUniqueCoinTypes, getUserCoins } from '../../lib/coin'
 import { ONLY_NUMBERS_REGEX } from '../../utils/regex'
 import { isSubmitFormDisabled } from '../../utils/checkSubmittingForm'
+import { CONFIG } from '../../lib/config'
 
 interface Props {
   pools: GetObjectDataResponse[]
@@ -80,7 +81,7 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
       const initialCoinOptions = uniqueCoinTypeArgs.map(arg => ({ value: arg, label: Coin.getCoinSymbol(arg) }))
       setFirstCoinOptions(initialCoinOptions)
     } else {
-      setFirstCoinOptions(userCoins)
+      setFirstCoinOptions(userCoins.filter(option => !option.value.startsWith(`${CONFIG.ammPackageId}::amm::LP`)))
     }
   }, [pools, tabValue, userCoins])
 
@@ -94,7 +95,11 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
       }))
       setSecondCoinOptions(newSecondCoinOptions)
     } else {
-      setSecondCoinOptions(userCoins.filter(option => option.value !== firstCoinType))
+      setSecondCoinOptions(
+        userCoins
+          .filter(option => !option.value.startsWith(`${CONFIG.ammPackageId}::amm::LP`))
+          .filter(option => option.value !== firstCoinType)
+      )
     }
   }, [pools, tabValue, firstCoinType, userCoins])
 

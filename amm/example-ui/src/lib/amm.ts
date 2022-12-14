@@ -3,6 +3,7 @@
 import {
   bcs,
   Coin,
+  COIN_TYPE,
   getMoveObjectType,
   GetObjectDataResponse,
   getObjectId,
@@ -18,7 +19,7 @@ import { getWalletAddress } from './util'
 /* ============================== constants ================================= */
 
 const POOL_TYPE_REGEX = new RegExp(`^${CONFIG.ammPackageId}::amm::Pool<(.+), (.+)>$`)
-const LP_COIN_TYPE_REGEX = new RegExp(`^${CONFIG.ammPackageId}::amm::LPCoin<(.+), (.+)>$`)
+const LP_COIN_TYPE_REGEX = new RegExp(`^${COIN_TYPE}<${CONFIG.ammPackageId}::amm::LP<(.+), (.+)>>$`)
 
 const POOL_CREATION_EVENT = `${CONFIG.ammPackageId}::amm::PoolCreationEvent`
 
@@ -49,37 +50,16 @@ async function fetchPoolsViaEvents(provider: JsonRpcProvider): Promise<string[]>
   return poolIds
 }
 
-async function fetchPoolsViaLpCoins(
-  provider: JsonRpcProvider,
-  wallet: WalletAdapter
-): Promise<string[]> {
-  const lpCoins = await getUserLpCoins(provider, wallet)
-
-  const poolIdSet = new Set<string>()
-  lpCoins.forEach(pool => poolIdSet.add((pool as any).details.data.fields.pool_id))
-
-  return Array.from(poolIdSet)
-}
-
-export async function getPools(
-  provider: JsonRpcProvider,
-  wallet: WalletAdapter
-): Promise<GetObjectDataResponse[]> {
+export async function getPools(provider: JsonRpcProvider): Promise<GetObjectDataResponse[]> {
   const poolIdSet = new Set<string>()
   const ret: string[] = []
 
-  const [viaEvents, viaLpCoins] = await Promise.all([
-    CONFIG.fetchPoolsViaEvents ? fetchPoolsViaEvents(provider) : [],
-    fetchPoolsViaLpCoins(provider, wallet),
-  ])
-  viaLpCoins
-    .concat(viaEvents)
-    .concat(CONFIG.ammDefaultPools)
-    .forEach(id => {
-      if (poolIdSet.has(id)) return
-      ret.push(id)
-      poolIdSet.add(id)
-    })
+  const viaEvents = CONFIG.fetchPoolsViaEvents ? await fetchPoolsViaEvents(provider) : []
+  viaEvents.concat(CONFIG.ammDefaultPools).forEach(id => {
+    if (poolIdSet.has(id)) return
+    ret.push(id)
+    poolIdSet.add(id)
+  })
 
   return await provider.getObjectBatch(ret)
 }
@@ -254,14 +234,6 @@ export async function getUserLpCoins(
   return await provider.getObjectBatch(infos.map(info => info.objectId))
 }
 
-export function getLpCoinPoolId(lpCoin: GetObjectDataResponse): string {
-  return (lpCoin as any).details.data.fields.pool_id
-}
-
-export function getLpCoinBalance(lpCoin: GetObjectDataResponse): bigint {
-  return BigInt((lpCoin as any).details.data.fields.balance)
-}
-
 /* =========================== smart contract calls ========================= */
 
 export interface CreatePoolParams {
@@ -273,6 +245,21 @@ export interface CreatePoolParams {
   adminFeePct: number
 }
 
+function maybeReorderCreatePoolParams(params: CreatePoolParams): CreatePoolParams {
+  if (params.typeA < params.typeB) {
+    return params
+  } else {
+    return {
+      typeA: params.typeB,
+      initAmountA: params.initAmountB,
+      typeB: params.typeA,
+      initAmountB: params.initAmountA,
+      lpFeeBps: params.lpFeeBps,
+      adminFeePct: params.adminFeePct,
+    }
+  }
+}
+
 export async function createPool(
   provider: JsonRpcProvider,
   wallet: WalletAdapter,
@@ -281,6 +268,8 @@ export async function createPool(
   if (wallet.signAndExecuteTransaction === undefined) {
     throw new Error('Wallet not supported')
   }
+
+  params = maybeReorderCreatePoolParams(params)
 
   const [inputA, inputB] = await Promise.all([
     getOrCreateCoinOfLargeEnoughBalance(provider, wallet, params.typeA, params.initAmountA),
@@ -296,6 +285,7 @@ export async function createPool(
       function: 'maybe_split_then_create_pool',
       typeArguments: [params.typeA, params.typeB],
       arguments: [
+        CONFIG.ammPoolListObj,
         Coin.getID(inputA),
         params.initAmountA.toString(),
         Coin.getID(inputB),
@@ -307,6 +297,9 @@ export async function createPool(
     },
   })
   console.debug(res)
+  if (res.effects.status.error) {
+    throw new Error(res.effects.status.error)
+  }
 }
 
 export async function swap(
@@ -425,6 +418,7 @@ export async function deposit(
 export async function withdraw(
   provider: JsonRpcProvider,
   wallet: WalletAdapter,
+  pools: GetObjectDataResponse[],
   lpCoin: GetObjectDataResponse,
   slippagePct: number
 ) {
@@ -432,10 +426,13 @@ export async function withdraw(
     throw new Error('Wallet not supported')
   }
 
-  const poolId = getLpCoinPoolId(lpCoin)
-  const pool = await provider.getObject(poolId)
+  const lpCoinTypeArgs = getLpCoinTypeArgs(lpCoin)
+  const pool = selectPoolForPair(pools, lpCoinTypeArgs)
+  if (pool === undefined) {
+    throw new Error('pool for provided LP coin not found in pool list!')
+  }
   const poolBalances = getPoolBalances(pool)
-  const lpCoinBalance = getLpCoinBalance(lpCoin)
+  const lpCoinBalance = Coin.getBalance(lpCoin)!
 
   const minA =
     (lpCoinBalance * poolBalances[0] * BigInt(100 - slippagePct)) / (poolBalances[2] * 100n)

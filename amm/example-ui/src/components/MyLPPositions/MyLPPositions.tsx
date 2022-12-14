@@ -4,14 +4,7 @@ import { useWallet } from '@mysten/wallet-adapter-react'
 import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Snackbar, Typography } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 
-import {
-  calcPoolLpValue,
-  getLpCoinBalance,
-  getLpCoinPoolId,
-  getLpCoinTypeArgs,
-  getUserLpCoins,
-  withdraw,
-} from '../../lib/amm'
+import { calcPoolLpValue, getLpCoinTypeArgs, getUserLpCoins, selectPoolForPair, withdraw } from '../../lib/amm'
 import { ConnectWalletModal } from '../Wallet/ConnectWalletModal'
 import { ellipsizeAddress } from '../../lib/util'
 
@@ -54,7 +47,7 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
       return
     }
     try {
-      await withdraw(provider, wallet, lpCoin, 1)
+      await withdraw(provider, wallet, pools, lpCoin, 1)
       getUpdatedPools()
       setSuccessSnackbar({ open: true, message: 'Withdraw Successful' })
     } catch (e) {
@@ -85,11 +78,10 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
             const [coinTypeA, coinTypeB] = getLpCoinTypeArgs(lpCoin)
             const symbolA = Coin.getCoinSymbol(coinTypeA)
             const symbolB = Coin.getCoinSymbol(coinTypeB)
-            const lpAmount = getLpCoinBalance(lpCoin)
+            const lpAmount = Coin.getBalance(lpCoin)!
 
             // find pool corresponding to the lp coin
-            const lpCoinPoolId = getLpCoinPoolId(lpCoin)
-            const pool = pools.find(pool => getObjectId(pool) === lpCoinPoolId)
+            const pool = selectPoolForPair(pools, getLpCoinTypeArgs(lpCoin))
             if (pool === undefined) {
               return null
             }

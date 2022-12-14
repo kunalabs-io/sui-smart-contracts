@@ -22,7 +22,7 @@ export const Amm = () => {
     if (!wallet || !connected) {
       return
     }
-    getPools(provider, wallet).then(setPools).catch(console.error)
+    getPools(provider).then(setPools).catch(console.error)
   }, [count, wallet, connected])
 
   const getUpdatedPools = useCallback(() => {
