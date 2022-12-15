@@ -1,2 +1,3 @@
 .envrc
 sui.log.*
+node_modules/
