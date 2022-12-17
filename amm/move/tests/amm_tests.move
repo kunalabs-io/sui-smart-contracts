@@ -5,7 +5,7 @@ module 0x0::amm_tests {
     use sui::balance::{Self, Balance};
     //use sui::object;
     use sui::coin::{Self, Coin};
-    use 0x0::amm::{Self, Pool, PoolList, AdminCap, LP};
+    use 0x0::amm::{Self, Pool, PoolRegistry, AdminCap, LP};
 
     const ADMIN: address = @0xABBA;
     const USER: address = @0xB0B;
@@ -42,15 +42,15 @@ module 0x0::amm_tests {
         lp_fee_bps: u64,
         admin_fee_pct: u64
     ) {
-        let list = test_scenario::take_shared<PoolList>(scenario);
+        let registry = test_scenario::take_shared<PoolRegistry>(scenario);
         let ctx = test_scenario::ctx(scenario);
 
         let init_a = mint_coin<A>(init_a, ctx);
         let init_b = mint_coin<B>(init_b, ctx);
 
-        amm::create_pool_(&mut list, init_a, init_b, lp_fee_bps, admin_fee_pct, ctx);
+        amm::create_pool_(&mut registry, init_a, init_b, lp_fee_bps, admin_fee_pct, ctx);
 
-        test_scenario::return_shared(list);
+        test_scenario::return_shared(registry);
     }
 
     fun assert_and_destroy_balance<T>(balance: Balance<T>, value: u64) {
@@ -66,15 +66,15 @@ module 0x0::amm_tests {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         {
-            let list = test_scenario::take_shared<PoolList>(scenario);
+            let registry = test_scenario::take_shared<PoolRegistry>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = coin::zero<A>(ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::create_pool_(&mut list, init_a, init_b, 0, 0, ctx);
+            amm::create_pool_(&mut registry, init_a, init_b, 0, 0, ctx);
 
-            test_scenario::return_shared(list);
+            test_scenario::return_shared(registry);
         };
 
         test_scenario::end(scenario_val);
@@ -86,15 +86,15 @@ module 0x0::amm_tests {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         {
-            let list = test_scenario::take_shared<PoolList>(scenario);
+            let registry = test_scenario::take_shared<PoolRegistry>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = mint_coin<A>(100, ctx);
             let init_b = coin::zero<B>(ctx);
 
-            amm::create_pool_(&mut list, init_a, init_b, 0, 0, ctx);
+            amm::create_pool_(&mut registry, init_a, init_b, 0, 0, ctx);
 
-            test_scenario::return_shared(list);
+            test_scenario::return_shared(registry);
         };
 
         test_scenario::end(scenario_val);
@@ -106,15 +106,15 @@ module 0x0::amm_tests {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         {
-            let list = test_scenario::take_shared<PoolList>(scenario);
+            let registry = test_scenario::take_shared<PoolRegistry>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = mint_coin<A>(100, ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::create_pool_(&mut list, init_a, init_b, 10001, 0, ctx);
+            amm::create_pool_(&mut registry, init_a, init_b, 10001, 0, ctx);
 
-            test_scenario::return_shared(list);
+            test_scenario::return_shared(registry);
         };
 
         test_scenario::end(scenario_val);
@@ -126,15 +126,15 @@ module 0x0::amm_tests {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         {
-            let list = test_scenario::take_shared<PoolList>(scenario);
+            let registry = test_scenario::take_shared<PoolRegistry>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = mint_coin<A>(100, ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::create_pool_(&mut list, init_a, init_b, 30, 101, ctx);
+            amm::create_pool_(&mut registry, init_a, init_b, 30, 101, ctx);
 
-            test_scenario::return_shared(list);
+            test_scenario::return_shared(registry);
         };
 
         test_scenario::end(scenario_val);
@@ -146,29 +146,29 @@ module 0x0::amm_tests {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         {
-            let list = test_scenario::take_shared<PoolList>(scenario);
+            let registry = test_scenario::take_shared<PoolRegistry>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = mint_coin<A>(200, ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::create_pool_(&mut list, init_a, init_b, 30, 10, ctx);
+            amm::create_pool_(&mut registry, init_a, init_b, 30, 10, ctx);
 
-            test_scenario::return_shared(list);
+            test_scenario::return_shared(registry);
 
         };
 
         test_scenario::next_tx(scenario, ADMIN);
         {
-            let list = test_scenario::take_shared<PoolList>(scenario);
+            let registry = test_scenario::take_shared<PoolRegistry>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = mint_coin<A>(200, ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::create_pool_(&mut list, init_a, init_b, 30, 10, ctx); // aborts here
+            amm::create_pool_(&mut registry, init_a, init_b, 30, 10, ctx); // aborts here
 
-            test_scenario::return_shared(list);
+            test_scenario::return_shared(registry);
         };
 
         test_scenario::end(scenario_val);
@@ -180,15 +180,15 @@ module 0x0::amm_tests {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         {
-            let list = test_scenario::take_shared<PoolList>(scenario);
+            let registry = test_scenario::take_shared<PoolRegistry>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = mint_coin<A>(200, ctx);
             let init_b = mint_coin<A>(100, ctx);
 
-            amm::create_pool_(&mut list, init_a, init_b, 30, 10, ctx); // aborts here
+            amm::create_pool_(&mut registry, init_a, init_b, 30, 10, ctx); // aborts here
 
-            test_scenario::return_shared(list);
+            test_scenario::return_shared(registry);
 
         };
 
@@ -201,15 +201,15 @@ module 0x0::amm_tests {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
         {
-            let list = test_scenario::take_shared<PoolList>(scenario);
+            let registry = test_scenario::take_shared<PoolRegistry>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = mint_coin<B>(200, ctx);
             let init_b = mint_coin<A>(100, ctx);
 
-            amm::create_pool_(&mut list, init_a, init_b, 30, 10, ctx); // aborts here
+            amm::create_pool_(&mut registry, init_a, init_b, 30, 10, ctx); // aborts here
 
-            test_scenario::return_shared(list);
+            test_scenario::return_shared(registry);
 
         };
 
@@ -227,15 +227,15 @@ module 0x0::amm_tests {
 
         test_scenario::next_tx(scenario, ADMIN);
         {
-            let list = test_scenario::take_shared<PoolList>(scenario);
+            let registry = test_scenario::take_shared<PoolRegistry>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = mint_coin<A>(200, ctx);
             let init_b = mint_coin<B>(100, ctx);
 
-            amm::create_pool_(&mut list, init_a, init_b, 30, 10, ctx);
+            amm::create_pool_(&mut registry, init_a, init_b, 30, 10, ctx);
 
-            test_scenario::return_shared(list);
+            test_scenario::return_shared(registry);
         };
 
         test_scenario::next_tx(scenario, ADMIN);
@@ -262,15 +262,15 @@ module 0x0::amm_tests {
         // create another one
         test_scenario::next_tx(scenario, ADMIN);
         {
-            let list = test_scenario::take_shared<PoolList>(scenario);
+            let registry = test_scenario::take_shared<PoolRegistry>(scenario);
             let ctx = test_scenario::ctx(scenario);
 
             let init_a = mint_coin<A>(200, ctx);
             let init_b = mint_coin<C>(100, ctx);
 
-            amm::create_pool_(&mut list, init_a, init_b, 30, 10, ctx);
+            amm::create_pool_(&mut registry, init_a, init_b, 30, 10, ctx);
 
-            test_scenario::return_shared(list);
+            test_scenario::return_shared(registry);
         };
 
         test_scenario::end(scenario_val);

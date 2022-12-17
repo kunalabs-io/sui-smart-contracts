@@ -83,24 +83,24 @@ module 0x0::amm {
         balance::value(&pool.admin_fee_balance)
     }
 
-    /* ================= PoolList ================= */
+    /* ================= PoolRegistry ================= */
 
-    /// `PoolList` stores a table of all pools created which is used to guarantee
+    /// `PoolRegistry` stores a table of all pools created which is used to guarantee
     /// that only one pool per currency pair can exist.
-    struct PoolList has key, store {
+    struct PoolRegistry has key, store {
         id: UID,
-        table: Table<PoolListItem, bool>,
+        table: Table<PoolRegistryItem, bool>,
     }
 
-    /// An item in the `PoolList` table. Represents a pool's currency pair.
-    struct PoolListItem has copy, drop, store  {
+    /// An item in the `PoolRegistry` table. Represents a pool's currency pair.
+    struct PoolRegistryItem has copy, drop, store  {
         a: TypeName,
         b: TypeName
     }
 
-    /// Creat an empty `PoolList`.
-    fun empty_list(ctx: &mut TxContext): PoolList {
-        PoolList { 
+    /// Creat a new empty `PoolRegistry`.
+    fun new_registry(ctx: &mut TxContext): PoolRegistry {
+        PoolRegistry { 
             id: object::new(ctx),
             table: table::new(ctx)
         }
@@ -143,17 +143,17 @@ module 0x0::amm {
         }
     }
 
-    /// Add a new coin type tuple (`A`, `B`) to the list. Types must be sorted alphabetically (ASCII ordered)
+    /// Add a new coin type tuple (`A`, `B`) to the registry. Types must be sorted alphabetically (ASCII ordered)
     /// such that `A` < `B`. They also cannot be equal.
     /// Aborts when coin types are the same.
     /// Aborts when coin types are not in order (type `A` must come before `B` alphabetically).
-    /// Aborts when coin type tuple is already in the list.
-    fun list_add<A, B>(self: &mut PoolList) {
+    /// Aborts when coin type tuple is already in the registry.
+    fun registry_add<A, B>(self: &mut PoolRegistry) {
         let a = type_name::get<A>();
         let b = type_name::get<B>();
         assert!(cmp_type_names(&a, &b) == 0, EInvalidPair);
 
-        let item = PoolListItem{ a, b };
+        let item = PoolRegistryItem{ a, b };
         assert!(table::contains(&self.table, item) == false, EPoolAlreadyExists);
 
         table::add(&mut self.table, item, true)
@@ -212,9 +212,9 @@ module 0x0::amm {
 
     /* ================= main logic ================= */
 
-    /// Initializes the `PoolList` objects and shares it, and transfers `AdminCap` to sender.
+    /// Initializes the `PoolRegistry` objects and shares it, and transfers `AdminCap` to sender.
     fun init(ctx: &mut TxContext) {
-        transfer::share_object(empty_list(ctx));
+        transfer::share_object(new_registry(ctx));
         transfer::transfer(
             AdminCap{ id: object::new(ctx) },
             tx_context::sender(ctx)
@@ -223,7 +223,7 @@ module 0x0::amm {
 
     /// Creates a new Pool with provided initial balances. Returns the initial LP coins.
     public fun create_pool<A, B>(
-        list: &mut PoolList,
+        registry: &mut PoolRegistry,
         init_a: Balance<A>,
         init_b: Balance<B>,
         lp_fee_bps: u64,
@@ -235,8 +235,8 @@ module 0x0::amm {
         assert!(lp_fee_bps < BPS_IN_100_PCT, EInvalidFeeParam);
         assert!(admin_fee_pct <= 100, EInvalidFeeParam);
 
-        // add to list (guarantees that there's only one pool per currency pair)
-        list_add<A, B>(list);
+        // add to registry (guarantees that there's only one pool per currency pair)
+        registry_add<A, B>(registry);
 
         // create pool
         let pool = Pool<A, B> {
@@ -262,7 +262,7 @@ module 0x0::amm {
     /// Entry function. Creates a new Pool with provided initial balances. Transfers
     /// the initial LP coins to the sender.
     public entry fun create_pool_<A, B>(
-        list: &mut PoolList,
+        registry: &mut PoolRegistry,
         init_a: Coin<A>,
         init_b: Coin<B>,
         lp_fee_bps: u64,
@@ -270,7 +270,7 @@ module 0x0::amm {
         ctx: &mut TxContext,
     ) {
         let lp_balance = create_pool(
-            list,
+            registry,
             coin::into_balance(init_a),
             coin::into_balance(init_b),
             lp_fee_bps,
@@ -614,66 +614,66 @@ module 0x0::amm {
     }
 
     #[test_only]
-    fun destroy_empty_for_testing(list: PoolList) {
-        let PoolList { id, table } = list;
+    fun destroy_empty_registry_for_testing(registry: PoolRegistry) {
+        let PoolRegistry { id, table } = registry;
         object::delete(id);
         table::destroy_empty(table);
     }
 
     #[test_only]
-    fun remove_for_testing<A, B>(list: &mut PoolList) {
+    fun remove_for_testing<A, B>(registry: &mut PoolRegistry) {
         let a = type_name::get<A>();
         let b = type_name::get<B>();
-        table::remove(&mut list.table, PoolListItem{ a, b });
+        table::remove(&mut registry.table, PoolRegistryItem{ a, b });
     }
 
     #[test]
-    fun test_pool_list_add() {
+    fun test_pool_registry_add() {
         let ctx = &mut tx_context::dummy();
-        let list = empty_list(ctx);
+        let registry = new_registry(ctx);
 
-        list_add<BAR, FOO>(&mut list);
-        list_add<FOO, FOOd>(&mut list);
+        registry_add<BAR, FOO>(&mut registry);
+        registry_add<FOO, FOOd>(&mut registry);
 
-        remove_for_testing<BAR, FOO>(&mut list);
-        remove_for_testing<FOO, FOOd>(&mut list);
-        destroy_empty_for_testing(list);
-    }
-
-    #[test]
-    #[expected_failure(abort_code = EInvalidPair)]
-    fun test_pool_list_add_aborts_when_wrong_order() {
-        let ctx = &mut tx_context::dummy();
-        let list = empty_list(ctx);
-
-        list_add<FOO, BAR>(&mut list);
-
-        remove_for_testing<FOO, BAR>(&mut list);
-        destroy_empty_for_testing(list);
+        remove_for_testing<BAR, FOO>(&mut registry);
+        remove_for_testing<FOO, FOOd>(&mut registry);
+        destroy_empty_registry_for_testing(registry);
     }
 
     #[test]
     #[expected_failure(abort_code = EInvalidPair)]
-    fun test_pool_list_add_aborts_when_equal() {
+    fun test_pool_registry_add_aborts_when_wrong_order() {
         let ctx = &mut tx_context::dummy();
-        let list = empty_list(ctx);
+        let registry = new_registry(ctx);
 
-        list_add<FOO, FOO>(&mut list);
+        registry_add<FOO, BAR>(&mut registry);
 
-        remove_for_testing<FOO, FOO>(&mut list);
-        destroy_empty_for_testing(list);
+        remove_for_testing<FOO, BAR>(&mut registry);
+        destroy_empty_registry_for_testing(registry);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = EInvalidPair)]
+    fun test_pool_registry_add_aborts_when_equal() {
+        let ctx = &mut tx_context::dummy();
+        let registry = new_registry(ctx);
+
+        registry_add<FOO, FOO>(&mut registry);
+
+        remove_for_testing<FOO, FOO>(&mut registry);
+        destroy_empty_registry_for_testing(registry);
     }
 
     #[test]
     #[expected_failure(abort_code = EPoolAlreadyExists)]
-    fun test_pool_list_add_aborts_when_already_exists() {
+    fun test_pool_registry_add_aborts_when_already_exists() {
         let ctx = &mut tx_context::dummy();
-        let list = empty_list(ctx);
+        let registry = new_registry(ctx);
 
-        list_add<BAR, FOO>(&mut list);
-        list_add<BAR, FOO>(&mut list); // aborts here
+        registry_add<BAR, FOO>(&mut registry);
+        registry_add<BAR, FOO>(&mut registry); // aborts here
 
-        remove_for_testing<BAR, FOO>(&mut list);
-        destroy_empty_for_testing(list);
+        remove_for_testing<BAR, FOO>(&mut registry);
+        destroy_empty_registry_for_testing(registry);
     }
 }

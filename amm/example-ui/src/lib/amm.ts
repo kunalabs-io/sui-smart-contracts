@@ -286,7 +286,7 @@ export async function createPool(
       function: 'maybe_split_then_create_pool',
       typeArguments: [params.typeA, params.typeB],
       arguments: [
-        CONFIG.ammPoolListObj,
+        CONFIG.ammPoolRegistryObj,
         Coin.getID(inputA),
         params.initAmountA.toString(),
         Coin.getID(inputB),
