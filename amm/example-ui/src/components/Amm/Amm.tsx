@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
-import { GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
 import { useWallet } from '@mysten/wallet-adapter-react'
 import { Box } from '@mui/material'
+import { JsonRpcProvider } from '@mysten/sui.js'
 
-import { getPools } from '../../lib/amm'
 import { SwapAndCreatePool } from '../SwapAndCreatePool/SwapAndCreatePool'
 import { MyLPPositions } from '../MyLPPositions/MyLPPositions'
 import { Pools } from '../Pools/Pools'
 import { CONFIG } from '../../lib/config'
+import { Pool } from '../../lib/amm-sdk/pool'
+import { fetchAllPools } from '../../lib/amm-sdk/util'
 
 const provider = new JsonRpcProvider(CONFIG.rpcUrl)
 
@@ -16,13 +17,13 @@ export const Amm = () => {
 
   const [count, setCount] = useState(0)
 
-  const [pools, setPools] = useState<GetObjectDataResponse[]>([])
+  const [pools, setPools] = useState<Pool[]>([])
 
   useEffect(() => {
     if (!wallet || !connected) {
       return
     }
-    getPools(provider).then(setPools).catch(console.error)
+    fetchAllPools(provider).then(setPools).catch(console.error)
   }, [count, wallet, connected])
 
   const getUpdatedPools = useCallback(() => {

@@ -3,16 +3,16 @@ import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Snackbar } f
 import { Typography } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import Button from '@mui/material/Button'
-import { Coin, GetObjectDataResponse, getObjectId, JsonRpcProvider } from '@mysten/sui.js'
+import { JsonRpcProvider } from '@mysten/sui.js'
 import { useWallet } from '@mysten/wallet-adapter-react'
 
-import { getPoolBalances, getPoolCoinTypeArgs } from '../../lib/amm'
 import { AddDeposit } from './AddDeposit'
 import { ConnectWalletModal } from '../Wallet/ConnectWalletModal'
 import { ellipsizeAddress } from '../../lib/util'
+import { Pool } from '../../lib/amm-sdk/pool'
 
 interface Props {
-  pools: GetObjectDataResponse[]
+  pools: Pool[]
   provider: JsonRpcProvider
   getUpdatedPools: () => void
 }
@@ -25,9 +25,9 @@ export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
   const [expanded, setExpanded] = useState(true)
 
   const [isOpenAddDeposit, setIsOpenAddDeposit] = useState(false)
-  const [activePool, setActivePool] = useState<GetObjectDataResponse>()
+  const [activePool, setActivePool] = useState<Pool>()
 
-  const handleAddDepositClick = (pool: GetObjectDataResponse) => {
+  const handleAddDepositClick = (pool: Pool) => {
     setActivePool(pool)
     setIsOpenAddDeposit(true)
   }
@@ -73,14 +73,16 @@ export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
         </AccordionSummary>
         <AccordionDetails>
           {pools.map(pool => {
-            const [coinTypeA, coinTypeB] = getPoolCoinTypeArgs(pool)
-            const symbolA = Coin.getCoinSymbol(coinTypeA)
-            const symbolB = Coin.getCoinSymbol(coinTypeB)
-            const [balanceA, balanceB, lpSupply] = getPoolBalances(pool)
-            const poolId = getObjectId(pool)
+            const [symbolA, symbolB] = pool.coinMetadata.map(m => m.symbol)
+            const [balanceA, balanceB, lpSupply] = [
+              pool.state.balanceA.value,
+              pool.state.balanceB.value,
+              pool.state.lpSupply.value,
+            ]
+
             return (
               <Box
-                key={`${poolId}`}
+                key={`${pool.id}`}
                 sx={{ boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.5)', borderRadius: '16px;', p: 3, mb: 3 }}
               >
                 <Typography variant="body1" color="primary">
@@ -88,12 +90,12 @@ export const Pools = ({ pools, provider, getUpdatedPools }: Props) => {
                   <Typography
                     component="a"
                     color="primary"
-                    href={`https://explorer.devnet.sui.io/objects/${poolId}`}
+                    href={`https://explorer.devnet.sui.io/objects/${pool.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     variant="body2"
                   >
-                    {`(${ellipsizeAddress(poolId)})`}
+                    {`(${ellipsizeAddress(pool.id)})`}
                   </Typography>
                 </Typography>
                 <Typography variant="body2">{`${symbolA} balance: ${balanceA}`}</Typography>

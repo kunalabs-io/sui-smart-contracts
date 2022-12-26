@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
-import { Coin, GetObjectDataResponse, getObjectId, JsonRpcProvider } from '@mysten/sui.js'
+import { JsonRpcProvider } from '@mysten/sui.js'
 import { useWallet } from '@mysten/wallet-adapter-react'
 import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Snackbar, Typography } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 
-import { calcPoolLpValue, getLpCoinTypeArgs, getUserLpCoins, selectPoolForPair, withdraw } from '../../lib/amm'
 import { ConnectWalletModal } from '../Wallet/ConnectWalletModal'
 import { ellipsizeAddress } from '../../lib/util'
+import { Pool } from '../../lib/amm-sdk/pool'
+import { fetchUserLpCoins, selectPoolForLpCoin } from '../../lib/amm-sdk/util'
+import { Coin } from '../../lib/amm-sdk/framework/coin'
 
 interface Props {
-  pools: GetObjectDataResponse[]
+  pools: Pool[]
   provider: JsonRpcProvider
   count: number
   getUpdatedPools: () => void
@@ -20,7 +22,7 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
   const [errorSnackbar, setErrorSnackbar] = useState({ open: false, message: '' })
   const [successSnackbar, setSuccessSnackbar] = useState({ open: false, message: '' })
 
-  const [userLpCoins, setUserLpCoins] = useState<GetObjectDataResponse[]>([])
+  const [userLpCoins, setUserLpCoins] = useState<Coin[]>([])
 
   const { wallet, connected } = useWallet()
 
@@ -28,7 +30,7 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
     if (!wallet || !connected) {
       return
     }
-    getUserLpCoins(provider, wallet)
+    fetchUserLpCoins(provider, wallet)
       .then(lpCoins => setUserLpCoins(lpCoins.reverse()))
       .catch(console.error)
   }, [provider, wallet, connected, count])
@@ -42,12 +44,21 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
     setSuccessSnackbar({ open: false, message: '' })
   }
 
-  const onWithdraw = async (lpCoin: GetObjectDataResponse) => {
+  const onWithdraw = async (lpCoin: Coin) => {
     if (!wallet || !connected) {
       return
     }
     try {
-      await withdraw(provider, wallet, pools, lpCoin, 1)
+      const pool = selectPoolForLpCoin(pools, lpCoin)
+      if (!pool) {
+        throw new Error('Pool not found')
+      }
+      await pool.withdraw(wallet, {
+        lpIn: lpCoin.id,
+        amount: lpCoin.balance.value,
+        maxSlippagePct: 1,
+      })
+
       getUpdatedPools()
       setSuccessSnackbar({ open: true, message: 'Withdraw Successful' })
     } catch (e) {
@@ -75,25 +86,18 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
         </AccordionSummary>
         <AccordionDetails>
           {userLpCoins.map(lpCoin => {
-            const [coinTypeA, coinTypeB] = getLpCoinTypeArgs(lpCoin)
-            const symbolA = Coin.getCoinSymbol(coinTypeA)
-            const symbolB = Coin.getCoinSymbol(coinTypeB)
-            const lpAmount = Coin.getBalance(lpCoin)!
-
             // find pool corresponding to the lp coin
-            const pool = selectPoolForPair(pools, getLpCoinTypeArgs(lpCoin))
+            const pool = selectPoolForLpCoin(pools, lpCoin)
             if (pool === undefined) {
               return null
             }
 
-            const [amountA, amountB] = calcPoolLpValue(pool, lpAmount)
-
-            const poolId = getObjectId(pool)
-            const lpCoinId = getObjectId(lpCoin)
+            const [amountA, amountB] = pool.calcLpValue(lpCoin.balance.value).map(v => v.int)
+            const [symbolA, symbolB] = pool.coinMetadata.map(m => m.symbol)
 
             return (
               <Box
-                key={`${lpCoinId}`}
+                key={`${lpCoin.id}`}
                 sx={{ boxShadow: '0px 5px 10px 0px rgba(0, 0, 0, 0.5)', borderRadius: '16px;', p: 3, mb: 3 }}
               >
                 <Typography variant="body1" color="primary">
@@ -101,27 +105,27 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
                   <Typography
                     component="a"
                     color="primary"
-                    href={`https://explorer.devnet.sui.io/objects/${lpCoinId}`}
+                    href={`https://explorer.devnet.sui.io/objects/${lpCoin.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     variant="body2"
                   >
-                    {`(${ellipsizeAddress(lpCoinId)})`}
+                    {`(${ellipsizeAddress(lpCoin.id)})`}
                   </Typography>
                 </Typography>
                 <Typography variant="body2">{`${symbolA} value: ${amountA}`}</Typography>
                 <Typography variant="body2">{`${symbolB} value: ${amountB}`}</Typography>
-                <Typography variant="body2">{`LP amount: ${lpAmount}`}</Typography>
+                <Typography variant="body2">{`LP amount: ${lpCoin.balance.value}`}</Typography>
                 <Typography
                   variant="body2"
                   component="a"
-                  href={`https://explorer.devnet.sui.io/objects/${poolId}`}
+                  href={`https://explorer.devnet.sui.io/objects/${pool.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   color="primary"
                   sx={{ textDecoration: 'none' }}
                 >
-                  Pool ID: {poolId}
+                  Pool ID: {pool.id}
                 </Typography>
 
                 {connected && wallet ? (

@@ -11,20 +11,19 @@ import {
   IconButton,
   TextField,
 } from '@mui/material/'
-import { Coin, GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
+import { JsonRpcProvider } from '@mysten/sui.js'
 import CloseIcon from '@mui/icons-material/Close'
 import { useWallet } from '@mysten/wallet-adapter-react'
 
-import { calcPoolOtherDepositAmount, deposit, getPoolCoinTypeArgs } from '../../lib/amm'
-import { getCoinBalances, getUserCoins } from '../../lib/coin'
 import { ONLY_NUMBERS_REGEX } from '../../utils/regex'
 import { isSubmitFormDisabled } from '../../utils/checkSubmittingForm'
-import { checkIfPoolIsEmpty } from '../../lib/util'
+import { Pool } from '../../lib/amm-sdk/pool'
+import { getCoinBalances, getUserCoins } from '../../lib/amm-sdk/framework/coin'
 
 interface Props {
   isOpen: boolean
   onClose: () => void
-  pool: GetObjectDataResponse
+  pool: Pool
   provider: JsonRpcProvider
   getUpdatedPools: () => void
   showSuccessSnackbar: () => void
@@ -57,18 +56,17 @@ export const AddDeposit = ({
       .catch(console.error)
   }, [wallet, provider, connected])
 
-  const [coinTypeA, coinTypeB] = getPoolCoinTypeArgs(pool)
-  const symbolA = Coin.getCoinSymbol(coinTypeA)
-  const symbolB = Coin.getCoinSymbol(coinTypeB)
+  const [symbolA, symbolB] = pool.coinMetadata.map(m => m.symbol)
 
-  const isEmptyPool = checkIfPoolIsEmpty(pool)
+  const isEmptyPool = pool.state.balanceA.value === 0n || pool.state.balanceB.value === 0n
 
   const handleFirstCoinValueChange = (event: ChangeEvent<HTMLInputElement>) => {
     const newFirstCoinValue = event.target.value
     if (newFirstCoinValue === '' || ONLY_NUMBERS_REGEX.test(newFirstCoinValue)) {
       setFirstCoinValue(newFirstCoinValue)
       if (!isEmptyPool) {
-        setSecondCoinValue(calcPoolOtherDepositAmount(pool, BigInt(newFirstCoinValue), coinTypeA).toString())
+        const amount = pool.coinMetadata[0].newAmount(BigInt(newFirstCoinValue))
+        setSecondCoinValue(pool.calcDepositOtherAmount(pool.state.typeArgs[0], amount)[0].int.toString())
       }
     }
   }
@@ -88,7 +86,12 @@ export const AddDeposit = ({
       const amountA = BigInt(firstCoinValue)
       const amountB = BigInt(secondCoinValue)
 
-      await deposit(provider, wallet, pool, amountA, amountB, 0)
+      await pool.deposit(provider, wallet, {
+        amountA,
+        amountB,
+        maxSlippagePct: 1,
+      })
+
       getUpdatedPools()
       onClose()
       showSuccessSnackbar()
@@ -97,6 +100,8 @@ export const AddDeposit = ({
       showErrorSnackbar()
     }
   }
+
+  const [coinTypeA, coinTypeB] = pool.state.typeArgs
 
   return (
     <Dialog

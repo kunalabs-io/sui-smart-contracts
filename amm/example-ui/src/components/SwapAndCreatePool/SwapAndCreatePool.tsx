@@ -7,25 +7,20 @@ import MenuItem from '@mui/material/MenuItem'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
 import Button from '@mui/material/Button'
-import { Coin, GetObjectDataResponse, JsonRpcProvider } from '@mysten/sui.js'
+import { Coin, JsonRpcProvider } from '@mysten/sui.js'
 import { useWallet } from '@mysten/wallet-adapter-react'
 
-import {
-  calcSwapAmountOut,
-  createPool,
-  getPoolsUniqueCoinTypeArgs,
-  getPossibleSecondCoinTypeArgs,
-  selectPoolForPair,
-  swap,
-} from '../../lib/amm'
 import { ConnectWalletModal } from '../Wallet/ConnectWalletModal'
-import { getCoinBalances, getUniqueCoinTypes, getUserCoins } from '../../lib/coin'
 import { ONLY_NUMBERS_REGEX } from '../../utils/regex'
 import { isSubmitFormDisabled } from '../../utils/checkSubmittingForm'
 import { CONFIG } from '../../lib/config'
+import { Pool } from '../../lib/amm-sdk/pool'
+import { getCoinBalances, getUniqueCoinTypes, getUserCoins } from '../../lib/amm-sdk/framework/coin'
+import { Type } from '../../lib/amm-sdk/core/type'
+import { selectPoolForPair } from '../../lib/amm-sdk/util'
 
 interface Props {
-  pools: GetObjectDataResponse[]
+  pools: Pool[]
   provider: JsonRpcProvider
   getUpdatedPools: () => void
   count: number
@@ -56,7 +51,7 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
   const [firstCoinValue, setFirstCoinValue] = useState('')
   const [secondCoinValue, setSecondCoinValue] = useState('')
 
-  const [pool, setPool] = useState<GetObjectDataResponse>()
+  const [pool, setPool] = useState<Pool>()
   const [coinBalances, setCoinBalances] = useState<Map<string, bigint>>()
   const [userCoins, setUserCoins] = useState<CoinTypeOption[]>([])
 
@@ -77,7 +72,7 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
   // first coin dropdown list
   useEffect(() => {
     if (tabValue === TabValue.Swap) {
-      const uniqueCoinTypeArgs = getPoolsUniqueCoinTypeArgs(pools)
+      const uniqueCoinTypeArgs = [...new Set(pools.reduce((acc: Type[], pool) => acc.concat(pool.state.typeArgs), []))]
       const initialCoinOptions = uniqueCoinTypeArgs.map(arg => ({ value: arg, label: Coin.getCoinSymbol(arg) }))
       setFirstCoinOptions(initialCoinOptions)
     } else {
@@ -88,7 +83,13 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
   // second coin dropdown list
   useEffect(() => {
     if (tabValue === TabValue.Swap) {
-      const possibleSecondCoinTypeArgs = getPossibleSecondCoinTypeArgs(pools, firstCoinType)
+      const possibleSecondCoinTypeArgs = [
+        ...new Set(
+          pools.reduce((acc: Type[], pool) => {
+            return acc.concat(pool.state.typeArgs.filter(arg => arg !== firstCoinType))
+          }, [])
+        ),
+      ]
       const newSecondCoinOptions = possibleSecondCoinTypeArgs.map(arg => ({
         value: arg,
         label: Coin.getCoinSymbol(arg),
@@ -140,7 +141,7 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
       return
     }
     try {
-      setSecondCoinValue(calcSwapAmountOut(pool, firstCoinType, BigInt(firstCoinValue)).toString())
+      setSecondCoinValue(pool.calcSwapOut(firstCoinType, BigInt(firstCoinValue)).int.toString())
     } catch {
       return
     }
@@ -169,7 +170,11 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
     }
 
     try {
-      await swap(provider, wallet, pool, firstCoinType, BigInt(firstCoinValue), 1)
+      await pool.swap(provider, wallet, {
+        inputType: firstCoinType,
+        amount: BigInt(firstCoinValue),
+        maxSlippagePct: 1,
+      })
       resetValues()
       getUpdatedPools()
       setSuccessSnackbar({ open: true, message: 'Swap Successful' })
@@ -185,11 +190,10 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
     }
 
     try {
-      await createPool(provider, wallet, {
-        typeA: firstCoinType,
-        initAmountA: BigInt(firstCoinValue),
-        typeB: secondCoinType,
-        initAmountB: BigInt(secondCoinValue),
+      await Pool.createPool(provider, wallet, [firstCoinType, secondCoinType], {
+        registry: CONFIG.ammPoolRegistryObj,
+        amountA: BigInt(firstCoinValue),
+        amountB: BigInt(secondCoinValue),
         lpFeeBps: 30,
         adminFeePct: 10,
       })
