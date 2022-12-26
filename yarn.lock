@@ -615,7 +615,7 @@
     prop-types "^15.8.1"
     react-is "^18.2.0"
 
-"@mysten/bcs@0.5.0":
+"@mysten/bcs@0.5.0", "@mysten/bcs@^0.5.0":
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/@mysten/bcs/-/bcs-0.5.0.tgz#d2570971e3d9121b83091ced38db13e907ab4198"
   integrity sha512-FjGnXZfR4dY01Q1l3xjgaU+ruIlVomXZk8vzgsQXPFOv7O4pNiOOpJyMEMUnWcyUiktk4R9MxoJJrygOtdxaUw==
@@ -639,7 +639,7 @@
     rpc-websockets "^7.5.0"
     tweetnacl "^1.0.3"
 
-"@mysten/wallet-adapter-base@0.3.7":
+"@mysten/wallet-adapter-base@0.3.7", "@mysten/wallet-adapter-base@^0.3.7":
   version "0.3.7"
   resolved "https://registry.yarnpkg.com/@mysten/wallet-adapter-base/-/wallet-adapter-base-0.3.7.tgz#922ad346903f097ef5cf405b981921762582c18f"
   integrity sha512-B+1Pqah84ZMEj2MCExalf/tr8RBunr/uuNMntZR7hwwME+NM7SJlJ+3Ye3ryH+bP9IcQ2x/8A6cxoTEUwO9XVA==
