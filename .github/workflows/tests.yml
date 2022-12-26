@@ -1,4 +1,4 @@
-name: AMM Example UI Tests
+name: AMM Example Tests
 
 on:
   push:
@@ -30,6 +30,10 @@ jobs:
       - name: Install
         working-directory: ${{env.EXAMPLE_UI_DIR}}
         run: yarn install --frozen-lockfile
+
+      - name: Test
+        working-directory: ${{env.EXAMPLE_UI_DIR}}
+        run: yarn run test
 
       - name: Check
         working-directory: ${{env.EXAMPLE_UI_DIR}}
