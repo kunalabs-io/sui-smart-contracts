@@ -100,6 +100,39 @@ export function selectCoinsWithBalanceGreaterThanOrEqual(coins: Coin[], balance:
   return sortByBalance(coins.filter(coin => coin.balance.value >= balance))
 }
 
+export function selectCoinSetWithCombinedBalanceGreaterThanOrEqual(
+  coins: Coin[],
+  amount: bigint
+): Coin[] {
+  const sortedCoins = sortByBalance(coins)
+
+  const total = totalBalance(sortedCoins)
+  // return empty set if the aggregate balance of all coins is smaller than amount
+  if (total < amount) {
+    return []
+  } else if (total === amount) {
+    return sortedCoins
+  }
+
+  let sum = BigInt(0)
+  const ret = []
+  while (sum < total) {
+    // prefer to add a coin with smallest sufficient balance
+    const target = amount - sum
+    const coinWithSmallestSufficientBalance = sortedCoins.find(c => c.balance.value >= target)
+    if (coinWithSmallestSufficientBalance) {
+      ret.push(coinWithSmallestSufficientBalance)
+      break
+    }
+
+    const coinWithLargestBalance = sortedCoins.pop()!
+    ret.push(coinWithLargestBalance)
+    sum += coinWithLargestBalance.balance.value
+  }
+
+  return sortByBalance(ret)
+}
+
 export async function getOrCreateCoinOfLargeEnoughBalance(
   provider: Provider,
   wallet: WalletAdapter,
@@ -118,7 +151,7 @@ export async function getOrCreateCoinOfLargeEnoughBalance(
     return coin
   }
 
-  const inputCoins = selectCoinsWithBalanceGreaterThanOrEqual(coins, balance)
+  const inputCoins = selectCoinSetWithCombinedBalanceGreaterThanOrEqual(coins, balance)
   const addr = await getWalletAddress(wallet)
   const res = await wallet.signAndExecuteTransaction({
     kind: 'pay',
@@ -129,8 +162,12 @@ export async function getOrCreateCoinOfLargeEnoughBalance(
       gasBudget: 10000,
     },
   })
+  if (!res.effects.created) {
+    console.debug(res)
+    throw new Error('transaction failed')
+  }
 
-  const createdId = res!.effects.created![0].reference.objectId
+  const createdId = res.effects.created[0].reference.objectId
   const newCoin = await provider.getObject(createdId)
 
   return suiCoinToCoin(newCoin)
