@@ -173,7 +173,7 @@ export const SwapAndCreatePool = ({ pools, provider, getUpdatedPools, count }: P
       await pool.swap(provider, wallet, {
         inputType: firstCoinType,
         amount: BigInt(firstCoinValue),
-        maxSlippagePct: 1,
+        maxSlippagePct: CONFIG.defaultSlippagePct,
       })
       resetValues()
       getUpdatedPools()

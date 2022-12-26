@@ -9,6 +9,7 @@ import { ellipsizeAddress } from '../../lib/util'
 import { Pool } from '../../lib/amm-sdk/pool'
 import { fetchUserLpCoins, selectPoolForLpCoin } from '../../lib/amm-sdk/util'
 import { Coin } from '../../lib/amm-sdk/framework/coin'
+import { CONFIG } from '../../lib/config'
 
 interface Props {
   pools: Pool[]
@@ -56,7 +57,7 @@ export const MyLPPositions = ({ pools, provider, count, getUpdatedPools }: Props
       await pool.withdraw(wallet, {
         lpIn: lpCoin.id,
         amount: lpCoin.balance.value,
-        maxSlippagePct: 1,
+        maxSlippagePct: CONFIG.defaultSlippagePct,
       })
 
       getUpdatedPools()

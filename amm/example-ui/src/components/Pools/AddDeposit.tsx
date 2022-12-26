@@ -19,6 +19,7 @@ import { ONLY_NUMBERS_REGEX } from '../../utils/regex'
 import { isSubmitFormDisabled } from '../../utils/checkSubmittingForm'
 import { Pool } from '../../lib/amm-sdk/pool'
 import { getCoinBalances, getUserCoins } from '../../lib/amm-sdk/framework/coin'
+import { CONFIG } from '../../lib/config'
 
 interface Props {
   isOpen: boolean
@@ -89,7 +90,7 @@ export const AddDeposit = ({
       await pool.deposit(provider, wallet, {
         amountA,
         amountB,
-        maxSlippagePct: 1,
+        maxSlippagePct: CONFIG.defaultSlippagePct,
       })
 
       getUpdatedPools()
