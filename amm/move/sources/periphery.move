@@ -5,7 +5,7 @@ module 0x0::periphery {
     use sui::coin::{Self, Coin};
     use sui::tx_context::{Self, TxContext};
     use sui::transfer;
-    use 0x0::amm::{Self, Pool, PoolRegistry};
+    use 0x0::amm::{Self, Pool, PoolRegistry, LP};
 
     /// Splits the provided Coin to desired amount (if needed) and returns it.
     /// Transfers the remainder to the sender.
@@ -71,5 +71,19 @@ module 0x0::periphery {
         let input_a = maybe_split_and_transfer_rest(input_a, amount_a, tx_context::sender(ctx), ctx);
         let input_b = maybe_split_and_transfer_rest(input_b, amount_b, tx_context::sender(ctx), ctx);
         amm::deposit_(pool, input_a, input_b, min_lp_out, ctx);
+    }
+
+    /// Splits the input LP coin to desired value and then does the withdraw. Returns the remainder
+    /// to the sender (if any).
+    public entry fun maybe_split_then_withdraw<A, B>(
+        pool: &mut Pool<A, B>,
+        lp_in: Coin<LP<A, B>>,
+        amount: u64,
+        min_a_out: u64,
+        min_b_out: u64,
+        ctx: &mut TxContext
+    ) {
+        let input_lp = maybe_split_and_transfer_rest(lp_in, amount, tx_context::sender(ctx), ctx);
+        amm::withdraw_(pool, input_lp, min_a_out, min_b_out, ctx);
     }
 }
