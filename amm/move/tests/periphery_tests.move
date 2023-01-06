@@ -1,6 +1,6 @@
 #[test_only]
-module 0x0::periphery_tests {
-    use 0x0::periphery;
+module amm::periphery_tests {
+    use amm::periphery;
     use sui::test_scenario as ts;
     use sui::coin::{Self, Coin};
 

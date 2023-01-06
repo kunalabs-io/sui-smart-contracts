@@ -1,4 +1,4 @@
-module 0x0::amm {
+module amm::amm {
     use std::type_name::{Self, TypeName};
     use std::vector;
     use sui::object::{Self, UID, ID};

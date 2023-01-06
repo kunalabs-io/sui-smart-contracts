@@ -1,11 +1,11 @@
 /// The functions in this module help with dealing with Coin objects that have
 /// different value than desired on the client side.
 
-module 0x0::periphery {
+module amm::periphery {
     use sui::coin::{Self, Coin};
     use sui::tx_context::{Self, TxContext};
     use sui::transfer;
-    use 0x0::amm::{Self, Pool, PoolRegistry, LP};
+    use amm::amm::{Self, Pool, PoolRegistry, LP};
 
     /// Splits the provided Coin to desired amount (if needed) and returns it.
     /// Transfers the remainder to the sender.

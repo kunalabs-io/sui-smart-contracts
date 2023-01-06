@@ -1,11 +1,11 @@
 #[test_only]
-module 0x0::amm_tests {
+module amm::amm_tests {
     use sui::test_scenario::{Self, Scenario};
     use sui::tx_context::TxContext;
     use sui::balance::{Self, Balance};
     //use sui::object;
     use sui::coin::{Self, Coin};
-    use 0x0::amm::{Self, Pool, PoolRegistry, AdminCap, LP};
+    use amm::amm::{Self, Pool, PoolRegistry, AdminCap, LP};
 
     const ADMIN: address = @0xABBA;
     const USER: address = @0xB0B;
@@ -61,7 +61,7 @@ module 0x0::amm_tests {
     /* ================= create_pool tests ================= */
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
+    #[expected_failure(abort_code = amm::amm::EZeroInput)]
     fun test_create_pool_fails_on_init_a_zero() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -81,7 +81,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
+    #[expected_failure(abort_code = amm::amm::EZeroInput)]
     fun test_create_pool_fails_on_init_b_zero() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -101,7 +101,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EInvalidFeeParam)]
+    #[expected_failure(abort_code = amm::amm::EInvalidFeeParam)]
     fun test_create_pool_fails_on_invalid_lp_fee() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -121,7 +121,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EInvalidFeeParam)]
+    #[expected_failure(abort_code = amm::amm::EInvalidFeeParam)]
     fun test_create_pool_fails_on_invalid_admin_fee() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -141,7 +141,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EPoolAlreadyExists)]
+    #[expected_failure(abort_code = amm::amm::EPoolAlreadyExists)]
     fun test_create_pool_fails_on_duplicate_pair() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -175,7 +175,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EInvalidPair)]
+    #[expected_failure(abort_code = amm::amm::EInvalidPair)]
     fun test_create_pool_fails_on_same_currency_pair() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -196,7 +196,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EInvalidPair)]
+    #[expected_failure(abort_code = amm::amm::EInvalidPair)]
     fun test_create_pool_fails_on_currency_pair_wrong_order() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -280,7 +280,7 @@ module 0x0::amm_tests {
 
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
+    #[expected_failure(abort_code = amm::amm::EZeroInput)]
     fun test_deposit_fails_on_amount_a_zero() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -300,7 +300,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
+    #[expected_failure(abort_code = amm::amm::EZeroInput)]
     fun test_deposit_fails_on_amount_b_zero() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -530,7 +530,7 @@ module 0x0::amm_tests {
     } 
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EExcessiveSlippage)]
+    #[expected_failure(abort_code = amm::amm::EExcessiveSlippage)]
     fun test_deposit_fails_on_min_lp_out() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -552,7 +552,7 @@ module 0x0::amm_tests {
     /* ================= withdraw tests ================= */
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
+    #[expected_failure(abort_code = amm::amm::EZeroInput)]
     fun test_withdraw_fails_on_zero_input() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -682,7 +682,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EExcessiveSlippage)]
+    #[expected_failure(abort_code = amm::amm::EExcessiveSlippage)]
     fun test_withdraw_fails_on_min_a_out() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -705,7 +705,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EExcessiveSlippage)]
+    #[expected_failure(abort_code = amm::amm::EExcessiveSlippage)]
     fun test_withdraw_fails_on_min_b_out() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -730,7 +730,7 @@ module 0x0::amm_tests {
     /* ================= swap tests ================= */
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
+    #[expected_failure(abort_code = amm::amm::EZeroInput)]
     fun test_swap_a_fails_on_zero_input_a() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -751,7 +751,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EZeroInput)]
+    #[expected_failure(abort_code = amm::amm::EZeroInput)]
     fun test_swap_b_fails_on_zero_input_b() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -772,7 +772,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::ENoLiquidity)]
+    #[expected_failure(abort_code = amm::amm::ENoLiquidity)]
     fun test_swap_a_fails_on_zero_pool_balances() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -796,7 +796,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::ENoLiquidity)]
+    #[expected_failure(abort_code = amm::amm::ENoLiquidity)]
     fun test_swap_b_fails_on_zero_pool_balances() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -1131,7 +1131,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EExcessiveSlippage)]
+    #[expected_failure(abort_code = amm::amm::EExcessiveSlippage)]
     fun test_swap_a_fails_on_min_out() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
@@ -1153,7 +1153,7 @@ module 0x0::amm_tests {
     }
 
     #[test]
-    #[expected_failure(abort_code = 0x0::amm::EExcessiveSlippage)]
+    #[expected_failure(abort_code = amm::amm::EExcessiveSlippage)]
     fun test_swap_b_fails_on_min_out() {
         let scenario_val = scenario_init(ADMIN);
         let scenario = &mut scenario_val;
