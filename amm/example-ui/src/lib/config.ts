@@ -1,7 +1,7 @@
 export const CONFIG = {
   rpcUrl: 'https://fullnode.devnet.sui.io:443',
-  ammPackageId: '0x54af5b4e0e21b54518baf980e96791546ea910a9',
-  ammPoolRegistryObj: '0x3f6f63951b9cb55f9d75ce6501863a0f46131149',
+  ammPackageId: '0x627364e993cc035693f91fa2874793d6e2940493',
+  ammPoolRegistryObj: '0x4e8bf2ecf432f652556557bad57a2e5392ebc8ef',
   ammDefaultPools: [],
   defaultSlippagePct: 1,
   fetchPoolsViaEvents: true,
