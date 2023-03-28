@@ -416,7 +416,7 @@ module amm::amm_tests {
 
             // return
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(lp_coin);
+            coin::burn_for_testing(lp_coin);
         };
 
         // deposit max B (slippage); (300, 150, 210) -> (400, 200, 280)
@@ -452,8 +452,8 @@ module amm::amm_tests {
 
             // return
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(lp_coin);
-            coin::destroy_for_testing(a_extra);
+            coin::burn_for_testing(lp_coin);
+            coin::burn_for_testing(a_extra);
         };
 
         // deposit max A (slippage); (400, 200, 280) -> (500, 250, 350)
@@ -489,8 +489,8 @@ module amm::amm_tests {
 
             // return
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(lp_coin);
-            coin::destroy_for_testing(b_extra);
+            coin::burn_for_testing(lp_coin);
+            coin::burn_for_testing(b_extra);
         };
 
         // no lp issued when input small; (500, 250, 350) -> (501, 251, 350)
@@ -609,8 +609,8 @@ module amm::amm_tests {
             assert!(coin::value(&out_b) == 4, 0);
 
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(out_a);
-            coin::destroy_for_testing(out_b);
+            coin::burn_for_testing(out_a);
+            coin::burn_for_testing(out_b);
         };
 
         // withdraw small amount (64, 9, 23) -> (62, 9, 22)
@@ -643,7 +643,7 @@ module amm::amm_tests {
             assert!(coin::value(&out_a) == 2, 0);
 
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(out_a);
+            coin::burn_for_testing(out_a);
         };
 
         // withdraw all (62, 9, 22) -> (0, 0, 0)
@@ -674,8 +674,8 @@ module amm::amm_tests {
             assert!(coin::value(&out_b) == 9, 0);
 
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(out_a);
-            coin::destroy_for_testing(out_b);
+            coin::burn_for_testing(out_a);
+            coin::burn_for_testing(out_b);
         };
 
         test_scenario::end(scenario_val);
@@ -698,7 +698,7 @@ module amm::amm_tests {
             amm::withdraw_(&mut pool, lp_coin, 51, 50, ctx);
 
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(lp_in);
+            coin::burn_for_testing(lp_in);
         };
 
         test_scenario::end(scenario_val);
@@ -721,7 +721,7 @@ module amm::amm_tests {
             amm::withdraw_(&mut pool, lp_coin, 50, 51, ctx);
 
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(lp_in);
+            coin::burn_for_testing(lp_in);
         };
 
         test_scenario::end(scenario_val);
@@ -931,7 +931,7 @@ module amm::amm_tests {
             assert!(amm::pool_admin_fee_value(&pool) == 0, 0); 
 
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(b_out);
+            coin::burn_for_testing(b_out);
         };
 
         // swap small amount; (21300, 9302, 14142) -> (21301, 9302, 14142)
@@ -996,7 +996,7 @@ module amm::amm_tests {
             assert!(amm::pool_admin_fee_value(&pool) == 0, 0); 
 
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(a_out);
+            coin::burn_for_testing(a_out);
         };
 
         // swap small amount; (17706, 11300, 14142) -> (17706, 11301, 14142)
@@ -1061,7 +1061,7 @@ module amm::amm_tests {
             assert!(amm::pool_admin_fee_value(&pool) == 1, 0); 
 
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(b_out);
+            coin::burn_for_testing(b_out);
         };
 
         test_scenario::end(scenario_val);
@@ -1099,7 +1099,7 @@ module amm::amm_tests {
             assert!(amm::pool_admin_fee_value(&pool) == 2, 0); 
 
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(a_out);
+            coin::burn_for_testing(a_out);
         };
 
         test_scenario::end(scenario_val);
@@ -1212,7 +1212,7 @@ module amm::amm_tests {
             assert!(coin::value(&lp_out) == 1, 0);
 
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(lp_out);
+            coin::burn_for_testing(lp_out);
         };
 
         // withdraw all
@@ -1239,7 +1239,7 @@ module amm::amm_tests {
             assert!(coin::value(&lp_out) == 1, 0);
 
             test_scenario::return_shared(pool);
-            coin::destroy_for_testing(lp_out);
+            coin::burn_for_testing(lp_out);
         };
 
         test_scenario::end(scenario_val);
@@ -1259,7 +1259,7 @@ module amm::amm_tests {
 
             // destroy initial LPCoin
             let lp_coin = test_scenario::take_from_sender<Coin<LP<A, B>>>(scenario);
-            coin::destroy_for_testing(lp_coin);
+            coin::burn_for_testing(lp_coin);
 
             // withdraw
             let ctx = test_scenario::ctx(scenario);

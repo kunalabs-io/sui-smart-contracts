@@ -204,7 +204,7 @@ module amm::amm {
             balance::destroy_zero(balance);
             return
         };
-        transfer::transfer(
+        transfer::public_transfer(
             coin::from_balance(balance, ctx),
             recipient
         );
@@ -277,7 +277,7 @@ module amm::amm {
             admin_fee_pct,
             ctx
         );
-        transfer::transfer(
+        transfer::public_transfer(
             coin::from_balance(lp_balance, ctx),
             tx_context::sender(ctx)
         );

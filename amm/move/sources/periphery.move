@@ -17,7 +17,7 @@ module amm::periphery {
         };
 
         let out = coin::split(&mut input, amount, ctx);
-        transfer::transfer(input, recipient);
+        transfer::public_transfer(input, recipient);
 
         return out
     }

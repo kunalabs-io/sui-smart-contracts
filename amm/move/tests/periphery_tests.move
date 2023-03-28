@@ -17,7 +17,7 @@ module amm::periphery_tests {
             let out = periphery::maybe_split_and_transfer_rest(input, 100, USER, ctx);
 
             assert!(coin::value(&out) == 100, 0);
-            coin::destroy_for_testing(out);
+            coin::burn_for_testing(out);
         };
 
         ts::next_tx(&mut scenario, USER);
@@ -37,14 +37,14 @@ module amm::periphery_tests {
             let out = periphery::maybe_split_and_transfer_rest(input, 100, USER, ctx);
 
             assert!(coin::value(&out) == 100, 0);
-            coin::destroy_for_testing(out);
+            coin::burn_for_testing(out);
         };
 
         ts::next_tx(&mut scenario, USER);
         {
             let rest = ts::take_from_sender<Coin<TEST_COIN>>(&mut scenario);
             assert!(coin::value(&rest) == 50, 0);
-            coin::destroy_for_testing(rest);
+            coin::burn_for_testing(rest);
         };
 
         ts::end(scenario);
