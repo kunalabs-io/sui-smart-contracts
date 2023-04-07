@@ -3,7 +3,7 @@ name = "amm"
 version = "0.1.0"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "devnet-0.29.0" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "releases/sui-v0.30.0-release" }
 
 [addresses]
-amm = "0x81110f0e07a8b33e57c16ebdf662d549e337ced2"
+amm = "0x0"

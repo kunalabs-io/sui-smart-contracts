@@ -1,9 +1,8 @@
-module amm::amm {
+module amm::pool {
     use std::type_name::{Self, TypeName};
     use std::vector;
     use sui::object::{Self, UID, ID};
     use sui::balance::{Self, Balance, Supply};
-    use sui::coin::{Self, Coin};
     use sui::balance::{create_supply};
     use sui::tx_context::{Self, TxContext};
     use sui::transfer;
@@ -195,21 +194,6 @@ module amm::amm {
         if (a == 0) 0 else (a - 1) / b + 1
     }
 
-    /* ================= util ================= */
-
-    /// Destroys the provided balance if zero, otherwise converts it to a `Coin`
-    /// and transfers it to recipient.
-    fun destroy_or_transfer_balance<T>(balance: Balance<T>, recipient: address, ctx: &mut TxContext) {
-        if (balance::value(&balance) == 0) {
-            balance::destroy_zero(balance);
-            return
-        };
-        transfer::public_transfer(
-            coin::from_balance(balance, ctx),
-            recipient
-        );
-    }
-
     /* ================= main logic ================= */
 
     /// Initializes the `PoolRegistry` objects and shares it, and transfers `AdminCap` to sender.
@@ -222,7 +206,7 @@ module amm::amm {
     }
 
     /// Creates a new Pool with provided initial balances. Returns the initial LP coins.
-    public fun create_pool<A, B>(
+    public fun create<A, B>(
         registry: &mut PoolRegistry,
         init_a: Balance<A>,
         init_b: Balance<B>,
@@ -259,36 +243,12 @@ module amm::amm {
         lp_balance
     }
 
-    /// Entry function. Creates a new Pool with provided initial balances. Transfers
-    /// the initial LP coins to the sender.
-    public entry fun create_pool_<A, B>(
-        registry: &mut PoolRegistry,
-        init_a: Coin<A>,
-        init_b: Coin<B>,
-        lp_fee_bps: u64,
-        admin_fee_pct: u64,
-        ctx: &mut TxContext,
-    ) {
-        let lp_balance = create_pool(
-            registry,
-            coin::into_balance(init_a),
-            coin::into_balance(init_b),
-            lp_fee_bps,
-            admin_fee_pct,
-            ctx
-        );
-        transfer::public_transfer(
-            coin::from_balance(lp_balance, ctx),
-            tx_context::sender(ctx)
-        );
-    }
-
     /// Deposit liquidity into pool. The deposit will use up the maximum amount of
     /// the provided balances possible depending on the current pool ratio. Usually
     /// this means that all of either `input_a` or `input_b` will be fully used, while
     /// the other only partially. Otherwise, both input values will be fully used.
-    /// Returns the remaining input amounts (if any) and LPCoin of appropriate value.
-    /// Fails if the value of the issued LPCoin is smaller than `min_lp_out`. 
+    /// Returns the remaining input amounts (if any) and LP Coin of appropriate value.
+    /// Fails if the value of the issued LP Coin is smaller than `min_lp_out`. 
     public fun deposit<A, B>(
         pool: &mut Pool<A, B>,
         input_a: Balance<A>,
@@ -362,32 +322,7 @@ module amm::amm {
         (input_a, input_b, lp)
     }
 
-    /// Entry function. Deposit liquidity into pool. The deposit will use up the maximum
-    /// amount of the provided coins possible depending on the current pool ratio. Usually
-    /// this means that all of either `input_a` or `input_b` will be fully used, while
-    /// the other only partially. Otherwise, both input values will be fully used.
-    /// Transfers the remaining input amounts (if any) and LPCoin of appropriate value
-    /// to the sender. Fails if the value of the issued LPCoin is smaller than `min_lp_out`. 
-    public entry fun deposit_<A, B>(
-        pool: &mut Pool<A, B>,
-        input_a: Coin<A>,
-        input_b: Coin<B>,
-        min_lp_out: u64,
-        ctx: &mut TxContext
-    ) {
-        let (remaining_a, remaining_b, lp) = deposit(
-            pool, coin::into_balance(input_a), coin::into_balance(input_b), min_lp_out
-        );
-
-        // transfer the output amounts to the caller (if any)
-        let sender = tx_context::sender(ctx);
-        destroy_or_transfer_balance(remaining_a, sender, ctx);
-        destroy_or_transfer_balance(remaining_b, sender, ctx);
-        destroy_or_transfer_balance(lp, sender, ctx);
-    }
-
-
-    /// Burns the provided LPCoin and withdraws corresponding pool balances.
+    /// Burns the provided LP Coin and withdraws corresponding pool balances.
     /// Fails if the withdrawn balances are smaller than `min_a_out` and `min_b_out`
     /// respectively.
     public fun withdraw<A, B>(
@@ -418,24 +353,6 @@ module amm::amm {
             balance::split(&mut pool.balance_a, a_out),
             balance::split(&mut pool.balance_b, b_out)
         )
-    }
-
-    /// Entry function. Burns the provided LPCoin and withdraws corresponding
-    /// pool balances. Fails if the withdrawn balances are smaller than
-    /// `min_a_out` and `min_b_out` respectively. Transfers the withdrawn balances
-    /// to the sender.
-    public entry fun withdraw_<A, B>(
-        pool: &mut Pool<A, B>,
-        lp_in: Coin<LP<A, B>>,
-        min_a_out: u64,
-        min_b_out: u64,
-        ctx: &mut TxContext
-    ) {
-        let (a_out, b_out) = withdraw(pool, coin::into_balance(lp_in), min_a_out, min_b_out);
-
-        let sender = tx_context::sender(ctx);
-        destroy_or_transfer_balance(a_out, sender, ctx);
-        destroy_or_transfer_balance(b_out, sender, ctx);
     }
 
     /// Calclates swap result and fees based on the input amount and current pool state.
@@ -503,15 +420,6 @@ module amm::amm {
         balance::split(&mut pool.balance_b, out_value)
     }
 
-    /// Entry function. Swaps the provided amount of A for B. Fails if the resulting
-    /// amount of B is smaller than `min_out`. Transfers the resulting Coin to the sender.
-    public entry fun swap_a_<A, B>(
-        pool: &mut Pool<A, B>, input: Coin<A>, min_out: u64, ctx: &mut TxContext
-    ) {
-        let out = swap_a(pool, coin::into_balance(input), min_out);
-        destroy_or_transfer_balance(out, tx_context::sender(ctx), ctx);
-    }
-
     /// Swaps the provided amount of B for A. Fails if the resulting amount of A
     /// is smaller than `min_out`.
     public fun swap_b<A, B>(
@@ -549,15 +457,6 @@ module amm::amm {
         balance::split(&mut pool.balance_a, out_value)
     }
 
-    /// Entry function. Swaps the provided amount of B for A. Fails if the resulting
-    /// amount of A is smaller than `min_out`. Transfers the resulting Coin to the sender.
-    public entry fun swap_b_<A, B>(
-        pool: &mut Pool<A, B>, input: Coin<B>, min_out: u64, ctx: &mut TxContext
-    ) {
-        let out = swap_b(pool, coin::into_balance(input), min_out);
-        destroy_or_transfer_balance(out, tx_context::sender(ctx), ctx);
-    }
-
     /// Withdraw `amount` of collected admin fees by providing pool's PoolAdminCap.
     /// When `amount` is set to 0, it will withdraw all available fees.
     public fun admin_withdraw_fees<A, B>(
@@ -567,19 +466,6 @@ module amm::amm {
     ): Balance<LP<A, B>> {
         if (amount == 0) amount = balance::value(&pool.admin_fee_balance);
         balance::split(&mut pool.admin_fee_balance, amount)
-    }
-
-    /// Entry function. Withdraw `amount` of collected admin fees by providing
-    /// pool's PoolAdminCap. When `amount` is set to 0, it will withdraw all
-    /// available fees. Transfers the resulting LPCoin to the sender (if any).
-    public entry fun admin_withdraw_fees_<A, B>(
-        pool: &mut Pool<A, B>,
-        admin_cap: &AdminCap,
-        amount: u64,
-        ctx: &mut TxContext
-    ) {
-        let lp = admin_withdraw_fees(pool, admin_cap, amount);
-        destroy_or_transfer_balance(lp, tx_context::sender(ctx), ctx);
     }
 
     /* ================= test only ================= */
