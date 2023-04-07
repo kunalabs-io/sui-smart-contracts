@@ -109,7 +109,7 @@ module amm::pool {
     //    0 if a < b,
     //    1 if a == b,
     //    2 if a > b
-    fun cmp_type_names(a: &TypeName, b: &TypeName): u8 {
+    public fun cmp_type_names(a: &TypeName, b: &TypeName): u8 {
         let bytes_a = std::ascii::as_bytes(type_name::borrow_string(a));
         let bytes_b = std::ascii::as_bytes(type_name::borrow_string(b));
 
