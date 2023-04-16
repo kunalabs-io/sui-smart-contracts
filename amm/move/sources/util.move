@@ -7,7 +7,7 @@ module amm::util {
 
     /// Destroys the provided balance if zero, otherwise converts it to a `Coin`
     /// and transfers it to recipient.
-    public fun destroy_or_transfer_balance<T>(balance: Balance<T>, recipient: address, ctx: &mut TxContext) {
+    fun destroy_or_transfer_balance<T>(balance: Balance<T>, recipient: address, ctx: &mut TxContext) {
         if (balance::value(&balance) == 0) {
             balance::destroy_zero(balance);
             return
@@ -19,7 +19,7 @@ module amm::util {
     }
 
     /// Destroys the provided balance if zero, otherwise transfers it to recipient.
-    public fun destroy_or_transfer_coin<T>(coin: Coin<T>, recipient: address) {
+    fun destroy_or_transfer_coin<T>(coin: Coin<T>, recipient: address) {
         if (coin::value(&coin) == 0) {
             coin::destroy_zero(coin);
             return
