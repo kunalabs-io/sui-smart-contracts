@@ -1,7 +1,7 @@
 #[test_only]
 module amm::pool_tests {
     use sui::test_scenario::{Self, Scenario};
-    use sui::tx_context::{Self, TxContext};
+    use sui::tx_context::{Self};
     use sui::balance::{Self, Balance};
     use sui::transfer;
     use sui::coin::{Self, Coin};
@@ -14,15 +14,6 @@ module amm::pool_tests {
     struct A has drop {}
     struct B has drop {}
     struct C has drop {}
-
-    fun mint_coin<T>(
-        amount: u64, ctx: &mut TxContext
-    ): Coin<T> {
-        coin::from_balance(
-            balance::create_for_testing<T>(amount),
-            ctx
-        )
-    }
 
     fun scenario_init(sender: address): Scenario {
         let scenario = test_scenario::begin(ADMIN);

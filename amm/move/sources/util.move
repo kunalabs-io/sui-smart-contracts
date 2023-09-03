@@ -18,18 +18,6 @@ module amm::util {
         );
     }
 
-    /// Destroys the provided balance if zero, otherwise transfers it to recipient.
-    fun destroy_or_transfer_coin<T>(coin: Coin<T>, recipient: address) {
-        if (coin::value(&coin) == 0) {
-            coin::destroy_zero(coin);
-            return
-        };
-        transfer::public_transfer(
-            coin,
-            recipient
-        );
-    }
-
     /// Calls `pool::create` using Coins as input. Returns the resulting LP Coin.
     public fun create_pool_with_coins<A, B>(
         registry: &mut PoolRegistry,
