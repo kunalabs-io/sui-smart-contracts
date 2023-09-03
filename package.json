@@ -1,7 +1,0 @@
-{
-    "private": true,
-    "workspaces": ["amm/example-ui"],
-    "scripts": {
-        "build:amm-example": "yarn workspace @kunalabs/amm-example build && cp -r amm/example-ui/dist .deployment/public/amm"
-    }
-}
