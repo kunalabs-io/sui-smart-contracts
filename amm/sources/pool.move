@@ -468,6 +468,20 @@ module amm::pool {
         balance::split(&mut pool.admin_fee_balance, amount)
     }
 
+    /// Admin function. Set new fees for the pool.
+    public fun admin_set_fees<A, B>(
+        pool: &mut Pool<A, B>,
+        _: &AdminCap,
+        lp_fee_bps: u64,
+        admin_fee_pct: u64
+    ) {
+        assert!(lp_fee_bps < BPS_IN_100_PCT, EInvalidFeeParam);
+        assert!(admin_fee_pct <= 100, EInvalidFeeParam);
+
+        pool.lp_fee_bps = lp_fee_bps;
+        pool.admin_fee_pct = admin_fee_pct;
+    }
+
     /* ================= test only ================= */
 
     #[test_only]

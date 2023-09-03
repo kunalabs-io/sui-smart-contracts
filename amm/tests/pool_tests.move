@@ -1158,4 +1158,89 @@ module amm::pool_tests {
         
         test_scenario::end(scenario_val);
     }
+
+    #[test]
+    fun test_admin_set_fees() {
+        let scenario_val = scenario_init(ADMIN);
+        let scenario = &mut scenario_val;
+        scenario_create_pool(scenario, 20000, 10000, 30, 30);
+
+        // sanity check
+        test_scenario::next_tx(scenario, ADMIN);
+        {
+            let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
+            let (lp_fee_bps, admin_fee_pct) = pool::pool_fees(&pool);
+            assert!(lp_fee_bps == 30, 0);
+            assert!(admin_fee_pct == 30, 0);
+
+            test_scenario::return_shared(pool);
+        };
+
+        // change fees
+        test_scenario::next_tx(scenario, ADMIN);
+        {
+            let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
+            let cap = test_scenario::take_from_sender<AdminCap>(scenario);
+
+            pool::admin_set_fees(&mut pool, &cap, 25, 10);
+
+            test_scenario::return_to_sender(scenario, cap);
+            test_scenario::return_shared(pool);
+        };
+
+        // check fees
+        test_scenario::next_tx(scenario, ADMIN);
+        {
+            let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
+            let (lp_fee_bps, admin_fee_pct) = pool::pool_fees(&pool);
+            assert!(lp_fee_bps == 25, 0);
+            assert!(admin_fee_pct == 10, 0);
+
+            test_scenario::return_shared(pool);
+        };
+
+        test_scenario::end(scenario_val);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = pool::EInvalidFeeParam)]
+    fun test_admin_set_fee_fails_on_invalid_lp_fee() {
+        let scenario_val = scenario_init(ADMIN);
+        let scenario = &mut scenario_val;
+        scenario_create_pool(scenario, 20000, 10000, 30, 30);
+
+        test_scenario::next_tx(scenario, ADMIN);
+        {
+            let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
+            let cap = test_scenario::take_from_sender<AdminCap>(scenario);
+
+            pool::admin_set_fees(&mut pool, &cap, 10001, 0);
+
+            test_scenario::return_to_sender(scenario, cap);
+            test_scenario::return_shared(pool);
+        };
+
+        test_scenario::end(scenario_val);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = pool::EInvalidFeeParam)]
+    fun test_admin_set_fee_fails_on_invalid_admin_fee() {
+        let scenario_val = scenario_init(ADMIN);
+        let scenario = &mut scenario_val;
+        scenario_create_pool(scenario, 20000, 10000, 30, 30);
+
+        test_scenario::next_tx(scenario, ADMIN);
+        {
+            let pool = test_scenario::take_shared<Pool<A, B>>(scenario);
+            let cap = test_scenario::take_from_sender<AdminCap>(scenario);
+
+            pool::admin_set_fees(&mut pool, &cap, 30, 101);
+
+            test_scenario::return_to_sender(scenario, cap);
+            test_scenario::return_shared(pool);
+        };
+
+        test_scenario::end(scenario_val);
+    }
 }
