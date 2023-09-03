@@ -1,6 +1,6 @@
 # AMM
 
-A UniswapV2-style AMM implementation for Sui.
+A UniswapV2-style AMM implementation in idiomatic Sui Move.
 
 **Features:**
 
