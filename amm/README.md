@@ -31,7 +31,4 @@ The limitation of 1. though is that there can be only one `Pool` per token pair.
 
 ## TODO
 
-- [ ] TypeScript SDK
 - [ ] make it possible for admin to change fees after pool creation
-- [ ] internal price oracle
-- [ ] flash lending / swaps
