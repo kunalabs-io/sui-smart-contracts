@@ -28,4 +28,3 @@ The limitation of 1. though is that there can be only one `Pool` per token pair.
 ### Periphery
 
 `periphery.move` contains `maybe_split_then...` functions which enable the pool functions be called with Coin objects which have a different (larger) value than desired. This is helpful because otherwise the client-side code would have to create two transactions for each operation -- first split the Coin to desired value and then call the pool function. This is a bit cumbersome because it requires the user to sign two transactions for each call.
-
