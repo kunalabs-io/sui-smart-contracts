@@ -5,15 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
-## [Unreleased]
+## [v1.0.0]
 
 ### Features
+
 - [move] added `add maybe_split_then_withdraw` function to periphery ([f3c435c](https://github.com/kunalabs-io/sui-smart-contracts/commit/f3c435c01ee1a57c02f37cef046bb67d21cc1c0e))
-- [example] introduce a proper SDK for the AMM ([#6](https://github.com/kunalabs-io/sui-smart-contracts/pull/6))
+- [move] make `cmp_type_names` function public ([d8e9b66](https://github.com/kunalabs-io/sui-smart-contracts/commit/d8e9b667b1b90761d986208c27359cadea2dbcb1))
+- [move] add admin function to set fees ([9f1bacd](https://github.com/kunalabs-io/sui-smart-contracts/commit/9f1bacd16b127882dbc7622e4552ae17a8f85a8d))
 
 ### Breaking
+
 - [move] renamed `PoolList` to `PoolRegistry` ([0edfb90](https://github.com/kunalabs-io/sui-smart-contracts/commit/0edfb90659b044d1bc611d13ce974b64c3be4b59))
+- [move] remove `periphery.move` and move coin functions to `util.move` ([40490f3](https://github.com/kunalabs-io/sui-smart-contracts/commit/40490f391c89f62c17c906078202a6502bb23690))
+- [move] make `destroy_or_` util functions private
 
 ## [v0.1.0]
 
