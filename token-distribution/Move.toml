@@ -1,0 +1,9 @@
+[package]
+name = "TokenDistribution"
+version = "0.1.0"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.8.2" }
+
+[addresses]
+token_distribution = "0x0"
