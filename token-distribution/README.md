@@ -19,11 +19,25 @@ Farm:
 - `farm`
 - `pool`
 
-The primitives implement different core functionalities (math and accounting) but cannot be used directly from the client side -- they're used as building blocks for other modules.
+The **primitives** implement different core functionalities (math and accounting) but cannot be used directly from the client side -- they're used as building blocks for other modules.
 
-Farm is a composable liquidity mining smart contract that uses the primitives under the hood and implements functionality similar to one pioneered by SushiSwap where a token (reward) is distributed across multiple different pools each of which can have any number of participants deposit stake and receive their share of rewards.
+For example, you can deposit some tokens into `TimeLockedBalance` and send it over to another person where the tokens you deposited will be unlocked gradually over time as a basic form of vesting. The recipient retains direct ownership of these tokens but can only withdraw them as they get unlocked over time on a second by second basis. You can configure the unlock start time on it and you have a cliff.
 
-## Primitives
+The `TimeDistributor` is a generalization of `TimeLockedBalance` (and uses it internally) such that it's able to distribute tokens over time to multiple members based on weights. For example, suppose you want to distribute a set amount of tokens to 4 participants over time, where one should recieve 50% of the total tokens and the remaining four each 12.5%. You can easilly achieve this functionallity with the `TimeDistributor` by setting appropriate weights for each member. It also allows you to dynamically change the distribution rate and add or remove members or change their weights at any point in time without loss of precision.
+
+`AccumulationDistributor` is analogous to the `TimeDistributor` in that it distributes tokens to multiple participants but uses different math internally to achieve a different set of properties. For example, one of the limitations of the `TimeDistributor` is that it's limited w.r.t. number of participants it can accomodate since it exhibits `O(n)` on most of its operations (`n` being number of participants). `AccumulationDistributor` on the other hand can accomodate virtually any number of participants since its operations are `O(1)`. It doesn't distribute tokens over time but works such that when you deposit tokens into it, they get distributed proportionally to all the members at once based on their current shares amount. It also transparently supports handling of multiple token types at once, so rewards can get distributed in form of multiple different tokens which can be added dynamically without any additional interaction from the participants.
+
+You can now see that by combining these primitives you can achieve higher-level functionality such as advanced forms of vesting and liquidity mining.
+
+**Farm** is a composable liquidity mining smart contract that uses the primitives under the hood and implements functionality similar to one pioneered by SushiSwap where a token (reward) is distributed across multiple different pools each of which can have any number of participants deposit stake and receive their share of rewards.
+
+The protocol has been constructed to enable some very powerful features. For example, each `Pool` can be a member of multiple different `Farms` which means that users who stake in that pool can recieve rewards in multiple different tokens. These `Farm` memberships for each `Pool` can be dynamically added and removed by the admin at any time without any loss of rewards or additional steps having to be taken by the users.
+
+To give a more concrete example, suppose a DEX creates liquidity mining pools for their AMM pairs where they distrubte ther native token as rewards. Now suppose another project lists their token on this DEX. While this newly-listed pair already recieves rewards in form of DEX' native token, the project creators can incentivize additional liquidity on that pair by distributing additional rewards to the LPs in form of other tokens. The DEX owners retain control on which additional rewards are allowed to be distributed (allow or deny another `Farm` on the `Pool`) and the project owners retain control over the distribution rate of the rewards they have added (distribution rate on the added `Farm`, given it's allowed by the DEX). Once a `Pool` has been joined to an additional `Farm`, the users immediatelly start receiving the additional rewards.
+
+Additionally, it is not a requirement that a `Pool` object is the only type that is allowed to join a `Farm`. You can have any custom type be a member of a `Farm`. This gives you the flexibility to create custom `Pool` implementations or any other way for collecting the rewards.
+
+## Implementation and Usage
 
 ### Time Locked Balance
 
@@ -150,8 +164,6 @@ Since stake holder positions are stored as separate `Position` objects, this dis
 no limit on the number of participants that can provide the stake. The limitation is only on the number of
 distinct coin types that are handeled by the distributor due to which there is `O(n)` complexity on
 certain operations (`top_up`, `deposit_shares_new`, `deposit_shares`, `withdraw_shares`, and `merge_positions`).
-
-## Farm and Pool
 
 ### Farm
 
