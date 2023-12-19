@@ -2,7 +2,7 @@
 
 [move]
 version = 0
-manifest_digest = "BC17F4334028702733AD6F4C98CAB642249A5DAFFAC416AB85D14BA8EE058CD1"
+manifest_digest = "6393D9D93907285B3F75118B886FB36B4B3F53426BADD57BBA2D72242E116419"
 deps_digest = "397E6A9F7A624706DBDFEE056CE88391A15876868FD18A88504DA74EB458D697"
 
 dependencies = [
@@ -60,14 +60,6 @@ dependencies = [
 ]
 
 [[move.package]]
-name = "0x9c564002970ce40370b0c1a8328d2e91924dab43ca2cb483af67aaf0f7cbe44e"
-source = { local = "on-chain-deps/0x9c564002970ce40370b0c1a8328d2e91924dab43ca2cb483af67aaf0f7cbe44e" }
-
-dependencies = [
-  { name = "MoveStdlib" },
-]
-
-[[move.package]]
 name = "0xad013d5fde39e15eabda32b3dbdafd67dac32b798ce63237c27a8f73339b9b6f"
 source = { local = "on-chain-deps/0xad013d5fde39e15eabda32b3dbdafd67dac32b798ce63237c27a8f73339b9b6f" }
 
@@ -90,10 +82,9 @@ source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.12.2
 
 [[move.package]]
 name = "ScallopPool"
-source = { local = "on-chain-deps/0xe87f1b2d498106a2c61421cec75b7b5c5e348512b0dc263949a0e7a3c256571a" }
+source = { local = "on-chain-deps/0xec1ac7f4d01c5bf178ff4e62e523e7df7721453d81d4904a42a0ffc2686c843d" }
 
 dependencies = [
-  { name = "0x9c564002970ce40370b0c1a8328d2e91924dab43ca2cb483af67aaf0f7cbe44e" },
   { name = "MoveStdlib" },
   { name = "Sui" },
 ]

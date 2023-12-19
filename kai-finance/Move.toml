@@ -1,14 +1,14 @@
 [package]
 name = "KaiFinance"
 version = "0.1.0"
-published-at = "0x66b2fb874e8cc3501c1e00e8565daf31777d821d059d8fa5c4481d5960b866ee"
+published-at = "0x7a27caf0a07d7a5aceba8dfba89228c38a4b901389fed880d43c2c5ceb8651aa"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.12.2" }
 MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.12.2" }
 WHUSDCE = { local = "./on-chain-deps/0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf" }
 ScallopProtocol = { local = "./on-chain-deps/0xbf47d96986af814ed74342fc6e90f2f35b995958c7f372c3a2501853f935b3cd" }
-ScallopPool = { local = "./on-chain-deps/0xe87f1b2d498106a2c61421cec75b7b5c5e348512b0dc263949a0e7a3c256571a" }
+ScallopPool = { local = "./on-chain-deps/0xec1ac7f4d01c5bf178ff4e62e523e7df7721453d81d4904a42a0ffc2686c843d" }
 
 [addresses]
 std = "0x1"
