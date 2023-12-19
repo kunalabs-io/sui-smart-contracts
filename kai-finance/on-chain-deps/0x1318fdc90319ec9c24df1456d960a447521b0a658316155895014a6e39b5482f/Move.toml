@@ -1,0 +1,8 @@
+[package]
+name = "0x1318fdc90319ec9c24df1456d960a447521b0a658316155895014a6e39b5482f"
+version = "0.0.1"
+published-at = "0x1318fdc90319ec9c24df1456d960a447521b0a658316155895014a6e39b5482f"
+
+[dependencies]
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.12.2" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.12.2" }
