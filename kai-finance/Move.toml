@@ -1,19 +1,16 @@
 [package]
 name = "KaiFinance"
 version = "0.1.0"
-published-at = "0x01c389a85310b47e7630a9361d4e71025bc35e4999d3a645949b1b68b26f2273"
+published-at = "0x66b2fb874e8cc3501c1e00e8565daf31777d821d059d8fa5c4481d5960b866ee"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.12.2" }
 MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.12.2" }
 WHUSDCE = { local = "./on-chain-deps/0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf" }
-ScallopProtocol = { local = "./on-chain-deps/0xc05a9cdf09d2f2451dea08ca72641e013834baef3d2ea5fcfee60a9d1dc3c7d9" }
+ScallopProtocol = { local = "./on-chain-deps/0xbf47d96986af814ed74342fc6e90f2f35b995958c7f372c3a2501853f935b3cd" }
 ScallopPool = { local = "./on-chain-deps/0xe87f1b2d498106a2c61421cec75b7b5c5e348512b0dc263949a0e7a3c256571a" }
 
 [addresses]
 std = "0x1"
 sui = "0x2"
 yieldoptimizer = "0x01c389a85310b47e7630a9361d4e71025bc35e4999d3a645949b1b68b26f2273"
-whusdce = "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf"
-scallop_protocol = "0xefe8b36d5b2e43728cc323298626b83177803521d195cfb11e15b910e892fddf"
-scallop_pool = "0xe87f1b2d498106a2c61421cec75b7b5c5e348512b0dc263949a0e7a3c256571a"

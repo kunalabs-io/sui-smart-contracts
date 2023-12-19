@@ -6,3 +6,6 @@ published-at = "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.12.2" }
 0x26efee2b51c911237888e5dc6702868abca3c7ac12c53f76ef8eba0697695e3d = { local = "../0x26efee2b51c911237888e5dc6702868abca3c7ac12c53f76ef8eba0697695e3d" }
+
+[addresses]
+whusdce = "0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf"

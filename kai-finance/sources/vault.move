@@ -342,7 +342,7 @@ module yieldoptimizer::vault {
         assert!(total_bps == BPS_IN_100_PCT, EInvalidWeights);
     }
 
-    public(friend) fun remove_strategy<T, YT>(
+    public fun remove_strategy<T, YT>(
         cap: &AdminCap<YT>, vault: &mut Vault<T, YT>, ticket: StrategyRemovalTicket<T, YT>,
         ids_for_weights: vector<ID>, weights_bps: vector<u64>,
         clock: &Clock
