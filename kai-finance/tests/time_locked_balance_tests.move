@@ -1,9 +1,9 @@
-module yieldoptimizer::time_locked_balance_tests {
+module kai::time_locked_balance_tests {
     use sui::balance::{Self, Balance};
     use sui::tx_context::{Self, TxContext};
     use sui::clock::{Self, Clock};
-    use yieldoptimizer::time_locked_balance as tlb;
-    use yieldoptimizer::time_locked_balance::{TimeLockedBalance};
+    use kai::time_locked_balance as tlb;
+    use kai::time_locked_balance::{TimeLockedBalance};
 
     struct FOO has  drop {}
 

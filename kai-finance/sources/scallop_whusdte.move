@@ -1,4 +1,4 @@
-module yieldoptimizer::scallop_whusdte {
+module kai::scallop_whusdte {
     use std::option::{Self, Option};
     use sui::object::{Self, UID, ID};
     use sui::transfer;
@@ -17,12 +17,12 @@ module yieldoptimizer::scallop_whusdte {
     use scallop_pool::spool::Spool as ScallopPool;
     use scallop_pool::rewards_pool::RewardsPool as ScallopRewardsPool;
 
-    use yieldoptimizer::vault::{
+    use kai::vault::{
         Self, Vault, VaultAccess, AdminCap as VaultAdminCap, RebalanceAmounts, WithdrawTicket,
         StrategyRemovalTicket
     };
-    use yieldoptimizer::ywhusdte::YWHUSDTE;
-    use yieldoptimizer::util::muldiv;
+    use kai::ywhusdte::YWHUSDTE;
+    use kai::util::muldiv;
 
     /* ================= constants ================= */
 

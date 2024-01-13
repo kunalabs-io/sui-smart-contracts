@@ -1,9 +1,9 @@
-module yieldoptimizer::ywhusdce {
+module kai::ywhusdce {
     use sui::tx_context::{Self, TxContext};
     use sui::transfer;
     use sui::coin;
     use std::option;
-    use yieldoptimizer::vault;
+    use kai::vault;
 
     use whusdce::coin::COIN as WHUSDCE;
 

@@ -1,10 +1,10 @@
-module yieldoptimizer::ysui {
+module kai::ysui {
     use sui::tx_context::{Self, TxContext};
     use sui::transfer;
     use sui::coin;
     use sui::sui::SUI;
     use std::option;
-    use yieldoptimizer::vault;
+    use kai::vault;
 
     struct YSUI has drop {}
 

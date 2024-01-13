@@ -1,4 +1,4 @@
-module yieldoptimizer::vault {
+module kai::vault {
     use std::option::{Self, Option};
     use std::vector;
     use sui::tx_context::TxContext;
@@ -12,15 +12,15 @@ module yieldoptimizer::vault {
     use sui::math;
     use sui::event;
 
-    use yieldoptimizer::time_locked_balance::{Self as tlb, TimeLockedBalance};
-    use yieldoptimizer::util::{muldiv, timestamp_sec};
+    use kai::time_locked_balance::{Self as tlb, TimeLockedBalance};
+    use kai::util::{muldiv, timestamp_sec};
    
-    friend yieldoptimizer::ywhusdce;
-    friend yieldoptimizer::scallop_whusdce;
-    friend yieldoptimizer::ywhusdte;
-    friend yieldoptimizer::scallop_whusdte;
-    friend yieldoptimizer::ysui;
-    friend yieldoptimizer::scallop_sui;
+    friend kai::ywhusdce;
+    friend kai::scallop_whusdce;
+    friend kai::ywhusdte;
+    friend kai::scallop_whusdte;
+    friend kai::ysui;
+    friend kai::scallop_sui;
 
     /* ================= constants ================= */
 

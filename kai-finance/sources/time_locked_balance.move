@@ -7,11 +7,11 @@
 /// as a basic building block and to provide safety guarantees for building more complex token
 /// emission modules (e.g. vesting).
 /// 
-module yieldoptimizer::time_locked_balance {
+module kai::time_locked_balance {
     use sui::balance::{Self, Balance};
     use sui::math;
     use sui::clock::Clock;
-    use yieldoptimizer::util::timestamp_sec;
+    use kai::util::timestamp_sec;
 
     /* ================= TimeLockedBalance ================= */
 

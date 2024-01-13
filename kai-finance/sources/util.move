@@ -1,4 +1,4 @@
-module yieldoptimizer::util {
+module kai::util {
     use sui::clock::{Self, Clock};
 
     /// Get current clock timestamp in seconds.

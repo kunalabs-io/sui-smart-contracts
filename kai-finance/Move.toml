@@ -1,5 +1,5 @@
 [package]
-name = "KaiFinance"
+name = "Kai"
 version = "0.1.0"
 published-at = "0x7a27caf0a07d7a5aceba8dfba89228c38a4b901389fed880d43c2c5ceb8651aa"
 
@@ -14,4 +14,4 @@ ScallopPool = { local = "./on-chain-deps/0xec1ac7f4d01c5bf178ff4e62e523e7df77214
 [addresses]
 std = "0x1"
 sui = "0x2"
-yieldoptimizer = "0x01c389a85310b47e7630a9361d4e71025bc35e4999d3a645949b1b68b26f2273"
+kai = "0x01c389a85310b47e7630a9361d4e71025bc35e4999d3a645949b1b68b26f2273"
