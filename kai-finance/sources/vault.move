@@ -11,6 +11,7 @@ module kai::vault {
     use sui::vec_set;
     use sui::math;
     use sui::event;
+    use sui::package::UpgradeCap;
 
     use kai::time_locked_balance::{Self as tlb, TimeLockedBalance};
     use kai::util::{muldiv, timestamp_sec};
@@ -65,6 +66,9 @@ module kai::vault {
 
     /// Migration is not an upgrade
     const ENotUpgrade: u64 = 10;
+
+    /// UpgradeCap object doesn't belong to this package
+    const EInvalidUpgradeCap: u64 = 11;
 
     /* ================= events ================= */
 
@@ -236,6 +240,19 @@ module kai::vault {
             id: object::new(ctx),
         };
         admin_cap
+    }
+
+    fun assert_upgrade_cap(cap: &UpgradeCap) {
+        let cap_id = @0x816949d764f3285c0420e9375c2594ca01355d1e05670b242ff5bfcf4c5fc958;
+        assert!(object::id_address(cap) == cap_id, EInvalidUpgradeCap);
+    }
+
+    // Creates a new `Vault` using the package's `UpgradeCap` as authority.
+    public fun new_with_upgrade_cap<T, YT>(
+        cap: &UpgradeCap, lp_treasury: TreasuryCap<YT>, ctx: &mut TxContext
+    ): AdminCap<YT> {
+        assert_upgrade_cap(cap);
+        new<T, YT>(lp_treasury, ctx)
     }
 
     fun assert_version<T, YT>(vault: &Vault<T, YT>) {
