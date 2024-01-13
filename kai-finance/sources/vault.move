@@ -10,6 +10,7 @@ module yieldoptimizer::vault {
     use sui::vec_map::{Self, VecMap};
     use sui::vec_set;
     use sui::math;
+    use sui::event;
 
     use yieldoptimizer::time_locked_balance::{Self as tlb, TimeLockedBalance};
     use yieldoptimizer::util::{muldiv, timestamp_sec};
@@ -59,6 +60,30 @@ module yieldoptimizer::vault {
 
     /// Migration is not an upgrade
     const ENotUpgrade: u64 = 10;
+
+    /* ================= events ================= */
+
+    struct DepositEvent<phantom YT> has copy, drop {
+        amount: u64,
+        lp_minted: u64,
+    }
+
+    struct WithdrawEvent<phantom YT> has copy, drop {
+        amount: u64,
+        lp_burned: u64,
+    }
+
+    struct StrategyProfitEvent<phantom YT> has copy, drop {
+        strategy_id: ID,
+        profit: u64,
+        fee_amt_yt: u64,
+    }
+
+    struct StrategyLossEvent<phantom YT> has copy, drop {
+        strategy_id: ID,
+        to_withdraw: u64,
+        withdrawn: u64
+    }
 
     /* ================= AdminCap ================= */
 
@@ -438,6 +463,11 @@ module yieldoptimizer::vault {
             )
         };
 
+        event::emit(DepositEvent<YT> {
+            amount: balance::value(&balance),
+            lp_minted: lp_amount,
+        });
+
         balance::join(&mut vault.free_balance, balance);
         coin::mint_balance(&mut vault.lp_treasury, lp_amount)
     }
@@ -601,6 +631,7 @@ module yieldoptimizer::vault {
         let WithdrawTicket {
             to_withdraw_from_free_balance, strategy_infos, lp_to_burn
         } = ticket;
+        let lp_to_burn_amt = balance::value(&lp_to_burn);
 
         while (vec_map::size(&strategy_infos) > 0) {
             let (strategy_id, withdraw_info) = vec_map::pop(&mut strategy_infos);
@@ -609,6 +640,14 @@ module yieldoptimizer::vault {
             } = withdraw_info;
             if (to_withdraw > 0) {
                 assert!(has_withdrawn, EStrategyNotWithdrawn);
+            };
+
+            if (balance::value(&withdrawn_balance) < to_withdraw) {
+                event::emit(StrategyLossEvent<YT> {
+                    strategy_id,
+                    to_withdraw,
+                    withdrawn: balance::value(&withdrawn_balance),
+                });
             };
 
             // Reduce strategy's borrowed amount. This calculation is intentionally based on
@@ -631,6 +670,11 @@ module yieldoptimizer::vault {
             coin::supply_mut(&mut vault.lp_treasury),
             lp_to_burn,
         );
+
+        event::emit(WithdrawEvent<YT> {
+            amount: balance::value(&out),
+            lp_burned: lp_to_burn_amt,
+        });
 
         vault.withdraw_ticket_issued = false;
         out
@@ -857,7 +901,7 @@ module yieldoptimizer::vault {
             vault.performance_fee_bps,
             BPS_IN_100_PCT
         );
-        if (fee_amt_t > 0) {
+        let fee_amt_yt = if (fee_amt_t > 0) {
             let total_available_balance = total_available_balance(vault, clock);
             // dL = L * f / (A - f)
             let fee_amt_yt = muldiv(
@@ -867,7 +911,17 @@ module yieldoptimizer::vault {
             );
             let fee_yt = coin::mint_balance(&mut vault.lp_treasury, fee_amt_yt);
             balance::join(&mut vault.performance_fee_balance, fee_yt);
+
+            fee_amt_yt
+        } else {
+            0
         };
+
+        event::emit(StrategyProfitEvent<YT> {
+            strategy_id: object::uid_to_inner(&access.id),
+            profit: balance::value(&profit),
+            fee_amt_yt: fee_amt_yt,
+        });
 
         // reset profit unlock
         balance::join(
