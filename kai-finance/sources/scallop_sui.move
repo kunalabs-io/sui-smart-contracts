@@ -1,3 +1,7 @@
+/* 
+    NOTE: This module has been deprecated due to `kai::ysui::YSUI` not initializing
+    during upgrade and thus the relevant `Vault` not being able to be initialized.
+*/ 
 module kai::scallop_sui {
     use std::option::{Self, Option};
     use sui::object::{Self, UID, ID};

@@ -1,3 +1,8 @@
+/*
+    NOTE: This module is deprecated. It was added in an upgrade which means that
+    the init function wasn't called. The related `TreasuryCap` was never created
+    and so wasn't the `Vault`.
+*/
 module kai::ywhusdte {
     use sui::tx_context::{Self, TxContext};
     use sui::transfer;

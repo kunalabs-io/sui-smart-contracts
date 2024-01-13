@@ -17,10 +17,11 @@ module kai::vault {
    
     friend kai::ywhusdce;
     friend kai::scallop_whusdce;
-    friend kai::ywhusdte;
-    friend kai::scallop_whusdte;
-    friend kai::ysui;
-    friend kai::scallop_sui;
+
+    friend kai::ywhusdte; // deprecated
+    friend kai::scallop_whusdte; // deprecated
+    friend kai::ysui; // deprecated
+    friend kai::scallop_sui; // deprecated
 
     /* ================= constants ================= */
 

@@ -1,3 +1,7 @@
+/* 
+    NOTE: This module has been deprecated due to `kai::ywhusdte::YWHUSDTE` not initializing
+    during upgrade and thus the relevant `Vault` not being able to be initialized.
+*/ 
 module kai::scallop_whusdte {
     use std::option::{Self, Option};
     use sui::object::{Self, UID, ID};
