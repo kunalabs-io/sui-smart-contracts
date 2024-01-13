@@ -213,11 +213,19 @@ module yieldoptimizer::scallop_whusdce {
                 scallop_version, scallop_market, unstaked_susdc, clock, ctx
             );
             let redeemed_balance_usdc = coin::into_balance(redeemed_coin);
-            let redeemed_amt_usdc = balance::value(&redeemed_balance_usdc);
 
+            if (balance::value(&redeemed_balance_usdc) > to_repay) {
+                let extra_amt = balance::value(&redeemed_balance_usdc) - to_repay;
+                balance::join(
+                    &mut strategy.collected_profit_usdc,
+                    balance::split(&mut redeemed_balance_usdc, extra_amt)
+                );
+            };
+
+            let repaid = balance::value(&redeemed_balance_usdc);
             vault::strategy_repay(vault, vault_access, redeemed_balance_usdc);
 
-            strategy.underlying_nominal_value_usdc = strategy.underlying_nominal_value_usdc - redeemed_amt_usdc;
+            strategy.underlying_nominal_value_usdc = strategy.underlying_nominal_value_usdc - repaid;
         } else if (can_borrow > 0) {
             let borrow_amt = math::min(can_borrow, vault::free_balance(vault));
             let borrowed = coin::from_balance(
