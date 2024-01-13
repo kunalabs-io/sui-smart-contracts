@@ -24,6 +24,9 @@ module kai::vault {
     friend kai::ysui; // deprecated
     friend kai::scallop_sui; // deprecated
 
+    friend kai::scallop_whusdte_proper;
+    friend kai::scallop_sui_proper;
+
     /* ================= constants ================= */
 
     const MODULE_VERSION: u64 = 1; 

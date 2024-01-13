@@ -2,10 +2,11 @@
 
 [move]
 version = 0
-manifest_digest = "63C4CF10F9262D02124D2DC9C6FD4D601A76240BF28F6CAE91E39DD65A766C2C"
-deps_digest = "52B406A7A21811BEF51751CF88DA0E76DAEFFEAC888D4F4060B1A72BBE7D8D35"
+manifest_digest = "7C567D90A2E447994854C349E10C913B48C2D6651D9274A9B6B6E9A5C04228C8"
+deps_digest = "CAFAD8A7CF51067FB4358215BECB86BD100DD64E57C2AC8A7AE7D74B688F5965"
 
 dependencies = [
+  { name = "KaiYwhUSDTeYSUI" },
   { name = "MoveStdlib" },
   { name = "ScallopPool" },
   { name = "ScallopProtocol" },
@@ -78,8 +79,16 @@ dependencies = [
 ]
 
 [[move.package]]
+name = "KaiYwhUSDTeYSUI"
+source = { local = "deps/kai-ywhusdte-ysui" }
+
+dependencies = [
+  { name = "Sui" },
+]
+
+[[move.package]]
 name = "MoveStdlib"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.12.2", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.15.2", subdir = "crates/sui-framework/packages/move-stdlib" }
 
 [[move.package]]
 name = "ScallopPool"
@@ -106,7 +115,7 @@ dependencies = [
 
 [[move.package]]
 name = "Sui"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.12.2", subdir = "crates/sui-framework/packages/sui-framework" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.15.2", subdir = "crates/sui-framework/packages/sui-framework" }
 
 dependencies = [
   { name = "MoveStdlib" },

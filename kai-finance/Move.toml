@@ -4,12 +4,13 @@ version = "0.1.0"
 published-at = "0x7a0269c65d5d156963ed0250c81baf16c4d1d56cb6c1738743770409298dc010"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.12.2" }
-MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.12.2" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.15.2", override = true }
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.15.2", override = true }
 WHUSDCE = { local = "./on-chain-deps/0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf" }
 WHUSDTE = { local = "./on-chain-deps/0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c" }
 ScallopProtocol = { local = "./on-chain-deps/0xbf47d96986af814ed74342fc6e90f2f35b995958c7f372c3a2501853f935b3cd" }
 ScallopPool = { local = "./on-chain-deps/0xec1ac7f4d01c5bf178ff4e62e523e7df7721453d81d4904a42a0ffc2686c843d" }
+KaiYwhUSDTeYSUI = { local = "./deps/kai-ywhusdte-ysui" }
 
 [addresses]
 std = "0x1"
