@@ -9,6 +9,7 @@ module yieldoptimizer::ywhusdce {
 
     struct YWHUSDCE has drop {}
 
+    #[lint_allow(share_owned)]
     fun init(witness: YWHUSDCE, ctx: &mut TxContext) {
         let (treasury, meta) = coin::create_currency(
             witness, 6, b"yUSDC", b"", b"", option::none(), ctx

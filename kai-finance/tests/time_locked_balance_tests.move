@@ -106,23 +106,23 @@ module yieldoptimizer::time_locked_balance_tests {
         assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity check
 
         // clock 100
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 0, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
 
         // clock 158
         set_clock_sec(&mut clock, 158);
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 0, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
 
         // clock 159
         increment_clock_sec(&mut clock, 1);
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 13, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 13, 0);
 
         // clock 161
         increment_clock_sec(&mut clock, 2);
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 39, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 39, 0);
 
         // clock 400
         set_clock_sec(&mut clock, 400);
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 1014, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 1014, 0);
 
         // clock 161, withdraw
         clock::destroy_for_testing(clock);
@@ -130,19 +130,19 @@ module yieldoptimizer::time_locked_balance_tests {
 
         balance::destroy_for_testing(tlb::withdraw(&mut tlb, 0, &clock));
         assert_tlb_values(&tlb, 982, 158, 13, 39, 236); // sanity check
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 39, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 39, 0);
 
         balance::destroy_for_testing(tlb::withdraw(&mut tlb, 15, &clock));
         assert_tlb_values(&tlb, 982, 158, 13, 24, 236); // sanity check
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 24, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 24, 0);
 
         // clock 164
         increment_clock_sec(&mut clock, 3);
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 63, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 63, 0);
 
         // clock 400
         set_clock_sec(&mut clock, 400);
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 999, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 999, 0);
 
         // clean up
         assert_and_destroy_balance(tlb::withdraw_all(&mut tlb, &clock), 999);
@@ -158,11 +158,11 @@ module yieldoptimizer::time_locked_balance_tests {
 
         clock::destroy_for_testing(clock);
         let clock = create_clock_at_sec(100, ctx);
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 0, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
         set_clock_sec(&mut clock, 200);
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 0, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
         set_clock_sec(&mut clock, 400);
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 0, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
 
         // clean up
         assert_and_destroy_balance(tlb::skim_extraneous_balance(&mut tlb), 1021);
@@ -176,11 +176,11 @@ module yieldoptimizer::time_locked_balance_tests {
 
         clock::destroy_for_testing(clock);
         let clock = create_clock_at_sec(100, ctx);
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 0, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
         set_clock_sec(&mut clock, 200);
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 0, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
         set_clock_sec(&mut clock, 400);
-        assert!(tlb::max_withdrawable(&mut tlb, &clock) == 0, 0);
+        assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
 
         // clean up
         tlb::destroy_empty(tlb); 

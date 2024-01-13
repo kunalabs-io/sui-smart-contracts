@@ -75,6 +75,7 @@ module yieldoptimizer::scallop_whusdce {
         assert!(object::id_address(pool) == SCALLOP_POOL_ID, EInvalidScallopPool);
     }
 
+    #[lint_allow(self_transfer)]
     entry public(friend) fun new(
         scallop_pool: &mut ScallopPool, clock: &Clock, ctx: &mut TxContext
     ) {

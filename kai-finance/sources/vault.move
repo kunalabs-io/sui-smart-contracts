@@ -849,7 +849,7 @@ module yieldoptimizer::vault {
         assert_version(vault);
         assert!(vault.withdraw_ticket_issued == false, EWithdrawTicketIssued);
         let strategy_id = object::uid_as_inner(&access.id);
-        assert!(vec_map::contains(&mut vault.strategies, strategy_id), EInvalidVaultAccess);
+        assert!(vec_map::contains(&vault.strategies, strategy_id), EInvalidVaultAccess);
 
         // collect performance fee
         let fee_amt_t = muldiv(
