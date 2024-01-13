@@ -1,0 +1,10 @@
+[package]
+name = "KaiYwhUSDTeYSUI"
+version = "0.0.1"
+published-at = "0xb8dc843a816b51992ee10d2ddc6d28aab4f0a1d651cd7289a7897902eb631613"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.15.2" }
+
+[addresses]
+kai_ywhusdte_ysui = "0xb8dc843a816b51992ee10d2ddc6d28aab4f0a1d651cd7289a7897902eb631613"
