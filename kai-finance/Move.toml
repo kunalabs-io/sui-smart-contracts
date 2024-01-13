@@ -1,7 +1,7 @@
 [package]
 name = "Kai"
 version = "0.1.0"
-published-at = "0x7a0269c65d5d156963ed0250c81baf16c4d1d56cb6c1738743770409298dc010"
+published-at = "0xaf110d3f48cd524ba378c05c56330c2a6afde183a14abff8a731268163ff6618"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.15.2", override = true }
