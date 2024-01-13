@@ -1,6 +1,7 @@
 /* 
     NOTE: This module has been deprecated due to `kai::ywhusdte::YWHUSDTE` not initializing
     during upgrade and thus the relevant `Vault` not being able to be initialized.
+    The new module is `kai::scallop_whusdte_proper`.
 */ 
 module kai::scallop_whusdte {
     use std::option::{Self, Option};
