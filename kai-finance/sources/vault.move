@@ -73,6 +73,9 @@ module kai::vault {
     /// UpgradeCap object doesn't belong to this package
     const EInvalidUpgradeCap: u64 = 11;
 
+    /// Treasury supply has to be 0
+    const ETreasurySupplyPositive: u64 = 12;
+
     /* ================= events ================= */
 
     struct DepositEvent<phantom YT> has copy, drop {
@@ -218,6 +221,8 @@ module kai::vault {
     public(friend) fun new<T, YT>(
         lp_treasury: TreasuryCap<YT>, ctx: &mut TxContext
     ): AdminCap<YT> {
+        assert!(coin::total_supply(&lp_treasury) == 0, ETreasurySupplyPositive);
+
         let vault = Vault<T, YT> {
             id: object::new(ctx),
 
