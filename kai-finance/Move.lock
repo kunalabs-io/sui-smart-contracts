@@ -2,8 +2,8 @@
 
 [move]
 version = 0
-manifest_digest = "6393D9D93907285B3F75118B886FB36B4B3F53426BADD57BBA2D72242E116419"
-deps_digest = "397E6A9F7A624706DBDFEE056CE88391A15876868FD18A88504DA74EB458D697"
+manifest_digest = "C2107A9B5580D0443D0A5751B781AF4D2DF0D94FC1ADB9A26CA7A52DF05CC166"
+deps_digest = "52B406A7A21811BEF51751CF88DA0E76DAEFFEAC888D4F4060B1A72BBE7D8D35"
 
 dependencies = [
   { name = "MoveStdlib" },
@@ -11,6 +11,7 @@ dependencies = [
   { name = "ScallopProtocol" },
   { name = "Sui" },
   { name = "WHUSDCE" },
+  { name = "WHUSDTE" },
 ]
 
 [[move.package]]
@@ -117,5 +118,13 @@ source = { local = "on-chain-deps/0x5d4b302506645c37ff133b98c4b50a5ae14841659738
 
 dependencies = [
   { name = "0x26efee2b51c911237888e5dc6702868abca3c7ac12c53f76ef8eba0697695e3d" },
+  { name = "Sui" },
+]
+
+[[move.package]]
+name = "WHUSDTE"
+source = { local = "on-chain-deps/0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c" }
+
+dependencies = [
   { name = "Sui" },
 ]

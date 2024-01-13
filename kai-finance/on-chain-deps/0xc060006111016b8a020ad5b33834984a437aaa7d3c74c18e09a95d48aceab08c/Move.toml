@@ -1,0 +1,10 @@
+[package]
+name = "WHUSDTE"
+version = "0.0.1"
+published-at = "0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.12.2" }
+
+[addresses]
+whusdte = "0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c"

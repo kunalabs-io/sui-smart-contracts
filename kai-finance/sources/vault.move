@@ -17,6 +17,8 @@ module yieldoptimizer::vault {
    
     friend yieldoptimizer::ywhusdce;
     friend yieldoptimizer::scallop_whusdce;
+    friend yieldoptimizer::ywhusdte;
+    friend yieldoptimizer::scallop_whusdte;
 
     /* ================= constants ================= */
 
