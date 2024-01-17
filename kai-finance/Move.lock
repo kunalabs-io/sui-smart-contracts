@@ -2,7 +2,7 @@
 
 [move]
 version = 0
-manifest_digest = "A0D814E16A40E1ABD60A2D0B515E203AED9A0AEE2C501C2B84BB2F339A1597C3"
+manifest_digest = "C7C161C55D1300E2C44B3A5A700A1DCF1AD2D4D176FF23A5B0CAB421287B4E20"
 deps_digest = "CAFAD8A7CF51067FB4358215BECB86BD100DD64E57C2AC8A7AE7D74B688F5965"
 
 dependencies = [
@@ -101,7 +101,7 @@ dependencies = [
 
 [[move.package]]
 name = "ScallopProtocol"
-source = { local = "on-chain-deps/0xbf47d96986af814ed74342fc6e90f2f35b995958c7f372c3a2501853f935b3cd" }
+source = { local = "on-chain-deps/0x38fe42a5a69f7eb3635404389e8003be9457b1a5c873f133184648c7e9bd47b7" }
 
 dependencies = [
   { name = "0x1318fdc90319ec9c24df1456d960a447521b0a658316155895014a6e39b5482f" },
