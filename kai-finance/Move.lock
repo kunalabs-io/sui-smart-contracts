@@ -137,3 +137,8 @@ source = { local = "on-chain-deps/0xc060006111016b8a020ad5b33834984a437aaa7d3c74
 dependencies = [
   { name = "Sui" },
 ]
+
+[move.toolchain-version]
+compiler-version = "1.16.2"
+edition = "legacy"
+flavor = "sui"

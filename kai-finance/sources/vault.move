@@ -58,7 +58,8 @@ module kai::vault {
     /// The strategy is not registered with the vault
     const EInvalidVaultAccess: u64 = 6;
 
-    /// Target strategy weights should add up to 100%
+    /// Target strategy weights input should add up to 100% and contain the same
+    /// number of elements as the number of strategies
     const EInvalidWeights: u64 = 7;
 
     /// An invariant has been violated
@@ -382,6 +383,8 @@ module kai::vault {
 
         let i = 0;
         let n = vec_map::size(&vault.strategies);
+        assert!(n == vector::length(&ids), EInvalidWeights);
+        assert!(n == vector::length(&weights_bps), EInvalidWeights);
         while (i < n) {
             let id = *vector::borrow(&ids, i);
             let weight = *vector::borrow(&weights_bps, i);
@@ -567,7 +570,7 @@ module kai::vault {
         let total_borrowed_after_excess_withdrawn = 0;
         let i = 0;
         let n = vector::length(&vault.strategy_withdraw_priority_order);
-        while (i < n) {
+        while (i < n && remaining_to_withdraw > 0) {
             let strategy_id = vector::borrow(&vault.strategy_withdraw_priority_order, i);
             let strategy_state = vec_map::get(&vault.strategies, strategy_id);
             let strategy_withdraw_info = vec_map::get_mut(&mut ticket.strategy_infos, strategy_id);
