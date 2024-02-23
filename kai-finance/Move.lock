@@ -2,7 +2,7 @@
 
 [move]
 version = 0
-manifest_digest = "C7C161C55D1300E2C44B3A5A700A1DCF1AD2D4D176FF23A5B0CAB421287B4E20"
+manifest_digest = "E0C4388048CF0AB1A1BBDE5957EDD2E73CE0B9B8FC0FBD2F2997B834C1D4B791"
 deps_digest = "CAFAD8A7CF51067FB4358215BECB86BD100DD64E57C2AC8A7AE7D74B688F5965"
 
 dependencies = [
@@ -88,7 +88,7 @@ dependencies = [
 
 [[move.package]]
 name = "MoveStdlib"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.15.2", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.18.1", subdir = "crates/sui-framework/packages/move-stdlib" }
 
 [[move.package]]
 name = "ScallopPool"
@@ -115,7 +115,7 @@ dependencies = [
 
 [[move.package]]
 name = "Sui"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.15.2", subdir = "crates/sui-framework/packages/sui-framework" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.18.1", subdir = "crates/sui-framework/packages/sui-framework" }
 
 dependencies = [
   { name = "MoveStdlib" },
@@ -139,6 +139,6 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.16.2"
+compiler-version = "1.18.1"
 edition = "legacy"
 flavor = "sui"
