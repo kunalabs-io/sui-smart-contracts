@@ -14,7 +14,7 @@ module kai::vault {
     use sui::package::UpgradeCap;
 
     use kai::time_locked_balance::{Self as tlb, TimeLockedBalance};
-    use kai::util::{muldiv, timestamp_sec};
+    use kai::util::{muldiv, muldiv_round_up, timestamp_sec};
    
     friend kai::ywhusdce;
     friend kai::scallop_whusdce;
@@ -713,6 +713,20 @@ module kai::vault {
         out
     }
 
+    public fun withdraw_t_amt<T, YT>(
+        vault: &mut Vault<T, YT>, t_amt: u64, balance: &mut Balance<YT>, clock: &Clock
+    ): WithdrawTicket<T, YT> {
+        let total_available = total_available_balance(vault, clock);
+        let yt_amt = muldiv_round_up(
+            t_amt,
+            coin::total_supply(&vault.lp_treasury),
+            total_available
+        );
+        let balance = balance::split(balance, yt_amt);
+
+        withdraw(vault, balance, clock)
+    }
+
     /* ================= strategy operations ================= */
 
     /// Makes the strategy deposit the withdrawn balance into the `WithdrawTicket`.
@@ -1082,6 +1096,22 @@ module kai::vault {
     }
 
     #[test_only]
+    fun assert_ticket_total_withdraw<T, YT>(
+        ticket: &WithdrawTicket<T, YT>,
+        total: u64
+    ) {
+        let i = 0;
+        let n = vec_map::size(&ticket.strategy_infos);
+        let total_withdraw = ticket.to_withdraw_from_free_balance;
+        while (i < n) {
+            let (_, strategy_withdraw_info) = vec_map::get_entry_by_idx(&ticket.strategy_infos, i);
+            total_withdraw = total_withdraw + strategy_withdraw_info.to_withdraw;
+            i = i + 1;
+        };
+        assert!(total_withdraw == total, 0);
+    }
+
+    #[test_only]
     fun create_vault_for_testing(ctx: &mut TxContext): (Vault<A, VAULT>, Balance<VAULT>) {
         let (ya_treasury, meta) = create_a_treasury(ctx);
 
@@ -1359,6 +1389,27 @@ module kai::vault {
             &ticket, 2000, keys, values, 10000,
         );
 
+        sui::test_utils::destroy(vault);
+        sui::test_utils::destroy(clock);
+        sui::test_utils::destroy(ticket);
+    }
+
+    #[test]
+    fun test_withdraw_t_amt() {
+        let ctx = tx_context::dummy();
+
+        let (vault, lp) = create_vault_for_testing(&mut ctx);
+
+        let clock = clock::create_for_testing(&mut ctx);
+        clock::increment_for_testing(&mut clock, 1000 * 2000);
+
+        let ticket = withdraw_t_amt(&mut vault, 3800, &mut lp, &clock);
+
+        assert_ticket_total_withdraw(&ticket, 3800);
+        assert!(balance::value(&ticket.lp_to_burn) == 3455, 0);
+        assert!(balance::value(&lp) == 10000 - 3455, 0);
+
+        sui::test_utils::destroy(lp);
         sui::test_utils::destroy(vault);
         sui::test_utils::destroy(clock);
         sui::test_utils::destroy(ticket);

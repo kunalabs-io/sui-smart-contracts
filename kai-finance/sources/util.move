@@ -10,6 +10,16 @@ module kai::util {
         (((a as u128) * (b as u128)) / (c as u128) as u64)
     }
 
+    public fun muldiv_round_up(a: u64, b: u64, c: u64): u64 {
+        let ab = (a as u128) * (b as u128);
+        let c = (c as u128);
+        if (ab % c == 0) {
+            ((ab / c) as u64)
+        } else {
+            ((ab / c + 1) as u64)
+        }
+    }
+
     #[test_only]
     use sui::tx_context;
 
@@ -39,5 +49,16 @@ module kai::util {
         assert!(timestamp_sec(&clock) == 3, 0);
 
         clock::destroy_for_testing(clock);
+    }
+
+    #[test]
+    fun test_muldiv_round_up() {
+        assert!(muldiv_round_up(0, 0, 1) == 0, 0);
+        assert!(muldiv_round_up(2, 1, 1) == 2, 0);
+        assert!(muldiv_round_up(2, 2, 1) == 4, 0);
+        assert!(muldiv_round_up(2, 2, 2) == 2, 0);
+        assert!(muldiv_round_up(2, 2, 3) == 2, 0);
+        assert!(muldiv_round_up(2, 2, 4) == 1, 0);
+        assert!(muldiv_round_up(2, 2, 5) == 1, 0);
     }
 }
