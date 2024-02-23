@@ -295,6 +295,10 @@ module kai::vault {
         total
     }
 
+    public fun total_yt_supply<T, YT>(vault: &Vault<T, YT>): u64 {
+        coin::total_supply(&vault.lp_treasury)
+    }
+
     /* ================= admin ================= */
 
     entry fun set_tvl_cap<T, YT>(
