@@ -237,6 +237,43 @@ module kai::scallop_sui_proper {
         }
     }
 
+    /// Skim the profits earned on base APY.
+    public fun skim_base_profits(
+        cap: &AdminCap, strategy: &mut Strategy,
+        scallop_version: &ScallopVersion, scallop_market: &mut ScallopMarket, scallop_pool: &mut ScallopPool,
+        clock: &Clock, ctx: &mut TxContext
+    ) {
+        assert_admin(cap, strategy);
+        assert_version(strategy);
+        assert_scallop_market(scallop_market);
+        assert_scallop_pool(scallop_pool);
+
+        let staked_amount_ssui = scallop_pool::spool_account::stake_amount(&strategy.scallop_pool_acc);
+        let unstaked_ssui = scallop_pool::user::unstake(
+            scallop_pool, &mut strategy.scallop_pool_acc, staked_amount_ssui, clock, ctx
+        );
+        let redeemed_coin = scallop_protocol::redeem::redeem(
+            scallop_version, scallop_market, unstaked_ssui, clock, ctx
+        );
+        let redeemed_balance_sui = coin::into_balance(redeemed_coin);
+
+        if (balance::value(&redeemed_balance_sui) > strategy.underlying_nominal_value_sui) {
+            let profit_amt = balance::value(&redeemed_balance_sui) - strategy.underlying_nominal_value_sui;
+            balance::join(
+                &mut strategy.collected_profit_sui, 
+                balance::split(&mut redeemed_balance_sui, profit_amt),
+            );
+        };
+
+        let stake_coin = coin::from_balance(redeemed_balance_sui, ctx);
+        let susdc = scallop_protocol::mint::mint(
+            scallop_version, scallop_market, stake_coin, clock, ctx
+        );
+        scallop_pool::user::stake(
+            scallop_pool, &mut strategy.scallop_pool_acc, susdc, clock, ctx
+        );
+    }
+
     /// Collect the profits and hand them over to the vault.
     public fun collect_and_hand_over_profit(
         cap: &AdminCap, strategy: &mut Strategy, vault: &mut Vault<SUI, YSUI>,
