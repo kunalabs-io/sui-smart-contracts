@@ -2,7 +2,7 @@
 
 [move]
 version = 2
-manifest_digest = "0A5E39A1B40E1D419FFDDD5360AE3B0C6EAC4F30C99612ACF8C5C22E185F535E"
+manifest_digest = "C588CF07CD814E6B94C02C699E94DDD80339CBBE9B6352000FB3E6597E105CF2"
 deps_digest = "CAFAD8A7CF51067FB4358215BECB86BD100DD64E57C2AC8A7AE7D74B688F5965"
 dependencies = [
   { name = "KaiYwhUSDTeYSUI" },
@@ -100,7 +100,7 @@ dependencies = [
 
 [[move.package]]
 name = "ScallopProtocol"
-source = { local = "on-chain-deps/0x38fe42a5a69f7eb3635404389e8003be9457b1a5c873f133184648c7e9bd47b7" }
+source = { local = "on-chain-deps/ScallopProtocol" }
 
 dependencies = [
   { name = "0x1318fdc90319ec9c24df1456d960a447521b0a658316155895014a6e39b5482f" },
@@ -138,6 +138,6 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.24.1"
+compiler-version = "1.27.4"
 edition = "legacy"
 flavor = "sui"
