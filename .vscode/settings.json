@@ -11,5 +11,8 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint",
     "editor.tabSize": 2
+  },
+  "[move]": {
+    "editor.formatOnSave": false
   }
 }
