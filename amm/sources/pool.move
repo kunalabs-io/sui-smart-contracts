@@ -1,37 +1,39 @@
 module amm::pool {
     use std::type_name::{Self, TypeName};
-    use std::vector;
-    use sui::object::{Self, UID, ID};
+    use std::u64;
+    use std::u128;
     use sui::balance::{Self, Balance, Supply};
     use sui::balance::{create_supply};
-    use sui::tx_context::{Self, TxContext};
-    use sui::transfer;
     use sui::event;
-    use sui::math;
     use sui::table::{Self, Table};
+
+    /// Allows calling `.add` to add an entry to `PoolRegistry`.
+    public use fun registry_add as PoolRegistry.add;
 
     /* ================= errors ================= */
 
-    /// The pool balance differs from the acceptable.
-    const EExcessiveSlippage: u64 = 0;
-    /// The input amount is zero.
-    const EZeroInput: u64 = 1;
-    /// The pool ID doesn't match the required.
-    const EInvalidPoolID: u64 = 2;
-    /// There's no liquidity in the pool.
-    const ENoLiquidity: u64 = 3;
-    /// Fee parameter is not valid.
-    const EInvalidFeeParam: u64 = 4;
-    /// The provided admin capability doesn't belong to this pool.
-    const EInvalidAdminCap: u64 = 5;
-    /// Pool pair coin types must be ordered alphabetically (`A` < `B`) and mustn't be equal.
-    const EInvalidPair: u64 = 6;
-    /// Pool for this pair already exists.
-    const EPoolAlreadyExists: u64 = 7;
+    #[error]
+    const EZeroInput: vector<u8>
+        = b"Input balances cannot be zero.";
+    #[error]
+    const EExcessiveSlippage: vector<u8>
+        = b"The resulting amount is below slippage tolerance.";
+    #[error]
+    const ENoLiquidity: vector<u8>
+        = b"Pool has no liquidity";
+    #[error]
+    const EInvalidFeeParam: vector<u8>
+        = b"Fee parameter is not valid.";
+    #[error]
+    const EInvalidPair: vector<u8>
+        = b"Pool pair coin types must be ordered alphabetically (`A` < `B`) and mustn't be equal.";
+    #[error]
+    const EPoolAlreadyExists: vector<u8>
+        = b"Pool for this pair already exists";
 
     /* ================= events ================= */
 
-    struct PoolCreationEvent has copy, drop {
+    public struct PoolCreationEvent has copy, drop {
         pool_id: ID,
     }
 
@@ -43,12 +45,12 @@ module amm::pool {
     /* ================= LP ================= */
 
     /// Pool LP token witness.
-    struct LP<phantom A, phantom B> has drop { }
+    public struct LP<phantom A, phantom B> has drop { }
 
     /* ================= Pool ================= */
 
     /// Pool represents an AMM Pool.
-    struct Pool<phantom A, phantom B> has key {
+    public struct Pool<phantom A, phantom B> has key {
         id: UID,
         balance_a: Balance<A>,
         balance_b: Balance<B>,
@@ -64,35 +66,35 @@ module amm::pool {
 
     /// Returns the balances of token A and B present in the pool and the total
     /// supply of LP coins.
-    public fun pool_values<A, B>(pool: &Pool<A, B>): (u64, u64, u64) {
+    public fun values<A, B>(pool: &Pool<A, B>): (u64, u64, u64) {
         (
-            balance::value(&pool.balance_a),
-            balance::value(&pool.balance_b),
-            balance::supply_value(&pool.lp_supply)
+            pool.balance_a.value(),
+            pool.balance_b.value(),
+            pool.lp_supply.supply_value()
         )
     }
 
     /// Returns the pool fee info.
-    public fun pool_fees<A, B>(pool: &Pool<A, B>): (u64, u64) {
+    public fun fees<A, B>(pool: &Pool<A, B>): (u64, u64) {
         (pool.lp_fee_bps, pool.admin_fee_pct)
     }
 
     /// Returns the value of collected admin fees stored in the pool.
-    public fun pool_admin_fee_value<A, B>(pool: &Pool<A, B>): u64 {
-        balance::value(&pool.admin_fee_balance)
+    public fun admin_fee_value<A, B>(pool: &Pool<A, B>): u64 {
+        pool.admin_fee_balance.value()
     }
 
     /* ================= PoolRegistry ================= */
 
     /// `PoolRegistry` stores a table of all pools created which is used to guarantee
     /// that only one pool per currency pair can exist.
-    struct PoolRegistry has key, store {
+    public struct PoolRegistry has key, store {
         id: UID,
         table: Table<PoolRegistryItem, bool>,
     }
 
     /// An item in the `PoolRegistry` table. Represents a pool's currency pair.
-    struct PoolRegistryItem has copy, drop, store  {
+    public struct PoolRegistryItem has copy, drop, store  {
         a: TypeName,
         b: TypeName
     }
@@ -110,17 +112,17 @@ module amm::pool {
     //    1 if a == b,
     //    2 if a > b
     public fun cmp_type_names(a: &TypeName, b: &TypeName): u8 {
-        let bytes_a = std::ascii::as_bytes(type_name::borrow_string(a));
-        let bytes_b = std::ascii::as_bytes(type_name::borrow_string(b));
+        let bytes_a = a.borrow_string().as_bytes();
+        let bytes_b = b.borrow_string().as_bytes();
 
-        let len_a = vector::length(bytes_a);
-        let len_b = vector::length(bytes_b);
+        let len_a = bytes_a.length();
+        let len_b = bytes_b.length();
 
-        let i = 0;
-        let n = math::min(len_a, len_b);
+        let mut i = 0;
+        let n = u64::min(len_a, len_b);
         while (i < n) {
-            let a = *vector::borrow(bytes_a, i);
-            let b = *vector::borrow(bytes_b, i);
+            let a = bytes_a[i];
+            let b = bytes_b[i];
 
             if (a < b) {
                 return 0
@@ -153,9 +155,9 @@ module amm::pool {
         assert!(cmp_type_names(&a, &b) == 0, EInvalidPair);
 
         let item = PoolRegistryItem{ a, b };
-        assert!(table::contains(&self.table, item) == false, EPoolAlreadyExists);
+        assert!(!self.table.contains(item), EPoolAlreadyExists);
 
-        table::add(&mut self.table, item, true)
+        self.table.add(item, true)
     }
 
     /* ================= AdminCap ================= */
@@ -163,7 +165,7 @@ module amm::pool {
     /// Capability allowing the bearer to execute admin operations on the pools
     /// (e.g. withdraw admin fees). There's only one `AdminCap` created during module
     /// initialization that's valid for all pools.
-    struct AdminCap has key, store {
+    public struct AdminCap has key, store {
         id: UID,
     }
 
@@ -171,37 +173,33 @@ module amm::pool {
 
     /// Calculates (a * b) / c. Errors if result doesn't fit into u64.
     fun muldiv(a: u64, b: u64, c: u64): u64 {
-        ((((a as u128) * (b as u128)) / (c as u128)) as u64)
+        (((a as u128) * (b as u128)) / (c as u128)) as u64
     }
 
     /// Calculates ceil_div((a * b), c). Errors if result doesn't fit into u64.
     fun ceil_muldiv(a: u64, b: u64, c: u64): u64 {
-        (ceil_div_u128((a as u128) * (b as u128), (c as u128)) as u64)
+        u128::divide_and_round_up((a as u128) * (b as u128), c as u128) as u64
     }
 
     /// Calculates sqrt(a * b).
     fun mulsqrt(a: u64, b: u64): u64 {
-        (math::sqrt_u128((a as u128) * (b as u128)) as u64)
+        u128::sqrt((a as u128) * (b as u128)) as u64
     }
 
     /// Calculates (a * b) / c for u128. Errors if result doesn't fit into u128.
     fun muldiv_u128(a: u128, b: u128, c: u128): u128 {
-        ((((a as u256) * (b as u256)) / (c as u256)) as u128)
-    }
-
-    /// Calculates ceil(a / b).
-    fun ceil_div_u128(a: u128, b: u128): u128 {
-        if (a == 0) 0 else (a - 1) / b + 1
+        (((a as u256) * (b as u256)) / (c as u256)) as u128
     }
 
     /* ================= main logic ================= */
 
+    #[allow(lint(share_owned))]
     /// Initializes the `PoolRegistry` objects and shares it, and transfers `AdminCap` to sender.
     fun init(ctx: &mut TxContext) {
         transfer::share_object(new_registry(ctx));
         transfer::transfer(
             AdminCap{ id: object::new(ctx) },
-            tx_context::sender(ctx)
+            ctx.sender()
         )
     }
 
@@ -215,15 +213,15 @@ module amm::pool {
         ctx: &mut TxContext,
     ): Balance<LP<A, B>> {
         // sanity checks
-        assert!(balance::value(&init_a) > 0 && balance::value(&init_b) > 0, EZeroInput);
+        assert!(init_a.value() > 0 && init_b.value() > 0, EZeroInput);
         assert!(lp_fee_bps < BPS_IN_100_PCT, EInvalidFeeParam);
         assert!(admin_fee_pct <= 100, EInvalidFeeParam);
 
         // add to registry (guarantees that there's only one pool per currency pair)
-        registry_add<A, B>(registry);
+        registry.add<A, B>();
 
         // create pool
-        let pool = Pool<A, B> {
+        let mut pool = Pool<A, B> {
             id: object::new(ctx),
             balance_a: init_a,
             balance_b: init_b,
@@ -234,8 +232,8 @@ module amm::pool {
         };
 
         // mint initial lp tokens
-        let lp_amt = mulsqrt(balance::value(&pool.balance_a), balance::value(&pool.balance_b));
-        let lp_balance = balance::increase_supply(&mut pool.lp_supply, lp_amt);
+        let lp_amt = mulsqrt(pool.balance_a.value(), pool.balance_b.value());
+        let lp_balance = pool.lp_supply.increase_supply(lp_amt);
 
         event::emit(PoolCreationEvent { pool_id: object::id(&pool) });
         transfer::share_object(pool);
@@ -251,72 +249,68 @@ module amm::pool {
     /// Fails if the value of the issued LP Coin is smaller than `min_lp_out`. 
     public fun deposit<A, B>(
         pool: &mut Pool<A, B>,
-        input_a: Balance<A>,
-        input_b: Balance<B>,
+        mut input_a: Balance<A>,
+        mut input_b: Balance<B>,
         min_lp_out: u64
     ): (Balance<A>, Balance<B>, Balance<LP<A, B>>) {
         // sanity checks
-        assert!(balance::value(&input_a) > 0, EZeroInput);
-        assert!(balance::value(&input_b) > 0, EZeroInput);
+        if (input_a.value() == 0 || input_b.value() == 0) {
+            assert!(min_lp_out == 0, EExcessiveSlippage);
+            return (input_a, input_b, balance::zero())
+        };
 
         // calculate the deposit amounts
-        let dab: u128 = (balance::value(&input_a) as u128) * (balance::value(&pool.balance_b) as u128);
-        let dba: u128 = (balance::value(&input_b) as u128) * (balance::value(&pool.balance_a) as u128);
+        let dab: u128 = (input_a.value() as u128) * (pool.balance_b.value() as u128);
+        let dba: u128 = (input_b.value() as u128) * (pool.balance_a.value() as u128);
 
         let deposit_a: u64;
         let deposit_b: u64;
         let lp_to_issue: u64;
         if (dab > dba) {
-            deposit_b = balance::value(&input_b);
-            deposit_a = (ceil_div_u128(
+            deposit_b = input_b.value();
+            deposit_a = u128::divide_and_round_up(
                 dba,
-                (balance::value(&pool.balance_b) as u128),
-            ) as u64);
+                pool.balance_b.value() as u128,
+            ) as u64;
             lp_to_issue = muldiv(
                 deposit_b,
-                balance::supply_value(&pool.lp_supply),
-                balance::value(&pool.balance_b)
+                pool.lp_supply.supply_value(),
+                pool.balance_b.value()
             );
         } else if (dab < dba) {
-            deposit_a = balance::value(&input_a);
-            deposit_b = (ceil_div_u128(
+            deposit_a = input_a.value();
+            deposit_b = u128::divide_and_round_up(
                 dab,
-                (balance::value(&pool.balance_a) as u128),
-            ) as u64);
+                pool.balance_a.value() as u128,
+            ) as u64;
             lp_to_issue = muldiv(
                 deposit_a,
-                balance::supply_value(&pool.lp_supply),
-                balance::value(&pool.balance_a)
+                pool.lp_supply.supply_value(),
+                pool.balance_a.value()
             );
         } else {
-            deposit_a = balance::value(&input_a);
-            deposit_b = balance::value(&input_b);
-            if (balance::supply_value(&pool.lp_supply) == 0) {
+            deposit_a = input_a.value();
+            deposit_b = input_b.value();
+            if (pool.lp_supply.supply_value() == 0) {
                 // in this case both pool balances are 0 and lp supply is 0
                 lp_to_issue = mulsqrt(deposit_a, deposit_b);
             } else {
                 // the ratio of input a and b matches the ratio of pool balances
                 lp_to_issue = muldiv(
                     deposit_a,
-                    balance::supply_value(&pool.lp_supply),
-                    balance::value(&pool.balance_a)
+                    pool.lp_supply.supply_value(),
+                    pool.balance_a.value()
                 );
             }
         };
 
         // deposit amounts into pool 
-        balance::join(
-            &mut pool.balance_a,
-            balance::split(&mut input_a, deposit_a)
-        );
-        balance::join(
-            &mut pool.balance_b,
-            balance::split(&mut input_b, deposit_b)
-        );
+        pool.balance_a.join(input_a.split(deposit_a));
+        pool.balance_b.join(input_b.split(deposit_b));
 
         // mint lp coin
         assert!(lp_to_issue >= min_lp_out, EExcessiveSlippage);
-        let lp = balance::increase_supply(&mut pool.lp_supply, lp_to_issue);
+        let lp = pool.lp_supply.increase_supply(lp_to_issue);
 
         // return
         (input_a, input_b, lp)
@@ -332,13 +326,16 @@ module amm::pool {
         min_b_out: u64,
     ): (Balance<A>, Balance<B>) {
         // sanity checks
-        assert!(balance::value(&lp_in) > 0, EZeroInput);
+        if (lp_in.value() == 0) {
+            lp_in.destroy_zero();
+            return (balance::zero(), balance::zero())
+        };
 
         // calculate output amounts
-        let lp_in_value = balance::value(&lp_in);
-        let pool_a_value = balance::value(&pool.balance_a);
-        let pool_b_value = balance::value(&pool.balance_b);
-        let pool_lp_value = balance::supply_value(&pool.lp_supply);
+        let lp_in_value = lp_in.value();
+        let pool_a_value = pool.balance_a.value();
+        let pool_b_value = pool.balance_b.value();
+        let pool_lp_value = pool.lp_supply.supply_value();
 
         let a_out = muldiv(lp_in_value, pool_a_value, pool_lp_value);
         let b_out = muldiv(lp_in_value, pool_b_value, pool_lp_value);
@@ -346,12 +343,12 @@ module amm::pool {
         assert!(b_out >= min_b_out, EExcessiveSlippage);
 
         // burn lp tokens
-        balance::decrease_supply(&mut pool.lp_supply, lp_in);
+        pool.lp_supply.decrease_supply(lp_in);
 
         // return amounts
         (
-            balance::split(&mut pool.balance_a, a_out),
-            balance::split(&mut pool.balance_b, b_out)
+            pool.balance_a.split(a_out),
+            pool.balance_b.split(b_out)
         )
     }
 
@@ -372,7 +369,7 @@ module amm::pool {
         // calc admin fee
         let admin_fee_value = muldiv(lp_fee_value, admin_fee_pct, 100);
         // dL = L * sqrt((A + dA) / A) - L = sqrt(L^2(A + dA) / A) - L
-        let admin_fee_in_lp = (math::sqrt_u128(
+        let admin_fee_in_lp = (u128::sqrt(
             muldiv_u128(
                 (pool_lp_value as u128) * (pool_lp_value as u128),
                 ((i_pool_value + i_value) as u128),
@@ -388,18 +385,21 @@ module amm::pool {
     public fun swap_a<A, B>(
         pool: &mut Pool<A, B>, input: Balance<A>, min_out: u64,
     ): Balance<B> {
-        // sanity checks
-        assert!(balance::value(&input) > 0, EZeroInput);
+        if (input.value() == 0) {
+            assert!(min_out == 0, EExcessiveSlippage);
+            input.destroy_zero();
+            return balance::zero()
+        };
         assert!(
-            balance::value(&pool.balance_a) > 0 && balance::value(&pool.balance_b) > 0,
+            pool.balance_a.value() > 0 && pool.balance_b.value() > 0,
             ENoLiquidity
         );
 
         // calculate swap result
-        let i_value = balance::value(&input);
-        let i_pool_value = balance::value(&pool.balance_a);
-        let o_pool_value = balance::value(&pool.balance_b);
-        let pool_lp_value = balance::supply_value(&pool.lp_supply);
+        let i_value = input.value();
+        let i_pool_value = pool.balance_a.value();
+        let o_pool_value = pool.balance_b.value();
+        let pool_lp_value = pool.lp_supply.supply_value();
 
         let (out_value, admin_fee_in_lp) = calc_swap_result(
             i_value, i_pool_value, o_pool_value, pool_lp_value, pool.lp_fee_bps, pool.admin_fee_pct
@@ -408,16 +408,13 @@ module amm::pool {
         assert!(out_value >= min_out, EExcessiveSlippage);
 
         // deposit admin fee
-        balance::join(
-            &mut pool.admin_fee_balance,
-            balance::increase_supply(&mut pool.lp_supply, admin_fee_in_lp)
-        );
+        pool.admin_fee_balance.join(pool.lp_supply.increase_supply(admin_fee_in_lp));
 
         // deposit input
-        balance::join(&mut pool.balance_a, input);
+        pool.balance_a.join(input);
 
         // return output
-        balance::split(&mut pool.balance_b, out_value)
+        pool.balance_b.split(out_value)
     }
 
     /// Swaps the provided amount of B for A. Fails if the resulting amount of A
@@ -425,18 +422,21 @@ module amm::pool {
     public fun swap_b<A, B>(
         pool: &mut Pool<A, B>, input: Balance<B>, min_out: u64
     ): Balance<A> {
-        // sanity checks
-        assert!(balance::value(&input) > 0, EZeroInput);
+        if (input.value() == 0) {
+            assert!(min_out == 0, EExcessiveSlippage);
+            input.destroy_zero();
+            return balance::zero()
+        };
         assert!(
-            balance::value(&pool.balance_a) > 0 && balance::value(&pool.balance_b) > 0,
+            pool.balance_a.value() > 0 && pool.balance_b.value() > 0,
             ENoLiquidity
         );
 
         // calculate swap result
-        let i_value = balance::value(&input);
-        let i_pool_value = balance::value(&pool.balance_b);
-        let o_pool_value = balance::value(&pool.balance_a);
-        let pool_lp_value = balance::supply_value(&pool.lp_supply);
+        let i_value = input.value();
+        let i_pool_value = pool.balance_b.value();
+        let o_pool_value = pool.balance_a.value();
+        let pool_lp_value = pool.lp_supply.supply_value();
 
         let (out_value, admin_fee_in_lp) = calc_swap_result(
             i_value, i_pool_value, o_pool_value, pool_lp_value, pool.lp_fee_bps, pool.admin_fee_pct
@@ -445,16 +445,13 @@ module amm::pool {
         assert!(out_value >= min_out, EExcessiveSlippage);
 
         // deposit admin fee
-        balance::join(
-            &mut pool.admin_fee_balance,
-            balance::increase_supply(&mut pool.lp_supply, admin_fee_in_lp)
-        );
+        pool.admin_fee_balance.join(pool.lp_supply.increase_supply(admin_fee_in_lp));
 
         // deposit input
-        balance::join(&mut pool.balance_b, input);
+        pool.balance_b.join(input);
 
         // return output
-        balance::split(&mut pool.balance_a, out_value)
+        pool.balance_a.split(out_value)
     }
 
     /// Withdraw `amount` of collected admin fees by providing pool's PoolAdminCap.
@@ -462,10 +459,10 @@ module amm::pool {
     public fun admin_withdraw_fees<A, B>(
         pool: &mut Pool<A, B>,
         _: &AdminCap, 
-        amount: u64
+        mut amount: u64
     ): Balance<LP<A, B>> {
-        if (amount == 0) amount = balance::value(&pool.admin_fee_balance);
-        balance::split(&mut pool.admin_fee_balance, amount)
+        if (amount == 0) amount = pool.admin_fee_balance.value();
+        pool.admin_fee_balance.split(amount)
     }
 
     /// Admin function. Set new fees for the pool.
@@ -492,13 +489,13 @@ module amm::pool {
     /* ================= tests ================= */
 
     #[test_only]
-    struct BAR has drop {}
+    public struct BAR has drop {}
     #[test_only]
-    struct FOO has drop {}
+    public struct FOO has drop {}
     #[test_only]
-    struct FOOD has drop {}
+    public struct FOOD has drop {}
     #[test_only]
-    struct FOOd has drop {}
+    public struct FOOd has drop {}
 
     #[test]
     fun test_cmp_type() {
@@ -517,63 +514,63 @@ module amm::pool {
     fun destroy_empty_registry_for_testing(registry: PoolRegistry) {
         let PoolRegistry { id, table } = registry;
         object::delete(id);
-        table::destroy_empty(table);
+        table.destroy_empty();
     }
 
     #[test_only]
     fun remove_for_testing<A, B>(registry: &mut PoolRegistry) {
         let a = type_name::get<A>();
         let b = type_name::get<B>();
-        table::remove(&mut registry.table, PoolRegistryItem{ a, b });
+        registry.table.remove(PoolRegistryItem{ a, b });
     }
 
     #[test]
     fun test_pool_registry_add() {
         let ctx = &mut tx_context::dummy();
-        let registry = new_registry(ctx);
+        let mut registry = new_registry(ctx);
 
-        registry_add<BAR, FOO>(&mut registry);
-        registry_add<FOO, FOOd>(&mut registry);
+        registry.add<BAR, FOO>();
+        registry.add<FOO, FOOd>();
 
         remove_for_testing<BAR, FOO>(&mut registry);
         remove_for_testing<FOO, FOOd>(&mut registry);
-        destroy_empty_registry_for_testing(registry);
+        registry.destroy_empty_registry_for_testing();
     }
 
     #[test]
     #[expected_failure(abort_code = EInvalidPair)]
     fun test_pool_registry_add_aborts_when_wrong_order() {
         let ctx = &mut tx_context::dummy();
-        let registry = new_registry(ctx);
+        let mut registry = new_registry(ctx);
 
-        registry_add<FOO, BAR>(&mut registry);
+        registry.add<FOO, BAR>();
 
         remove_for_testing<FOO, BAR>(&mut registry);
-        destroy_empty_registry_for_testing(registry);
+        registry.destroy_empty_registry_for_testing();
     }
 
     #[test]
     #[expected_failure(abort_code = EInvalidPair)]
     fun test_pool_registry_add_aborts_when_equal() {
         let ctx = &mut tx_context::dummy();
-        let registry = new_registry(ctx);
+        let mut registry = new_registry(ctx);
 
-        registry_add<FOO, FOO>(&mut registry);
+        registry.add<FOO, FOO>();
 
-        remove_for_testing<FOO, FOO>(&mut registry);
-        destroy_empty_registry_for_testing(registry);
+        registry.remove_for_testing<FOO, FOO>();
+        registry.destroy_empty_registry_for_testing();
     }
 
     #[test]
     #[expected_failure(abort_code = EPoolAlreadyExists)]
     fun test_pool_registry_add_aborts_when_already_exists() {
         let ctx = &mut tx_context::dummy();
-        let registry = new_registry(ctx);
+        let mut registry = new_registry(ctx);
 
-        registry_add<BAR, FOO>(&mut registry);
-        registry_add<BAR, FOO>(&mut registry); // aborts here
+        registry.add<BAR, FOO>();
+        registry.add<BAR, FOO>(); // aborts here
 
-        remove_for_testing<BAR, FOO>(&mut registry);
-        destroy_empty_registry_for_testing(registry);
+        registry.remove_for_testing<BAR, FOO>();
+        registry.destroy_empty_registry_for_testing();
     }
 }
