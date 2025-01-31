@@ -88,6 +88,12 @@ module kai::kai_leverage_supply_pool {
         assert!(strategy.version == MODULE_VERSION, EWrongVersion);
     }
 
+    /* ================= read ================= */
+
+    public fun admin_cap_id<T, ST>(strategy: &Strategy<T, ST>): ID {
+        strategy.admin_cap_id
+    }
+
     /* ================= admin ================= */
 
     fun assert_admin<T, ST>(cap: &AdminCap, strategy: &Strategy<T, ST>) {
