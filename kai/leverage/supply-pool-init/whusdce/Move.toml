@@ -1,0 +1,16 @@
+[package]
+name = "KaiLeverageSupplyPoolInitWhusdce"
+edition = "2024.beta"
+license = "Apache 2.0"
+authors = ["Krešimir Klas (kklas@kunalabs.io)"]
+published-at = "0x27fc520bfa9a98ca098b8f484c445f865fcb0efd79c8e4c5274cd6515282fd14"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.35.2", override = true }
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.35.2", override = true }
+KaiLeverage = { local = "../../core" }
+KaiLeverageSupplyPoolInit = { local = "../core" }
+WHUSDCE = { local = "../../../on-chain-deps/0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf" }
+
+[addresses]
+klsp_whusdce = "0x27fc520bfa9a98ca098b8f484c445f865fcb0efd79c8e4c5274cd6515282fd14"

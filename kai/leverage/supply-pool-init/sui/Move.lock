@@ -2,24 +2,18 @@
 
 [move]
 version = 3
-manifest_digest = "87210BB79C7CFD5CC368CDCC089B6246ACB38E5B2A351E8F6604AA61B26B8785"
-deps_digest = "CB99E3BEE139471F3765AE330F855F3B376156AA54F37DEDE11BBE5BB0D3BB74"
+manifest_digest = "FAF41D2D2D0638610660EB943D6865F2083BD16AC54D991341752B9D3019A770"
+deps_digest = "F9B494B64F0615AED0E98FC12A85B85ECD2BC5185C22D30E7F67786BB52E507C"
 dependencies = [
-  { id = "AccessManagement", name = "AccessManagement" },
-  { id = "CetusClmm", name = "CetusClmm" },
-  { id = "FlowxClmm", name = "FlowxClmm" },
+  { id = "KaiLeverage", name = "KaiLeverage" },
+  { id = "KaiLeverageSupplyPoolInit", name = "KaiLeverageSupplyPoolInit" },
   { id = "MoveStdlib", name = "MoveStdlib" },
-  { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
-  { id = "TurbosCLMM", name = "TurbosCLMM" },
-  { id = "WHUSDCE", name = "WHUSDCE" },
-  { id = "WHUSDTE", name = "WHUSDTE" },
-  { id = "usdc", name = "usdc" },
 ]
 
 [[move.package]]
 id = "0x26efee2b51c911237888e5dc6702868abca3c7ac12c53f76ef8eba0697695e3d"
-source = { local = "../../on-chain-deps/0x26efee2b51c911237888e5dc6702868abca3c7ac12c53f76ef8eba0697695e3d" }
+source = { local = "../../../on-chain-deps/0x26efee2b51c911237888e5dc6702868abca3c7ac12c53f76ef8eba0697695e3d" }
 
 dependencies = [
   { id = "0x5306f64e312b581766351c07af79c72fcb1cd25147157fdc2f8ad76de9a3fb6a", name = "0x5306f64e312b581766351c07af79c72fcb1cd25147157fdc2f8ad76de9a3fb6a" },
@@ -29,7 +23,7 @@ dependencies = [
 
 [[move.package]]
 id = "0x5306f64e312b581766351c07af79c72fcb1cd25147157fdc2f8ad76de9a3fb6a"
-source = { local = "../../on-chain-deps/0x5306f64e312b581766351c07af79c72fcb1cd25147157fdc2f8ad76de9a3fb6a" }
+source = { local = "../../../on-chain-deps/0x5306f64e312b581766351c07af79c72fcb1cd25147157fdc2f8ad76de9a3fb6a" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -38,7 +32,7 @@ dependencies = [
 
 [[move.package]]
 id = "AccessManagement"
-source = { local = "../../../access-management" }
+source = { local = "../../../../access-management" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -57,7 +51,7 @@ dependencies = [
 
 [[move.package]]
 id = "FlowxClmm"
-source = { local = "vendor/flowx-clmm" }
+source = { local = "../../core/vendor/flowx-clmm" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -70,6 +64,35 @@ source = { git = "https://github.com/CetusProtocol/integer-mate.git", rev = "mai
 
 dependencies = [
   { id = "Sui", name = "Sui" },
+]
+
+[[move.package]]
+id = "KaiLeverage"
+source = { local = "../../core" }
+
+dependencies = [
+  { id = "AccessManagement", name = "AccessManagement" },
+  { id = "CetusClmm", name = "CetusClmm" },
+  { id = "FlowxClmm", name = "FlowxClmm" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Pyth", name = "Pyth" },
+  { id = "Sui", name = "Sui" },
+  { id = "TurbosCLMM", name = "TurbosCLMM" },
+  { id = "WHUSDCE", name = "WHUSDCE" },
+  { id = "WHUSDTE", name = "WHUSDTE" },
+  { id = "usdc", name = "usdc" },
+]
+
+[[move.package]]
+id = "KaiLeverageSupplyPoolInit"
+source = { local = "../core" }
+
+dependencies = [
+  { id = "AccessManagement", name = "AccessManagement" },
+  { id = "KaiLeverage", name = "KaiLeverage" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+  { id = "usdc", name = "usdc" },
 ]
 
 [[move.package]]
@@ -86,7 +109,7 @@ source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.35.2
 
 [[move.package]]
 id = "Pyth"
-source = { local = "vendor/pyth" }
+source = { local = "../../core/vendor/pyth" }
 
 dependencies = [
   { id = "0x5306f64e312b581766351c07af79c72fcb1cd25147157fdc2f8ad76de9a3fb6a", name = "0x5306f64e312b581766351c07af79c72fcb1cd25147157fdc2f8ad76de9a3fb6a" },
@@ -112,7 +135,7 @@ dependencies = [
 
 [[move.package]]
 id = "WHUSDCE"
-source = { local = "../../on-chain-deps/0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf" }
+source = { local = "../../../on-chain-deps/0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf" }
 
 dependencies = [
   { id = "0x26efee2b51c911237888e5dc6702868abca3c7ac12c53f76ef8eba0697695e3d", name = "0x26efee2b51c911237888e5dc6702868abca3c7ac12c53f76ef8eba0697695e3d" },
@@ -121,7 +144,7 @@ dependencies = [
 
 [[move.package]]
 id = "WHUSDTE"
-source = { local = "../../on-chain-deps/0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c" }
+source = { local = "../../../on-chain-deps/0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -129,7 +152,7 @@ dependencies = [
 
 [[move.package]]
 id = "stablecoin"
-source = { local = "../../on-chain-deps/USDC/stablecoin" }
+source = { local = "../../../on-chain-deps/USDC/stablecoin" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -138,7 +161,7 @@ dependencies = [
 
 [[move.package]]
 id = "sui_extensions"
-source = { local = "../../on-chain-deps/USDC/sui_extensions" }
+source = { local = "../../../on-chain-deps/USDC/sui_extensions" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -146,7 +169,7 @@ dependencies = [
 
 [[move.package]]
 id = "usdc"
-source = { local = "../../on-chain-deps/USDC/usdc" }
+source = { local = "../../../on-chain-deps/USDC/usdc" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },

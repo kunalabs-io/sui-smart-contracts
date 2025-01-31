@@ -356,7 +356,7 @@ module kai_leverage::supply_pool {
         update_interest(pool, clock);
         equity::calc_redeem_lossy(
             pool.supply_equity.borrow_registry(),
-            (share_amount << 64) as u128
+            ((share_amount as u128) << 64)
         )
     }
 
