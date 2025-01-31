@@ -1,0 +1,18 @@
+[package]
+name = "Kai"
+version = "0.1.0"
+published-at = "0x0249e0a06ad4d953734261525be727d1e239db076d6c02e7fdd229661ada8be5"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.18.1", override = true }
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.18.1", override = true }
+WHUSDCE = { local = "../../on-chain-deps/0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf" }
+WHUSDTE = { local = "../../on-chain-deps/0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c" }
+ScallopProtocol = { local = "../../on-chain-deps/ScallopProtocol" }
+ScallopPool = { local = "../../on-chain-deps/0xec1ac7f4d01c5bf178ff4e62e523e7df7721453d81d4904a42a0ffc2686c843d" }
+KaiYwhUSDTeYSUI = { local = "../vault-token-init/kai-ywhusdte-ysui" }
+
+[addresses]
+std = "0x1"
+sui = "0x2"
+kai = "0x01c389a85310b47e7630a9361d4e71025bc35e4999d3a645949b1b68b26f2273"
