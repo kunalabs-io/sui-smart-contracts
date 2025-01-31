@@ -1,32 +1,16 @@
 module kai::vault {
-    use std::option::{Self, Option};
-    use std::vector;
-    use sui::tx_context::TxContext;
+    use std::u64;
     use sui::balance::{Self, Balance};
     use sui::coin::{Self, TreasuryCap};
-    use sui::transfer;
-    use sui::object::{Self, UID, ID};
     use sui::clock::Clock;
     use sui::vec_map::{Self, VecMap};
     use sui::vec_set;
-    use sui::math;
     use sui::event;
     use sui::package::UpgradeCap;
 
     use kai::time_locked_balance::{Self as tlb, TimeLockedBalance};
     use kai::util::{muldiv, muldiv_round_up, timestamp_sec};
    
-    friend kai::ywhusdce;
-    friend kai::scallop_whusdce;
-
-    friend kai::ywhusdte; // deprecated
-    friend kai::scallop_whusdte; // deprecated
-    friend kai::ysui; // deprecated
-    friend kai::scallop_sui; // deprecated
-
-    friend kai::scallop_whusdte_proper;
-    friend kai::scallop_sui_proper;
-
     /* ================= constants ================= */
 
     const MODULE_VERSION: u64 = 1; 
@@ -79,23 +63,23 @@ module kai::vault {
 
     /* ================= events ================= */
 
-    struct DepositEvent<phantom YT> has copy, drop {
+    public struct DepositEvent<phantom YT> has copy, drop {
         amount: u64,
         lp_minted: u64,
     }
 
-    struct WithdrawEvent<phantom YT> has copy, drop {
+    public struct WithdrawEvent<phantom YT> has copy, drop {
         amount: u64,
         lp_burned: u64,
     }
 
-    struct StrategyProfitEvent<phantom YT> has copy, drop {
+    public struct StrategyProfitEvent<phantom YT> has copy, drop {
         strategy_id: ID,
         profit: u64,
         fee_amt_yt: u64,
     }
 
-    struct StrategyLossEvent<phantom YT> has copy, drop {
+    public struct StrategyLossEvent<phantom YT> has copy, drop {
         strategy_id: ID,
         to_withdraw: u64,
         withdrawn: u64
@@ -104,7 +88,7 @@ module kai::vault {
     /* ================= AdminCap ================= */
 
     /// There can only ever be one `AdminCap` for a `Vault`
-    struct AdminCap<phantom YT> has key, store {
+    public struct AdminCap<phantom YT> has key, store {
         id: UID,
     }
 
@@ -112,22 +96,23 @@ module kai::vault {
 
     /// Strategies store this and it gives them access to deposit and withdraw
     /// from the vault
-    struct VaultAccess has store {
+    #[allow(lint(missing_key))]
+    public struct VaultAccess has store {
         id: UID,
     }
 
-    public(friend) fun vault_access_id(access: &VaultAccess): ID {
+    public(package) fun vault_access_id(access: &VaultAccess): ID {
         object::uid_to_inner(&access.id)
     }
 
     /* ================= StrategyRemovalTicket ================= */
 
-    struct StrategyRemovalTicket<phantom T, phantom YT> {
+    public struct StrategyRemovalTicket<phantom T, phantom YT> {
         access: VaultAccess,
         returned_balance: Balance<T>,
     }
 
-    public(friend) fun new_strategy_removal_ticket<T, YT>(
+    public(package) fun new_strategy_removal_ticket<T, YT>(
         access: VaultAccess, returned_balance: Balance<T>
     ): StrategyRemovalTicket<T, YT> {
         StrategyRemovalTicket {
@@ -138,19 +123,19 @@ module kai::vault {
 
     /* ================= WithdrawTicket ================= */
 
-    struct StrategyWithdrawInfo<phantom T> has store {
+    public struct StrategyWithdrawInfo<phantom T> has store {
         to_withdraw: u64,
         withdrawn_balance: Balance<T>,
         has_withdrawn: bool,
     }
 
-    struct WithdrawTicket<phantom T, phantom YT> {
+    public struct WithdrawTicket<phantom T, phantom YT> {
         to_withdraw_from_free_balance: u64,
         strategy_infos: VecMap<ID, StrategyWithdrawInfo<T>>,
         lp_to_burn: Balance<YT>,
     }
 
-    public(friend) fun withdraw_ticket_to_withdraw<T, YT>(
+    public(package) fun withdraw_ticket_to_withdraw<T, YT>(
         ticket: &WithdrawTicket<T, YT>, access: &VaultAccess
     ): u64 {
         let id = object::uid_as_inner(&access.id);
@@ -160,7 +145,7 @@ module kai::vault {
 
     /* ================= RebalanceInfo ================= */
 
-    struct RebalanceInfo has store, copy, drop {
+    public struct RebalanceInfo has store, copy, drop {
         /// The target amount the strategy should repay. The strategy shouldn't
         /// repay more than this amount.
         to_repay: u64,
@@ -170,11 +155,11 @@ module kai::vault {
         can_borrow: u64,
     }
 
-    struct RebalanceAmounts has copy, drop {
+    public struct RebalanceAmounts has copy, drop {
         inner: VecMap<ID, RebalanceInfo>,
     } 
 
-    public(friend) fun rebalance_amounts_get(
+    public(package) fun rebalance_amounts_get(
         amounts: &RebalanceAmounts, access: &VaultAccess
     ): (u64, u64) {
         let strategy_id = object::uid_as_inner(&access.id);
@@ -184,7 +169,7 @@ module kai::vault {
 
     /* ================= StrategyState ================= */
 
-    struct StrategyState has store {
+    public struct StrategyState has store {
         borrowed: u64,
         target_alloc_weight_bps: u64,
         max_borrow: Option<u64>,
@@ -192,7 +177,7 @@ module kai::vault {
 
     /* ================= Vault ================= */
 
-    struct Vault<phantom T, phantom YT> has key {
+    public struct Vault<phantom T, phantom YT> has key {
         id: UID,
         /// balance that's not allocated to any strategy
         free_balance: Balance<T>,
@@ -219,7 +204,7 @@ module kai::vault {
         version: u64,
     }
 
-    public(friend) fun new<T, YT>(
+    public(package) fun new<T, YT>(
         lp_treasury: TreasuryCap<YT>, ctx: &mut TxContext
     ): AdminCap<YT> {
         assert!(coin::total_supply(&lp_treasury) == 0, ETreasurySupplyPositive);
@@ -279,12 +264,12 @@ module kai::vault {
     }
 
     public fun total_available_balance<T, YT>(vault: &Vault<T, YT>, clock: &Clock): u64 {
-        let total: u64 = 0;
+        let mut total: u64 = 0;
 
         total = total + balance::value(&vault.free_balance);
         total = total + tlb::max_withdrawable(&vault.time_locked_profit, clock);
 
-        let i = 0;
+        let mut i = 0;
         let n = vec_map::size(&vault.strategies);
         while (i < n) {
             let (_, strategy_state) = vec_map::get_entry_by_idx(&vault.strategies, i);
@@ -340,7 +325,7 @@ module kai::vault {
         );
     }
 
-    public(friend) fun add_strategy<T, YT>(
+    public(package) fun add_strategy<T, YT>(
         _cap: &AdminCap<YT>, vault: &mut Vault<T, YT>, ctx: &mut TxContext
     ): VaultAccess {
         assert_version(vault);
@@ -382,10 +367,10 @@ module kai::vault {
     ) {
         assert_version(vault);
 
-        let ids_seen = vec_set::empty<ID>();
-        let total_bps = 0;
+        let mut ids_seen = vec_set::empty<ID>();
+        let mut total_bps = 0;
 
-        let i = 0;
+        let mut i = 0;
         let n = vec_map::size(&vault.strategies);
         assert!(n == vector::length(&ids), EInvalidWeights);
         assert!(n == vector::length(&weights_bps), EInvalidWeights);
@@ -411,7 +396,7 @@ module kai::vault {
     ) {
         assert_version(vault);
 
-        let StrategyRemovalTicket { access, returned_balance } = ticket;
+        let StrategyRemovalTicket { access, mut returned_balance } = ticket;
 
         let VaultAccess{ id: uid } = access;
         let id = &object::uid_to_inner(&uid);
@@ -510,8 +495,8 @@ module kai::vault {
     }
 
     fun create_withdraw_ticket<T, YT>(vault: &Vault<T, YT>): WithdrawTicket<T, YT> {
-        let strategy_infos: VecMap<ID, StrategyWithdrawInfo<T>> = vec_map::empty();
-        let i = 0;
+        let mut strategy_infos: VecMap<ID, StrategyWithdrawInfo<T>> = vec_map::empty();
+        let mut i = 0;
         let n = vector::length(&vault.strategy_withdraw_priority_order);
         while (i < n) {
             let strategy_id = *vector::borrow(&vault.strategy_withdraw_priority_order, i);
@@ -541,7 +526,7 @@ module kai::vault {
         assert!(balance::value(&balance) > 0, EZeroAmount);
         vault.withdraw_ticket_issued = true;
 
-        let ticket = create_withdraw_ticket(vault);
+        let mut ticket = create_withdraw_ticket(vault);
         balance::join(&mut ticket.lp_to_burn, balance);
 
         // join unlocked profits to free balance
@@ -552,14 +537,14 @@ module kai::vault {
 
         // calculate withdraw amount
         let total_available = total_available_balance(vault, clock);
-        let remaining_to_withdraw = muldiv(
+        let mut remaining_to_withdraw = muldiv(
             balance::value(&ticket.lp_to_burn),
             total_available,
             coin::total_supply(&vault.lp_treasury)
         );
 
         // first withdraw everything possible from free balance
-        ticket.to_withdraw_from_free_balance = math::min(
+        ticket.to_withdraw_from_free_balance = u64::min(
             remaining_to_withdraw,
             balance::value(&vault.free_balance)
         );
@@ -571,8 +556,8 @@ module kai::vault {
 
         // if this is not enough, start withdrawing from strategies
         // first withdraw from all the strategies that are over their target allocation
-        let total_borrowed_after_excess_withdrawn = 0;
-        let i = 0;
+        let mut total_borrowed_after_excess_withdrawn = 0;
+        let mut i = 0;
         let n = vector::length(&vault.strategy_withdraw_priority_order);
         while (i < n && remaining_to_withdraw > 0) {
             let strategy_id = vector::borrow(&vault.strategy_withdraw_priority_order, i);
@@ -610,7 +595,7 @@ module kai::vault {
         };
         let to_withdraw_propotionally_base = remaining_to_withdraw;
 
-        let i = 0;
+        let mut i = 0;
         let n = vector::length(&vault.strategy_withdraw_priority_order);
         while (i < n) {
             let strategy_id = vector::borrow(&vault.strategy_withdraw_priority_order, i);
@@ -635,7 +620,7 @@ module kai::vault {
             return ticket
         };
 
-        let i = 0;
+        let mut i = 0;
         let n = vector::length(&vault.strategy_withdraw_priority_order);
         while (i < n) {
             let strategy_id = vector::borrow(&vault.strategy_withdraw_priority_order, i);
@@ -643,7 +628,7 @@ module kai::vault {
             let strategy_withdraw_info = vec_map::get_mut(&mut ticket.strategy_infos, strategy_id);
 
             let strategy_remaining = strategy_state.borrowed - strategy_withdraw_info.to_withdraw;
-            let to_withdraw = math::min(strategy_remaining, remaining_to_withdraw);
+            let to_withdraw = u64::min(strategy_remaining, remaining_to_withdraw);
 
             strategy_withdraw_info.to_withdraw = strategy_withdraw_info.to_withdraw + to_withdraw;
             remaining_to_withdraw = remaining_to_withdraw - to_withdraw;
@@ -663,10 +648,10 @@ module kai::vault {
     ): Balance<T> {
         assert_version(vault);
 
-        let out = balance::zero();
+        let mut out = balance::zero();
 
         let WithdrawTicket {
-            to_withdraw_from_free_balance, strategy_infos, lp_to_burn
+            to_withdraw_from_free_balance, mut strategy_infos, lp_to_burn
         } = ticket;
         let lp_to_burn_amt = balance::value(&lp_to_burn);
 
@@ -734,7 +719,7 @@ module kai::vault {
     /* ================= strategy operations ================= */
 
     /// Makes the strategy deposit the withdrawn balance into the `WithdrawTicket`.
-    public(friend) fun strategy_withdraw_to_ticket<T, YT>(
+    public(package) fun strategy_withdraw_to_ticket<T, YT>(
         ticket: &mut WithdrawTicket<T, YT>, access: &VaultAccess, balance: Balance<T>
     ) {
         let strategy_id = object::uid_as_inner(&access.id);
@@ -763,15 +748,15 @@ module kai::vault {
         assert!(vault.withdraw_ticket_issued == false, EWithdrawTicketIssued);
 
         // calculate total available balance and prepare rebalance infos
-        let rebalance_infos: VecMap<ID, RebalanceInfo> = vec_map::empty();
-        let total_available_balance = 0;
-        let max_borrow_idxs_to_process = vector::empty();
-        let no_max_borrow_idxs = vector::empty();
+        let mut rebalance_infos: VecMap<ID, RebalanceInfo> = vec_map::empty();
+        let mut total_available_balance = 0;
+        let mut max_borrow_idxs_to_process = vector::empty();
+        let mut no_max_borrow_idxs = vector::empty();
 
         total_available_balance = total_available_balance + balance::value(&vault.free_balance);
         total_available_balance = total_available_balance + tlb::max_withdrawable(&vault.time_locked_profit, clock);
 
-        let i = 0;
+        let mut i = 0;
         let n = vec_map::size(&vault.strategies);
         while (i < n) {
             let (strategy_id, strategy_state) = vec_map::get_entry_by_idx(&vault.strategies, i);
@@ -796,14 +781,14 @@ module kai::vault {
 
         // process strategies with max borrow limits iteratively until all who can
         // reach their cap have reached it
-        let remaining_to_allocate = total_available_balance;
-        let remaining_total_alloc_bps = BPS_IN_100_PCT;
+        let mut remaining_to_allocate = total_available_balance;
+        let mut remaining_total_alloc_bps = BPS_IN_100_PCT;
 
-        let need_to_reprocess = true;
+        let mut need_to_reprocess = true;
         while (need_to_reprocess) {
-            let i = 0;
+            let mut i = 0;
             let n = vector::length(&max_borrow_idxs_to_process);
-            let new_max_borrow_idxs_to_process = vector::empty();
+            let mut new_max_borrow_idxs_to_process = vector::empty();
             need_to_reprocess = false;
             while (i < n) {
                 let idx = *vector::borrow(&max_borrow_idxs_to_process, i);
@@ -860,7 +845,7 @@ module kai::vault {
 
         // the remaining strategies in `max_borrow_idxs_to_process` and `no_max_borrow_idxs` won't reach
         // their cap so we can easilly calculate the remaining amounts to allocate
-        let i = 0;
+        let mut i = 0;
         let n = vector::length(&max_borrow_idxs_to_process);
         while (i < n) {
             let idx = *vector::borrow(&max_borrow_idxs_to_process, i);
@@ -881,7 +866,7 @@ module kai::vault {
             i = i + 1;
         };
 
-        let i = 0;
+        let mut i = 0;
         let n = vector::length(&no_max_borrow_idxs);
         while (i < n) {
             let idx = *vector::borrow(&no_max_borrow_idxs, i);
@@ -906,7 +891,7 @@ module kai::vault {
     }
 
     /// Strategies call this to repay loaned amounts.
-    public(friend) fun strategy_repay<T, YT>(
+    public(package) fun strategy_repay<T, YT>(
         vault: &mut Vault<T, YT>, access: &VaultAccess, balance: Balance<T>
     ) {
         assert_version(vault);
@@ -922,7 +907,7 @@ module kai::vault {
 
     /// Strategies call this to borrow additional funds from the vault. Always returns
     /// exact amount requested or aborts.
-    public(friend) fun strategy_borrow<T, YT>(
+    public(package) fun strategy_borrow<T, YT>(
         vault: &mut Vault<T, YT>, access: &VaultAccess, amount: u64
     ): Balance<T> {
         assert_version(vault);
@@ -938,7 +923,7 @@ module kai::vault {
         balance
     }
 
-    public(friend) fun strategy_hand_over_profit<T, YT>(
+    public(package) fun strategy_hand_over_profit<T, YT>(
         vault: &mut Vault<T, YT>, access: &VaultAccess, profit: Balance<T>, clock: &Clock
     ) {
         assert_version(vault);
@@ -981,13 +966,13 @@ module kai::vault {
         );
 
         tlb::change_unlock_per_second(&mut vault.time_locked_profit, 0, clock);
-        let redeposit = tlb::skim_extraneous_balance(&mut vault.time_locked_profit);
+        let mut redeposit = tlb::skim_extraneous_balance(&mut vault.time_locked_profit);
         balance::join(&mut redeposit, profit);
 
         tlb::change_unlock_start_ts_sec(
             &mut vault.time_locked_profit, timestamp_sec(clock), clock
         );
-        let unlock_per_second = math::divide_and_round_up(
+        let unlock_per_second = u64::divide_and_round_up(
             balance::value(&redeposit),
             vault.profit_unlock_duration_sec
         );
@@ -1005,15 +990,13 @@ module kai::vault {
     #[test_only]
     use sui::coin::{CoinMetadata};
     #[test_only]
-    use sui::tx_context;
-    #[test_only]
     use sui::clock;
     #[test_only]
     use sui::vec_set::{VecSet};
     #[test_only]
-    struct A has drop {}
+    public struct A has drop {}
     #[test_only]
-    struct VAULT has drop {}
+    public struct VAULT has drop {}
 
     #[test_only]
     fun create_a_treasury(ctx: &mut TxContext): (TreasuryCap<VAULT>, CoinMetadata<VAULT>) {
@@ -1022,7 +1005,7 @@ module kai::vault {
 
     #[test_only]
     fun mint_a_balance(amount: u64): Balance<A> {
-        let supply = balance::create_supply(A{});
+        let mut supply = balance::create_supply(A{});
         let balance = balance::increase_supply(&mut supply, amount);
         sui::test_utils::destroy(supply);
         balance
@@ -1030,10 +1013,10 @@ module kai::vault {
 
     #[test]
     fun test_total_available_balance() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let (ya_treasury, meta) = create_a_treasury(&mut ctx);
 
-        let strategies = vec_map::empty();
+        let mut strategies = vec_map::empty();
         vec_map::insert(&mut strategies, object::id_from_address(@0xA), StrategyState {
             borrowed: 100,
             target_alloc_weight_bps: 5000,
@@ -1045,7 +1028,7 @@ module kai::vault {
             max_borrow: option::none(),
         });
 
-        let strategy_withdraw_priority_order = vector::empty();
+        let mut strategy_withdraw_priority_order = vector::empty();
         vector::push_back(&mut strategy_withdraw_priority_order, object::id_from_address(@0xA));
         vector::push_back(&mut strategy_withdraw_priority_order, object::id_from_address(@0xB));
 
@@ -1067,7 +1050,7 @@ module kai::vault {
             version: MODULE_VERSION,
         };
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 100 * 1000);
         assert!(total_available_balance(&vault, &clock) == 260, 0);
 
@@ -1086,8 +1069,8 @@ module kai::vault {
     ) {
         assert!(vector::length(&keys) == vector::length(&to_withdraw_values), 0);
         assert!(ticket.to_withdraw_from_free_balance == to_withdraw_from_free_balance, 0);
-        let seen: VecSet<ID> = vec_set::empty();
-        let i = 0;
+        let mut seen: VecSet<ID> = vec_set::empty();
+        let mut i = 0;
         let n = vector::length(&keys);
         while (i < n) {
             let strategy_id = *vector::borrow(&keys, i);
@@ -1104,9 +1087,9 @@ module kai::vault {
         ticket: &WithdrawTicket<T, YT>,
         total: u64
     ) {
-        let i = 0;
+        let mut i = 0;
         let n = vec_map::size(&ticket.strategy_infos);
-        let total_withdraw = ticket.to_withdraw_from_free_balance;
+        let mut total_withdraw = ticket.to_withdraw_from_free_balance;
         while (i < n) {
             let (_, strategy_withdraw_info) = vec_map::get_entry_by_idx(&ticket.strategy_infos, i);
             total_withdraw = total_withdraw + strategy_withdraw_info.to_withdraw;
@@ -1123,7 +1106,7 @@ module kai::vault {
         let id_b = object::id_from_address(@0xB);
         let id_c = object::id_from_address(@0xC);
 
-        let strategies = vec_map::empty();
+        let mut strategies = vec_map::empty();
         vec_map::insert(&mut strategies, id_a, StrategyState {
             borrowed: 5000,
             target_alloc_weight_bps: 5000,
@@ -1140,12 +1123,12 @@ module kai::vault {
             max_borrow: option::some(1500),
         });
 
-        let strategy_withdraw_priority_order = vector::empty();
+        let mut strategy_withdraw_priority_order = vector::empty();
         vector::push_back(&mut strategy_withdraw_priority_order, id_a);
         vector::push_back(&mut strategy_withdraw_priority_order, id_b);
         vector::push_back(&mut strategy_withdraw_priority_order, id_c);
 
-        let vault = Vault<A, VAULT> {
+        let mut vault = Vault<A, VAULT> {
             id: object::new(ctx),
 
             free_balance: mint_a_balance(1000),
@@ -1171,24 +1154,24 @@ module kai::vault {
 
     #[test]
     fun test_withdraw_from_free_balance() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let id_a = object::id_from_address(@0xA);
         let id_b = object::id_from_address(@0xB);
         let id_c = object::id_from_address(@0xC);
 
-        let (vault, lp) = create_vault_for_testing(&mut ctx);
+        let (mut vault, mut lp) = create_vault_for_testing(&mut ctx);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 1000 * 1000);
 
         let to_withdraw = balance::split(&mut lp, 500);
         let ticket = withdraw(&mut vault, to_withdraw, &clock);
 
-        let keys = vector::empty();
+        let mut keys = vector::empty();
         vector::push_back(&mut keys, id_a);
         vector::push_back(&mut keys, id_b);
         vector::push_back(&mut keys, id_c);
-        let values = vector::empty();
+        let mut values = vector::empty();
         vector::push_back(&mut values, 0);
         vector::push_back(&mut values, 0);
         vector::push_back(&mut values, 0);
@@ -1204,24 +1187,24 @@ module kai::vault {
 
     #[test]
     fun test_withdraw_over_cap() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let id_a = object::id_from_address(@0xA);
         let id_b = object::id_from_address(@0xB);
         let id_c = object::id_from_address(@0xC);
 
-        let (vault, lp) = create_vault_for_testing(&mut ctx);
+        let (mut vault, mut lp) = create_vault_for_testing(&mut ctx);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 1000 * 1000);
 
         let to_withdraw = balance::split(&mut lp, 2200);
         let ticket = withdraw(&mut vault, to_withdraw, &clock);
 
-        let keys = vector::empty();
+        let mut keys = vector::empty();
         vector::push_back(&mut keys, id_a);
         vector::push_back(&mut keys, id_b);
         vector::push_back(&mut keys, id_c);
-        let values = vector::empty();
+        let mut values = vector::empty();
         vector::push_back(&mut values, 0);
         vector::push_back(&mut values, 0);
         vector::push_back(&mut values, 200);
@@ -1237,24 +1220,24 @@ module kai::vault {
 
     #[test]
     fun test_withdraw_proportional_tiny() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let id_a = object::id_from_address(@0xA);
         let id_b = object::id_from_address(@0xB);
         let id_c = object::id_from_address(@0xC);
 
-        let (vault, lp) = create_vault_for_testing(&mut ctx);
+        let (mut vault, mut lp) = create_vault_for_testing(&mut ctx);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 1000 * 1000);
 
         let to_withdraw = balance::split(&mut lp, 2501);
         let ticket = withdraw(&mut vault, to_withdraw, &clock);
 
-        let keys = vector::empty();
+        let mut keys = vector::empty();
         vector::push_back(&mut keys, id_a);
         vector::push_back(&mut keys, id_b);
         vector::push_back(&mut keys, id_c);
-        let values = vector::empty();
+        let mut values = vector::empty();
         vector::push_back(&mut values, 1);
         vector::push_back(&mut values, 0);
         vector::push_back(&mut values, 500);
@@ -1270,24 +1253,24 @@ module kai::vault {
 
     #[test]
     fun test_withdraw_proportional_exact() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let id_a = object::id_from_address(@0xA);
         let id_b = object::id_from_address(@0xB);
         let id_c = object::id_from_address(@0xC);
 
-        let (vault, lp) = create_vault_for_testing(&mut ctx);
+        let (mut vault, mut lp) = create_vault_for_testing(&mut ctx);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 1000 * 1000);
 
         let to_withdraw = balance::split(&mut lp, 3250);
         let ticket = withdraw(&mut vault, to_withdraw, &clock);
 
-        let keys = vector::empty();
+        let mut keys = vector::empty();
         vector::push_back(&mut keys, id_a);
         vector::push_back(&mut keys, id_b);
         vector::push_back(&mut keys, id_c);
-        let values = vector::empty();
+        let mut values = vector::empty();
         vector::push_back(&mut values, 500);
         vector::push_back(&mut values, 100);
         vector::push_back(&mut values, 650);
@@ -1303,24 +1286,24 @@ module kai::vault {
 
     #[test]
     fun test_withdraw_proportional_undivisible() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let id_a = object::id_from_address(@0xA);
         let id_b = object::id_from_address(@0xB);
         let id_c = object::id_from_address(@0xC);
 
-        let (vault, lp) = create_vault_for_testing(&mut ctx);
+        let (mut vault, mut lp) = create_vault_for_testing(&mut ctx);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 1000 * 1000);
 
         let to_withdraw = balance::split(&mut lp, 3251);
         let ticket = withdraw(&mut vault, to_withdraw, &clock);
 
-        let keys = vector::empty();
+        let mut keys = vector::empty();
         vector::push_back(&mut keys, id_a);
         vector::push_back(&mut keys, id_b);
         vector::push_back(&mut keys, id_c);
-        let values = vector::empty();
+        let mut values = vector::empty();
         vector::push_back(&mut values, 501);
         vector::push_back(&mut values, 100);
         vector::push_back(&mut values, 650);
@@ -1336,24 +1319,24 @@ module kai::vault {
 
     #[test]
     fun test_withdraw_almost_all() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let id_a = object::id_from_address(@0xA);
         let id_b = object::id_from_address(@0xB);
         let id_c = object::id_from_address(@0xC);
 
-        let (vault, lp) = create_vault_for_testing(&mut ctx);
+        let (mut vault, mut lp) = create_vault_for_testing(&mut ctx);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 1000 * 1000);
 
         let to_withdraw = balance::split(&mut lp, 9999);
         let ticket = withdraw(&mut vault, to_withdraw, &clock);
 
-        let keys = vector::empty();
+        let mut keys = vector::empty();
         vector::push_back(&mut keys, id_a);
         vector::push_back(&mut keys, id_b);
         vector::push_back(&mut keys, id_c);
-        let values = vector::empty();
+        let mut values = vector::empty();
         vector::push_back(&mut values, 5000);
         vector::push_back(&mut values, 1000);
         vector::push_back(&mut values, 1999);
@@ -1369,23 +1352,23 @@ module kai::vault {
 
     #[test]
     fun test_withdraw_all() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let id_a = object::id_from_address(@0xA);
         let id_b = object::id_from_address(@0xB);
         let id_c = object::id_from_address(@0xC);
 
-        let (vault, lp) = create_vault_for_testing(&mut ctx);
+        let (mut vault, lp) = create_vault_for_testing(&mut ctx);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 1000 * 1000);
 
         let ticket = withdraw(&mut vault, lp, &clock);
 
-        let keys = vector::empty();
+        let mut keys = vector::empty();
         vector::push_back(&mut keys, id_a);
         vector::push_back(&mut keys, id_b);
         vector::push_back(&mut keys, id_c);
-        let values = vector::empty();
+        let mut values = vector::empty();
         vector::push_back(&mut values, 5000);
         vector::push_back(&mut values, 1000);
         vector::push_back(&mut values, 2000);
@@ -1400,11 +1383,11 @@ module kai::vault {
 
     #[test]
     fun test_withdraw_t_amt() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
 
-        let (vault, lp) = create_vault_for_testing(&mut ctx);
+        let (mut vault, mut lp) = create_vault_for_testing(&mut ctx);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 1000 * 2000);
 
         let ticket = withdraw_t_amt(&mut vault, 3800, &mut lp, &clock);
@@ -1421,14 +1404,14 @@ module kai::vault {
 
     #[test]
     fun test_withdraw_ticket_redeem() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let id_a = object::id_from_address(@0xA);
         let id_b = object::id_from_address(@0xB);
         let id_c = object::id_from_address(@0xC);
 
-        let (vault, lp) = create_vault_for_testing(&mut ctx);
+        let (mut vault, mut lp) = create_vault_for_testing(&mut ctx);
 
-        let strategy_infos = vec_map::empty();
+        let mut strategy_infos = vec_map::empty();
         vec_map::insert(&mut strategy_infos, id_a, StrategyWithdrawInfo {
             to_withdraw: 2500,
             withdrawn_balance: balance::create_for_testing(2500),
@@ -1471,23 +1454,23 @@ module kai::vault {
 
     #[test]
     fun test_strategy_get_rebalance_amounts_one_strategy() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let (ya_treasury, meta) = create_a_treasury(&mut ctx);
 
         let vault_access_a = VaultAccess { id: object::new(&mut ctx) };
         let id_a = object::uid_to_inner(&vault_access_a.id);
 
-        let strategies = vec_map::empty();
+        let mut strategies = vec_map::empty();
         vec_map::insert(&mut strategies, id_a, StrategyState {
             borrowed: 5000,
             target_alloc_weight_bps: 10000,
             max_borrow: option::none(),
         });
 
-        let strategy_withdraw_priority_order = vector::empty();
+        let mut strategy_withdraw_priority_order = vector::empty();
         vector::push_back(&mut strategy_withdraw_priority_order, id_a);
 
-        let vault = Vault<A, VAULT> {
+        let mut vault = Vault<A, VAULT> {
             id: object::new(&mut ctx),
 
             free_balance: mint_a_balance(1000),
@@ -1508,7 +1491,7 @@ module kai::vault {
 
         sui::test_utils::destroy(meta);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 1000 * 1000);
 
         
@@ -1532,7 +1515,7 @@ module kai::vault {
 
     #[test]
     fun test_strategy_get_rebalance_amounts_two_strategies_balanced() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let (ya_treasury, meta) = create_a_treasury(&mut ctx);
 
         let vault_access_a = VaultAccess { id: object::new(&mut ctx) };
@@ -1540,7 +1523,7 @@ module kai::vault {
         let id_a = object::uid_to_inner(&vault_access_a.id);
         let id_b = object::uid_to_inner(&vault_access_b.id);
 
-        let strategies = vec_map::empty();
+        let mut strategies = vec_map::empty();
         vec_map::insert(&mut strategies, id_a, StrategyState {
             borrowed: 5000,
             target_alloc_weight_bps: 5000,
@@ -1552,11 +1535,11 @@ module kai::vault {
             max_borrow: option::none(),
         });
 
-        let strategy_withdraw_priority_order = vector::empty();
+        let mut strategy_withdraw_priority_order = vector::empty();
         vector::push_back(&mut strategy_withdraw_priority_order, id_a);
         vector::push_back(&mut strategy_withdraw_priority_order, id_b);
 
-        let vault = Vault<A, VAULT> {
+        let mut vault = Vault<A, VAULT> {
             id: object::new(&mut ctx),
 
             free_balance: mint_a_balance(1000),
@@ -1577,7 +1560,7 @@ module kai::vault {
 
         sui::test_utils::destroy(meta);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 1000 * 1000);
 
         
@@ -1609,7 +1592,7 @@ module kai::vault {
 
     #[test]
     fun test_strategy_get_rebalance_amounts_two_strategies_one_balanced() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let (ya_treasury, meta) = create_a_treasury(&mut ctx);
 
         let vault_access_a = VaultAccess { id: object::new(&mut ctx) };
@@ -1617,7 +1600,7 @@ module kai::vault {
         let id_a = object::uid_to_inner(&vault_access_a.id);
         let id_b = object::uid_to_inner(&vault_access_b.id);
 
-        let strategies = vec_map::empty();
+        let mut strategies = vec_map::empty();
         vec_map::insert(&mut strategies, id_a, StrategyState {
             borrowed: 5000,
             target_alloc_weight_bps: 5000,
@@ -1629,11 +1612,11 @@ module kai::vault {
             max_borrow: option::none(),
         });
 
-        let strategy_withdraw_priority_order = vector::empty();
+        let mut strategy_withdraw_priority_order = vector::empty();
         vector::push_back(&mut strategy_withdraw_priority_order, id_a);
         vector::push_back(&mut strategy_withdraw_priority_order, id_b);
 
-        let vault = Vault<A, VAULT> {
+        let mut vault = Vault<A, VAULT> {
             id: object::new(&mut ctx),
 
             free_balance: mint_a_balance(0),
@@ -1654,7 +1637,7 @@ module kai::vault {
 
         sui::test_utils::destroy(meta);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 1000 * 1000);
 
         // free_balance: 0
@@ -1685,7 +1668,7 @@ module kai::vault {
 
     #[test]
     fun test_strategy_get_rebalance_amounts_two_strategies_both_unbalanced() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let (ya_treasury, meta) = create_a_treasury(&mut ctx);
 
         let vault_access_a = VaultAccess { id: object::new(&mut ctx) };
@@ -1693,7 +1676,7 @@ module kai::vault {
         let id_a = object::uid_to_inner(&vault_access_a.id);
         let id_b = object::uid_to_inner(&vault_access_b.id);
 
-        let strategies = vec_map::empty();
+        let mut strategies = vec_map::empty();
         vec_map::insert(&mut strategies, id_a, StrategyState {
             borrowed: 4000,
             target_alloc_weight_bps: 5000,
@@ -1705,11 +1688,11 @@ module kai::vault {
             max_borrow: option::none(),
         });
 
-        let strategy_withdraw_priority_order = vector::empty();
+        let mut strategy_withdraw_priority_order = vector::empty();
         vector::push_back(&mut strategy_withdraw_priority_order, id_a);
         vector::push_back(&mut strategy_withdraw_priority_order, id_b);
 
-        let vault = Vault<A, VAULT> {
+        let mut vault = Vault<A, VAULT> {
             id: object::new(&mut ctx),
 
             free_balance: mint_a_balance(50),
@@ -1730,7 +1713,7 @@ module kai::vault {
 
         sui::test_utils::destroy(meta);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 50 * 1000);
 
         
@@ -1762,7 +1745,7 @@ module kai::vault {
  
     #[test]
     fun test_strategy_get_rebalance_amounts_with_cap_balanced() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let (ya_treasury, meta) = create_a_treasury(&mut ctx);
 
         let vault_access_a = VaultAccess { id: object::new(&mut ctx) };
@@ -1772,7 +1755,7 @@ module kai::vault {
         let id_b = object::uid_to_inner(&vault_access_b.id);
         let id_c = object::uid_to_inner(&vault_access_c.id);
 
-        let strategies = vec_map::empty();
+        let mut strategies = vec_map::empty();
         vec_map::insert(&mut strategies, id_a, StrategyState {
             borrowed: 2000,
             target_alloc_weight_bps: 2000,
@@ -1789,12 +1772,12 @@ module kai::vault {
             max_borrow: option::none(),
         });
 
-        let strategy_withdraw_priority_order = vector::empty();
+        let mut strategy_withdraw_priority_order = vector::empty();
         vector::push_back(&mut strategy_withdraw_priority_order, id_a);
         vector::push_back(&mut strategy_withdraw_priority_order, id_b);
         vector::push_back(&mut strategy_withdraw_priority_order, id_c);
 
-        let vault = Vault<A, VAULT> {
+        let mut vault = Vault<A, VAULT> {
             id: object::new(&mut ctx),
 
             free_balance: mint_a_balance(0),
@@ -1815,7 +1798,7 @@ module kai::vault {
 
         sui::test_utils::destroy(meta);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 0 * 1000);
 
         
@@ -1854,7 +1837,7 @@ module kai::vault {
 
     #[test]
     fun test_strategy_get_rebalance_amounts_with_cap_over_cap() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let (ya_treasury, meta) = create_a_treasury(&mut ctx);
 
         let vault_access_a = VaultAccess { id: object::new(&mut ctx) };
@@ -1864,7 +1847,7 @@ module kai::vault {
         let id_b = object::uid_to_inner(&vault_access_b.id);
         let id_c = object::uid_to_inner(&vault_access_c.id);
 
-        let strategies = vec_map::empty();
+        let mut strategies = vec_map::empty();
         vec_map::insert(&mut strategies, id_a, StrategyState {
             borrowed: 1000,
             target_alloc_weight_bps: 20_00,
@@ -1881,12 +1864,12 @@ module kai::vault {
             max_borrow: option::none(),
         });
 
-        let strategy_withdraw_priority_order = vector::empty();
+        let mut strategy_withdraw_priority_order = vector::empty();
         vector::push_back(&mut strategy_withdraw_priority_order, id_a);
         vector::push_back(&mut strategy_withdraw_priority_order, id_b);
         vector::push_back(&mut strategy_withdraw_priority_order, id_c);
 
-        let vault = Vault<A, VAULT> {
+        let mut vault = Vault<A, VAULT> {
             id: object::new(&mut ctx),
 
             free_balance: mint_a_balance(2500),
@@ -1907,7 +1890,7 @@ module kai::vault {
 
         sui::test_utils::destroy(meta);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 2500 * 1000);
 
         
@@ -1946,7 +1929,7 @@ module kai::vault {
 
     #[test]
     fun test_strategy_get_rebalance_amounts_with_cap_over_and_under_cap() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let (ya_treasury, meta) = create_a_treasury(&mut ctx);
 
         let vault_access_a = VaultAccess { id: object::new(&mut ctx) };
@@ -1958,7 +1941,7 @@ module kai::vault {
         let id_c = object::uid_to_inner(&vault_access_c.id);
         let id_d = object::uid_to_inner(&vault_access_d.id);
 
-        let strategies = vec_map::empty();
+        let mut strategies = vec_map::empty();
         vec_map::insert(&mut strategies, id_a, StrategyState {
             borrowed: 1000,
             target_alloc_weight_bps: 10_00,
@@ -1980,13 +1963,13 @@ module kai::vault {
             max_borrow: option::none(),
         });
 
-        let strategy_withdraw_priority_order = vector::empty();
+        let mut strategy_withdraw_priority_order = vector::empty();
         vector::push_back(&mut strategy_withdraw_priority_order, id_a);
         vector::push_back(&mut strategy_withdraw_priority_order, id_b);
         vector::push_back(&mut strategy_withdraw_priority_order, id_c);
         vector::push_back(&mut strategy_withdraw_priority_order, id_d);
 
-        let vault = Vault<A, VAULT> {
+        let mut vault = Vault<A, VAULT> {
             id: object::new(&mut ctx),
 
             free_balance: mint_a_balance(2500),
@@ -2007,7 +1990,7 @@ module kai::vault {
 
         sui::test_utils::destroy(meta);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 2500 * 1000);
 
         
@@ -2053,7 +2036,7 @@ module kai::vault {
 
     #[test]
     fun test_strategy_get_rebalance_amounts_with_cap_over_and_two_under_cap() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let (ya_treasury, meta) = create_a_treasury(&mut ctx);
 
         let vault_access_a = VaultAccess { id: object::new(&mut ctx) };
@@ -2067,7 +2050,7 @@ module kai::vault {
         let id_d = object::uid_to_inner(&vault_access_d.id);
         let id_e = object::uid_to_inner(&vault_access_e.id);
 
-        let strategies = vec_map::empty();
+        let mut strategies = vec_map::empty();
         vec_map::insert(&mut strategies, id_a, StrategyState {
             borrowed: 1000,
             target_alloc_weight_bps: 20_00,
@@ -2094,14 +2077,14 @@ module kai::vault {
             max_borrow: option::none(),
         });
 
-        let strategy_withdraw_priority_order = vector::empty();
+        let mut strategy_withdraw_priority_order = vector::empty();
         vector::push_back(&mut strategy_withdraw_priority_order, id_a);
         vector::push_back(&mut strategy_withdraw_priority_order, id_b);
         vector::push_back(&mut strategy_withdraw_priority_order, id_c);
         vector::push_back(&mut strategy_withdraw_priority_order, id_d);
         vector::push_back(&mut strategy_withdraw_priority_order, id_e);
 
-        let vault = Vault<A, VAULT> {
+        let mut vault = Vault<A, VAULT> {
             id: object::new(&mut ctx),
 
             free_balance: mint_a_balance(2500),
@@ -2122,7 +2105,7 @@ module kai::vault {
 
         sui::test_utils::destroy(meta);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 2500 * 1000);
 
         
@@ -2175,7 +2158,7 @@ module kai::vault {
 
     #[test]
     fun test_strategy_get_rebalance_amounts_with_cap_over_reduce_and_two_under_cap() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let (ya_treasury, meta) = create_a_treasury(&mut ctx);
 
         let vault_access_a = VaultAccess { id: object::new(&mut ctx) };
@@ -2189,7 +2172,7 @@ module kai::vault {
         let id_d = object::uid_to_inner(&vault_access_d.id);
         let id_e = object::uid_to_inner(&vault_access_e.id);
 
-        let strategies = vec_map::empty();
+        let mut strategies = vec_map::empty();
         vec_map::insert(&mut strategies, id_a, StrategyState {
             borrowed: 6000,
             target_alloc_weight_bps: 4_00,
@@ -2216,14 +2199,14 @@ module kai::vault {
             max_borrow: option::none(),
         });
 
-        let strategy_withdraw_priority_order = vector::empty();
+        let mut strategy_withdraw_priority_order = vector::empty();
         vector::push_back(&mut strategy_withdraw_priority_order, id_a);
         vector::push_back(&mut strategy_withdraw_priority_order, id_b);
         vector::push_back(&mut strategy_withdraw_priority_order, id_c);
         vector::push_back(&mut strategy_withdraw_priority_order, id_d);
         vector::push_back(&mut strategy_withdraw_priority_order, id_e);
 
-        let vault = Vault<A, VAULT> {
+        let mut vault = Vault<A, VAULT> {
             id: object::new(&mut ctx),
 
             free_balance: mint_a_balance(2500),
@@ -2244,7 +2227,7 @@ module kai::vault {
 
         sui::test_utils::destroy(meta);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 2500 * 1000);
 
         
@@ -2297,23 +2280,23 @@ module kai::vault {
 
     #[test]
     fun test_strategy_hand_over_profit() {
-        let ctx = tx_context::dummy();
+        let mut ctx = tx_context::dummy();
         let (ya_treasury, meta) = create_a_treasury(&mut ctx);
 
         let vault_access_a = VaultAccess { id: object::new(&mut ctx) };
         let id_a = object::uid_to_inner(&vault_access_a.id);
 
-        let strategies = vec_map::empty();
+        let mut strategies = vec_map::empty();
         vec_map::insert(&mut strategies, id_a, StrategyState {
             borrowed: 1000,
             target_alloc_weight_bps: 10000,
             max_borrow: option::none(),
         });
 
-        let strategy_withdraw_priority_order = vector::empty();
+        let mut strategy_withdraw_priority_order = vector::empty();
         vector::push_back(&mut strategy_withdraw_priority_order, id_a);
 
-        let vault = Vault<A, VAULT> {
+        let mut vault = Vault<A, VAULT> {
             id: object::new(&mut ctx),
 
             free_balance: mint_a_balance(1000),
@@ -2334,7 +2317,7 @@ module kai::vault {
 
         sui::test_utils::destroy(meta);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 1000 * 1000);
 
         let profit = balance::create_for_testing<A>(5000);
@@ -2364,7 +2347,7 @@ module kai::vault {
 
     #[test]
     fun test_remove_strategy() {
-                let ctx = tx_context::dummy();
+                let mut ctx = tx_context::dummy();
         let (ya_treasury, meta) = create_a_treasury(&mut ctx);
 
         let vault_access_a = VaultAccess { id: object::new(&mut ctx) };
@@ -2374,7 +2357,7 @@ module kai::vault {
         let id_b = object::uid_to_inner(&vault_access_b.id);
         let id_c = object::uid_to_inner(&vault_access_c.id);
 
-        let strategies = vec_map::empty();
+        let mut strategies = vec_map::empty();
         vec_map::insert(&mut strategies, id_a, StrategyState {
             borrowed: 6000,
             target_alloc_weight_bps: 4_00,
@@ -2392,12 +2375,12 @@ module kai::vault {
         });
 
 
-        let strategy_withdraw_priority_order = vector::empty();
+        let mut strategy_withdraw_priority_order = vector::empty();
         vector::push_back(&mut strategy_withdraw_priority_order, id_a);
         vector::push_back(&mut strategy_withdraw_priority_order, id_b);
         vector::push_back(&mut strategy_withdraw_priority_order, id_c);
 
-        let vault = Vault<A, VAULT> {
+        let mut vault = Vault<A, VAULT> {
             id: object::new(&mut ctx),
 
             free_balance: mint_a_balance(2500),
@@ -2418,15 +2401,15 @@ module kai::vault {
 
         sui::test_utils::destroy(meta);
 
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut clock = clock::create_for_testing(&mut ctx);
         clock::increment_for_testing(&mut clock, 1000 * 1000);
 
         let admin_cap = AdminCap<VAULT>{ id: object::new(&mut ctx) };
         let ticket = new_strategy_removal_ticket(vault_access_b, mint_a_balance(10000));
-        let ids_for_weights = vector::empty();
+        let mut ids_for_weights = vector::empty();
         vector::push_back(&mut ids_for_weights, id_a);
         vector::push_back(&mut ids_for_weights, id_c);
-        let new_weights = vector::empty();
+        let mut new_weights = vector::empty();
         vector::push_back(&mut new_weights, 30_00);
         vector::push_back(&mut new_weights, 70_00);
         remove_strategy(&admin_cap, &mut vault, ticket, ids_for_weights, new_weights, &clock);
@@ -2434,7 +2417,7 @@ module kai::vault {
         assert!(vec_map::size(&vault.strategies) == 2, 0);
         assert!(vec_map::get(&vault.strategies, &id_a).target_alloc_weight_bps == 30_00, 0);
         assert!(vec_map::get(&vault.strategies, &id_c).target_alloc_weight_bps == 70_00, 0);
-        let exp_priority_order = vector::empty();
+        let mut exp_priority_order = vector::empty();
         vector::push_back(&mut exp_priority_order, id_a);
         vector::push_back(&mut exp_priority_order, id_c);
         assert!(vault.strategy_withdraw_priority_order == exp_priority_order, 0);

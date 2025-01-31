@@ -5,14 +5,11 @@
     The corrected package was published at `0xb8dc843a816b51992ee10d2ddc6d28aab4f0a1d651cd7289a7897902eb631613`.
 */
 module kai::ysui {
-    use sui::tx_context::{Self, TxContext};
-    use sui::transfer;
     use sui::coin;
     use sui::sui::SUI;
-    use std::option;
     use kai::vault;
 
-    struct YSUI has drop {}
+    public struct YSUI has drop {}
 
     #[lint_allow(share_owned)]
     fun init(witness: YSUI, ctx: &mut TxContext) {

@@ -20,13 +20,10 @@ module kai::util {
         }
     }
 
-    #[test_only]
-    use sui::tx_context;
-
     #[test]
     fun test_timstamp_sec() {
-        let ctx = tx_context::dummy();
-        let clock = clock::create_for_testing(&mut ctx);
+        let mut ctx = tx_context::dummy();
+        let mut clock = clock::create_for_testing(&mut ctx);
 
         assert!(timestamp_sec(&clock) == 0, 0);
 

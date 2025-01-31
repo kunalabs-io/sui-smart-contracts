@@ -5,15 +5,12 @@
     The corrected package was published at `0xb8dc843a816b51992ee10d2ddc6d28aab4f0a1d651cd7289a7897902eb631613`.
 */
 module kai::ywhusdte {
-    use sui::tx_context::{Self, TxContext};
-    use sui::transfer;
     use sui::coin;
-    use std::option;
     use kai::vault;
 
     use whusdte::coin::COIN as WHUSDTE;
 
-    struct YWHUSDTE has drop {}
+    public struct YWHUSDTE has drop {}
 
     #[lint_allow(share_owned)]
     fun init(witness: YWHUSDTE, ctx: &mut TxContext) {

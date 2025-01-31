@@ -4,12 +4,8 @@
     The new module is `kai::scallop_sui_proper`.
 */ 
 module kai::scallop_sui {
-    use std::option::{Self, Option};
-    use sui::object::{Self, UID, ID};
-    use sui::transfer;
-    use sui::tx_context::{Self, TxContext};
+    use std::u64;
     use sui::clock::Clock;
-    use sui::math;
     use sui::coin;
     use sui::balance::{Self, Balance};
     use sui::sui::SUI;
@@ -58,13 +54,13 @@ module kai::scallop_sui {
 
     /* ================= AdminCap ================= */
 
-    struct AdminCap has key, store {
+    public struct AdminCap has key, store {
         id: UID,
     }
 
     /* ================= Strategy ================= */
 
-    struct Strategy has key {
+    public struct Strategy has key {
         id: UID,
         admin_cap_id: ID,
         vault_access: Option<VaultAccess>,
@@ -79,7 +75,7 @@ module kai::scallop_sui {
     }
 
     #[lint_allow(self_transfer)]
-    entry public(friend) fun new(
+    entry public(package) fun new(
         scallop_pool: &mut ScallopPool, clock: &Clock, ctx: &mut TxContext
     ) {
         assert_scallop_pool(scallop_pool);
@@ -210,7 +206,7 @@ module kai::scallop_sui {
             let redeemed_coin = scallop_protocol::redeem::redeem(
                 scallop_version, scallop_market, unstaked_ssui, clock, ctx
             );
-            let redeemed_balance_sui = coin::into_balance(redeemed_coin);
+            let mut redeemed_balance_sui = coin::into_balance(redeemed_coin);
 
             if (balance::value(&redeemed_balance_sui) > to_repay) {
                 let extra_amt = balance::value(&redeemed_balance_sui) - to_repay;
@@ -225,7 +221,7 @@ module kai::scallop_sui {
 
             strategy.underlying_nominal_value_sui = strategy.underlying_nominal_value_sui - repaid;
         } else if (can_borrow > 0) {
-            let borrow_amt = math::min(can_borrow, vault::free_balance(vault));
+            let borrow_amt = u64::min(can_borrow, vault::free_balance(vault));
             let borrowed = coin::from_balance(
                 vault::strategy_borrow(vault, vault_access, borrow_amt), ctx
             );
@@ -294,7 +290,7 @@ module kai::scallop_sui {
         let redeemed_coin = scallop_protocol::redeem::redeem(
             scallop_version, scallop_market, unstaked_ssui, clock, ctx
         );
-        let redeemed_balance_sui = coin::into_balance(redeemed_coin);
+        let mut redeemed_balance_sui = coin::into_balance(redeemed_coin);
 
         if (balance::value(&redeemed_balance_sui) > to_withdraw) {
             let profit_amt = balance::value(&redeemed_balance_sui) - to_withdraw;

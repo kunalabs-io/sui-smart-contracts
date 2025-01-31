@@ -1,13 +1,10 @@
 module kai::ywhusdce {
-    use sui::tx_context::{Self, TxContext};
-    use sui::transfer;
     use sui::coin;
-    use std::option;
     use kai::vault;
 
     use whusdce::coin::COIN as WHUSDCE;
 
-    struct YWHUSDCE has drop {}
+    public struct YWHUSDCE has drop {}
 
     #[lint_allow(share_owned)]
     fun init(witness: YWHUSDCE, ctx: &mut TxContext) {

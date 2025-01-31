@@ -1,10 +1,6 @@
 module kai::scallop_whusdte_proper {
-    use std::option::{Self, Option};
-    use sui::object::{Self, UID, ID};
-    use sui::transfer;
-    use sui::tx_context::{Self, TxContext};
+    use std::u64;
     use sui::clock::Clock;
-    use sui::math;
     use sui::coin;
     use sui::balance::{Self, Balance};
     use sui::sui::SUI;
@@ -55,13 +51,13 @@ module kai::scallop_whusdte_proper {
 
     /* ================= AdminCap ================= */
 
-    struct AdminCap has key, store {
+    public struct AdminCap has key, store {
         id: UID,
     }
 
     /* ================= Strategy ================= */
 
-    struct Strategy has key {
+    public struct Strategy has key {
         id: UID,
         admin_cap_id: ID,
         vault_access: Option<VaultAccess>,
@@ -77,7 +73,7 @@ module kai::scallop_whusdte_proper {
     }
 
     #[lint_allow(self_transfer)]
-    entry public(friend) fun new(
+    entry public(package) fun new(
         scallop_pool: &mut ScallopPool, clock: &Clock, ctx: &mut TxContext
     ) {
         assert_scallop_pool(scallop_pool);
@@ -163,7 +159,7 @@ module kai::scallop_whusdte_proper {
         let redeemed_coin = scallop_protocol::redeem::redeem(
             scallop_version, scallop_market, unstaked_susdt, clock, ctx
         );
-        let returned_balance = coin::into_balance(redeemed_coin);
+        let mut returned_balance = coin::into_balance(redeemed_coin);
         balance::join(
             &mut returned_balance,
             balance::withdraw_all(&mut strategy.collected_profit_usdt)
@@ -213,7 +209,7 @@ module kai::scallop_whusdte_proper {
             let redeemed_coin = scallop_protocol::redeem::redeem(
                 scallop_version, scallop_market, unstaked_susdt, clock, ctx
             );
-            let redeemed_balance_usdt = coin::into_balance(redeemed_coin);
+            let mut redeemed_balance_usdt = coin::into_balance(redeemed_coin);
 
             if (balance::value(&redeemed_balance_usdt) > to_repay) {
                 let extra_amt = balance::value(&redeemed_balance_usdt) - to_repay;
@@ -228,7 +224,7 @@ module kai::scallop_whusdte_proper {
 
             strategy.underlying_nominal_value_usdt = strategy.underlying_nominal_value_usdt - repaid;
         } else if (can_borrow > 0) {
-            let borrow_amt = math::min(can_borrow, vault::free_balance(vault));
+            let borrow_amt = u64::min(can_borrow, vault::free_balance(vault));
             let borrowed = coin::from_balance(
                 vault::strategy_borrow(vault, vault_access, borrow_amt), ctx
             );
@@ -289,7 +285,7 @@ module kai::scallop_whusdte_proper {
         let redeemed_coin = scallop_protocol::redeem::redeem(
             scallop_version, scallop_market, unstaked_susdt, clock, ctx
         );
-        let redeemed_balance_usdt = coin::into_balance(redeemed_coin);
+        let mut redeemed_balance_usdt = coin::into_balance(redeemed_coin);
 
         if (balance::value(&redeemed_balance_usdt) > strategy.underlying_nominal_value_usdt) {
             let profit_amt = balance::value(&redeemed_balance_usdt) - strategy.underlying_nominal_value_usdt;
@@ -311,7 +307,7 @@ module kai::scallop_whusdte_proper {
     /// Return the converted profits. See `take_profits_for_selling`.
     public fun deposit_sold_profits(
         cap: &AdminCap, strategy: &mut Strategy,
-        vault: &mut Vault<WHUSDTE, YWHUSDTE>, profit: Balance<WHUSDTE>,
+        vault: &mut Vault<WHUSDTE, YWHUSDTE>, mut profit: Balance<WHUSDTE>,
         clock: &Clock
     ) {
         assert_admin(cap, strategy);
@@ -355,7 +351,7 @@ module kai::scallop_whusdte_proper {
         let redeemed_coin = scallop_protocol::redeem::redeem(
             scallop_version, scallop_market, unstaked_susdt, clock, ctx
         );
-        let redeemed_balance_usdt = coin::into_balance(redeemed_coin);
+        let mut redeemed_balance_usdt = coin::into_balance(redeemed_coin);
 
         if (balance::value(&redeemed_balance_usdt) > to_withdraw) {
             let profit_amt = balance::value(&redeemed_balance_usdt) - to_withdraw;
