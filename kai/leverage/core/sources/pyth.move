@@ -11,6 +11,7 @@ use sui::vec_map::{Self, VecMap};
 use usdc::usdc::USDC;
 use whusdce::coin::COIN as WHUSDCE;
 use whusdte::coin::COIN as WHUSDTE;
+use suiusdt::usdt::USDT as SUIUSDT;
 
 const EUnsupportedPriceFeed: u64 = 0;
 const EStalePrice: u64 = 1;
@@ -83,6 +84,8 @@ public fun decimals(`type`: TypeName): u8 {
     } else if (`type` == type_name::get<WHUSDTE>()) {
         6
     } else if (`type` == type_name::get<USDC>()) {
+        6
+    } else if (`type` == type_name::get<SUIUSDT>()) {
         6
     } else {
         abort (EUnsupportedPriceFeed)

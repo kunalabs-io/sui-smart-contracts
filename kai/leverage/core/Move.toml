@@ -3,7 +3,7 @@ name = "KaiLeverage"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
 edition = "2024.beta"
-published-at = "0x0f6e43ba7dc3fdb1dad3fcc5b7d431b6527aa1bf877a1b24d6865becfa14f8d1"
+published-at = "0x3c5784759be384704d164c58e7f22afce5bdca6723f1a4d25c8fd8be6ad782dd"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.35.2", override = true }
@@ -17,6 +17,7 @@ WHUSDCE = { local = "../../on-chain-deps/0x5d4b302506645c37ff133b98c4b50a5ae1484
 WHUSDTE = { local = "../../on-chain-deps/0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c" }
 usdc = { local = "../../on-chain-deps/USDC/usdc" }
 BluefinSpot = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", subdir = "", rev = "5e70db0" }
+SuiUsdt = { local = "../../on-chain-deps/SuiUsdt" }
 
 [addresses]
 kai_leverage = "0x51e0ccce48f0763f98f1cb4856847c2e1531adacada99cdd7626ab999db57523"

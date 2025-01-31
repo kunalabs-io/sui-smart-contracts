@@ -2,8 +2,8 @@
 
 [move]
 version = 3
-manifest_digest = "DEB67F17FA8276E4F4A5C0D812BD4A80336097C5CE2CD522DC286FF1D53E6257"
-deps_digest = "D7FB1F2E1A893B9A0E80A392473710373DE5791D3AC8F6D898803754B2ADAE6B"
+manifest_digest = "71ADB5D60EC21D43F2F1E93317ACA81CCE906B8B38463FB73A4955DA0C7C84EB"
+deps_digest = "8D8E72BAA06E63572166CA7E7F6E159CA2D11E27ADE3961B15E29922A04B0D32"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
   { id = "BluefinSpot", name = "BluefinSpot" },
@@ -12,6 +12,7 @@ dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiUsdt", name = "SuiUsdt" },
   { id = "TurbosCLMM", name = "TurbosCLMM" },
   { id = "WHUSDCE", name = "WHUSDCE" },
   { id = "WHUSDTE", name = "WHUSDTE" },
@@ -112,6 +113,10 @@ source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.35.2
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
 ]
+
+[[move.package]]
+id = "SuiUsdt"
+source = { local = "../../on-chain-deps/SuiUsdt" }
 
 [[move.package]]
 id = "TurbosCLMM"
