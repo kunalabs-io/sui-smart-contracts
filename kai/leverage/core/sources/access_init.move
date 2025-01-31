@@ -1,10 +1,10 @@
-module kai_leverage::access_init {
-    use access_management::access;
+module kai_leverage::access_init;
 
-    public struct ACCESS_INIT has drop { }
+use access_management::access;
 
-    fun init(otw: ACCESS_INIT, ctx: &mut TxContext) {
-        let admin = access::claim_package(otw, ctx);
-        transfer::public_transfer(admin, tx_context::sender(ctx));
-    }
+public struct ACCESS_INIT has drop {}
+
+fun init(otw: ACCESS_INIT, ctx: &mut TxContext) {
+    let admin = access::claim_package(otw, ctx);
+    transfer::public_transfer(admin, tx_context::sender(ctx));
 }

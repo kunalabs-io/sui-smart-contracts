@@ -1,141 +1,141 @@
-module kai_leverage::piecewise {
-    use kai_leverage::util;
+module kai_leverage::piecewise;
 
-    /* ================= errors ================= */
+use kai_leverage::util;
 
-    /// Piecewise must have at least one section
-    const ENoSections: u64 = 0;
-    /// x is out of range
-    const EOutOfRange: u64 = 1;
+/* ================= errors ================= */
 
-    /* ================= types ================= */
+/// Piecewise must have at least one section
+const ENoSections: u64 = 0;
+/// x is out of range
+const EOutOfRange: u64 = 1;
 
-    public struct Section has store, copy, drop {
-        end: u64,
-        end_val: u64,
+/* ================= types ================= */
+
+public struct Section has store, copy, drop {
+    end: u64,
+    end_val: u64,
+}
+
+public struct Piecewise has store, copy, drop {
+    start: u64,
+    start_val: u64,
+    sections: vector<Section>,
+}
+
+/* ================= functions ================= */
+
+public fun section(end: u64, end_val: u64): Section {
+    Section {
+        end,
+        end_val,
     }
+}
 
-    public struct Piecewise has store, copy, drop {
-        start: u64,
-        start_val: u64,
-        sections: vector<Section>,
+public fun create(start: u64, start_val: u64, sections: vector<Section>): Piecewise {
+    assert!(sections.length() > 0, ENoSections);
+
+    Piecewise {
+        start: start,
+        start_val: start_val,
+        sections: sections,
     }
+}
 
-    /* ================= functions ================= */
+public fun value_at(pw: &Piecewise, x: u64): u64 {
+    assert!(x >= pw.start, EOutOfRange);
 
-    public fun section(end: u64, end_val: u64): Section {
-        Section {
-            end,
-            end_val,
-        }
+    let len = pw.sections.length();
+    let last_section = pw.sections[len - 1];
+    assert!(x <= last_section.end, EOutOfRange);
+
+    if (x == pw.start) {
+        return pw.start_val
+    };
+
+    let mut cs_start = pw.start;
+    let mut cs_start_val = pw.start_val;
+    let mut cs = pw.sections[0];
+    let mut idx = 0;
+    while (x > cs.end) {
+        cs_start = cs.end;
+        cs_start_val = cs.end_val;
+        cs = pw.sections[idx + 1];
+        idx = idx + 1;
+    };
+    if (x == cs.end) {
+        return cs.end_val
+    };
+    if (cs_start_val == cs.end_val) {
+        return cs_start_val
+    };
+
+    let sdy = util::abs_diff(cs.end_val, cs_start_val);
+    let sdx = util::abs_diff(cs.end, cs_start);
+    let dx = x - cs_start;
+
+    let dy = util::muldiv(sdy, dx, sdx);
+
+    if (cs_start_val < cs.end_val) {
+        cs_start_val + dy
+    } else {
+        cs_start_val - dy
     }
+}
 
-    public fun create(start: u64, start_val: u64, sections: vector<Section>): Piecewise {
-        assert!(sections.length() > 0, ENoSections);
+public fun range(pw: &Piecewise): (u64, u64) {
+    let len = pw.sections.length();
+    let last_section = pw.sections[len -1];
+    (pw.start, last_section.end)
+}
 
-        Piecewise {
-            start: start,
-            start_val: start_val,
-            sections: sections,
-        }   
-    }
+/* ================= testing ================= */
 
-    public fun value_at(pw: &Piecewise, x: u64): u64 {
-        assert!(x >= pw.start, EOutOfRange);
+#[test]
+fun test_piecewise() {
+    let mut sections = vector::empty();
+    vector::push_back(&mut sections, section(50_00, 5_00));
+    vector::push_back(&mut sections, section(70_00, 7_00));
+    vector::push_back(&mut sections, section(80_00, 4_00));
+    vector::push_back(&mut sections, section(100_00, 4_00));
 
-        let len = pw.sections.length();
-        let last_section = pw.sections[len - 1];
-        assert!(x <= last_section.end, EOutOfRange);
+    let pw = create(0, 2_00, sections);
 
-        if (x == pw.start) {
-            return pw.start_val
-        };
+    assert!(value_at(&pw, 0) == 2_00, 0);
+    assert!(value_at(&pw, 12_00) == 2_72, 0);
+    assert!(value_at(&pw, 25_00) == 3_50, 0);
+    assert!(value_at(&pw, 65_00) == 6_50, 0);
+    assert!(value_at(&pw, 70_00) == 7_00, 0);
+    assert!(value_at(&pw, 71_00) == 6_70, 0);
+    assert!(value_at(&pw, 75_00) == 5_50, 0);
+    assert!(value_at(&pw, 80_00) == 4_00, 0);
+    assert!(value_at(&pw, 81_00) == 4_00, 0);
+    assert!(value_at(&pw, 89_00) == 4_00, 0);
+    assert!(value_at(&pw, 100_00) == 4_00, 0);
+}
 
-        let mut cs_start = pw.start;
-        let mut cs_start_val = pw.start_val;
-        let mut cs = pw.sections[0];
-        let mut idx = 0;
-        while (x > cs.end) {
-            cs_start = cs.end;
-            cs_start_val = cs.end_val;
-            cs = pw.sections[idx + 1];
-            idx = idx + 1;
-        };
-        if (x == cs.end) {
-            return cs.end_val
-        };
-        if (cs_start_val == cs.end_val) {
-            return cs_start_val
-        };
+#[test]
+#[expected_failure(abort_code = ENoSections)]
+fun test_no_sections() {
+    let sections = vector::empty();
+    create(0, 2_00, sections);
+}
 
-        let sdy = util::abs_diff(cs.end_val, cs_start_val);
-        let sdx = util::abs_diff(cs.end, cs_start);
-        let dx = x - cs_start;
+#[test]
+#[expected_failure(abort_code = EOutOfRange)]
+fun test_out_of_range_start() {
+    let mut sections = vector::empty();
+    vector::push_back(&mut sections, section(50_00, 5_00));
+    let pw = create(5_00, 2_00, sections);
 
-        let dy = util::muldiv(sdy, dx, sdx);
+    value_at(&pw, 4_99);
+}
 
-        if (cs_start_val < cs.end_val) {
-            cs_start_val + dy
-        } else {
-            cs_start_val - dy
-        }
-    }
+#[test]
+#[expected_failure(abort_code = EOutOfRange)]
+fun test_out_of_range_end() {
+    let mut sections = vector::empty();
+    vector::push_back(&mut sections, section(50_00, 5_00));
+    let pw = create(5_00, 2, sections);
 
-    public fun range(pw: &Piecewise): (u64, u64) {
-        let len = pw.sections.length();
-        let last_section = pw.sections[len -1];
-        (pw.start, last_section.end)
-    }
-
-    /* ================= testing ================= */
-
-    #[test]
-    fun test_piecewise() {
-        let mut sections = vector::empty();
-        vector::push_back(&mut sections, section(50_00, 5_00));
-        vector::push_back(&mut sections, section(70_00, 7_00));
-        vector::push_back(&mut sections, section(80_00, 4_00));
-        vector::push_back(&mut sections, section(100_00, 4_00));
-
-        let pw = create(0, 2_00, sections);
-
-        assert!(value_at(&pw, 0) == 2_00, 0);
-        assert!(value_at(&pw, 12_00) == 2_72, 0);
-        assert!(value_at(&pw, 25_00) == 3_50, 0);
-        assert!(value_at(&pw, 65_00) == 6_50, 0);
-        assert!(value_at(&pw, 70_00) == 7_00, 0);
-        assert!(value_at(&pw, 71_00) == 6_70, 0);
-        assert!(value_at(&pw, 75_00) == 5_50, 0);
-        assert!(value_at(&pw, 80_00) == 4_00, 0);
-        assert!(value_at(&pw, 81_00) == 4_00, 0);
-        assert!(value_at(&pw, 89_00) == 4_00, 0);
-        assert!(value_at(&pw, 100_00) == 4_00, 0);
-    }
-
-    #[test]
-    #[expected_failure(abort_code = ENoSections)]
-    fun test_no_sections() {
-        let sections = vector::empty();
-        create(0, 2_00, sections);
-    }
-
-    #[test]
-    #[expected_failure(abort_code = EOutOfRange)]
-    fun test_out_of_range_start() {
-        let mut sections = vector::empty();
-        vector::push_back(&mut sections, section(50_00, 5_00));
-        let pw = create(5_00, 2_00, sections);
-
-        value_at(&pw, 4_99);
-    }
-
-    #[test]
-    #[expected_failure(abort_code = EOutOfRange)]
-    fun test_out_of_range_end() {
-        let mut sections = vector::empty();
-        vector::push_back(&mut sections, section(50_00, 5_00));
-        let pw = create(5_00, 2, sections);
-
-        value_at(&pw, 50_01);
-    }
+    value_at(&pw, 50_01);
 }
