@@ -1,0 +1,7 @@
+[package]
+name = "USDY"
+published-at = "0x960b531667636f39e85867775f52f6b1f220a058c4de786905bdf761e06a56bb"
+
+[addresses]
+usdy = "0x960b531667636f39e85867775f52f6b1f220a058c4de786905bdf761e06a56bb"
+std = "0x1"

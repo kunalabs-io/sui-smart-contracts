@@ -2,8 +2,8 @@
 
 [move]
 version = 3
-manifest_digest = "C9D0C8603E3AB178A8F9614C9C1F8CDC2F5C2D7606E7CE718B55CCDA65683F60"
-deps_digest = "8D8E72BAA06E63572166CA7E7F6E159CA2D11E27ADE3961B15E29922A04B0D32"
+manifest_digest = "5A8D41C5234458FEC4226B623E7125A895F1B0A691B4D8A1A4205F771FD79426"
+deps_digest = "59CF4C5FBF9CA9498217B3AC2BED47AD5D49696CE64F735BE1226EDCEF529664"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
   { id = "BluefinSpot", name = "BluefinSpot" },
@@ -14,6 +14,7 @@ dependencies = [
   { id = "Sui", name = "Sui" },
   { id = "SuiUsdt", name = "SuiUsdt" },
   { id = "TurbosCLMM", name = "TurbosCLMM" },
+  { id = "USDY", name = "USDY" },
   { id = "WHUSDCE", name = "WHUSDCE" },
   { id = "WHUSDTE", name = "WHUSDTE" },
   { id = "usdc", name = "usdc" },
@@ -125,6 +126,10 @@ source = { git = "https://github.com/turbos-finance/turbos-sui-move-interface.gi
 dependencies = [
   { id = "Sui", name = "Sui" },
 ]
+
+[[move.package]]
+id = "USDY"
+source = { local = "../../on-chain-deps/USDY" }
 
 [[move.package]]
 id = "WHUSDCE"

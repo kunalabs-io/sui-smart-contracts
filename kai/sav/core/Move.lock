@@ -89,6 +89,16 @@ dependencies = [
 ]
 
 [[move.package]]
+id = "BluefinSpot"
+source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "5dfcb03", subdir = "" }
+
+dependencies = [
+  { id = "CetusClmm", name = "CetusClmm" },
+  { id = "IntegerMate", name = "IntegerMate" },
+  { id = "Sui", name = "Sui" },
+]
+
+[[move.package]]
 id = "CetusClmm"
 source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "mainnet-v1.23.1", subdir = "sui/clmmpool" }
 
@@ -121,12 +131,15 @@ source = { local = "../../leverage/core" }
 
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
+  { id = "BluefinSpot", name = "BluefinSpot" },
   { id = "CetusClmm", name = "CetusClmm" },
   { id = "FlowxClmm", name = "FlowxClmm" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiUsdt", name = "SuiUsdt" },
   { id = "TurbosCLMM", name = "TurbosCLMM" },
+  { id = "USDY", name = "USDY" },
   { id = "WHUSDCE", name = "WHUSDCE" },
   { id = "WHUSDTE", name = "WHUSDTE" },
   { id = "usdc", name = "usdc" },
@@ -194,12 +207,20 @@ dependencies = [
 ]
 
 [[move.package]]
+id = "SuiUsdt"
+source = { local = "../../on-chain-deps/SuiUsdt" }
+
+[[move.package]]
 id = "TurbosCLMM"
 source = { git = "https://github.com/turbos-finance/turbos-sui-move-interface.git", rev = "8887603", subdir = "clmm" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
 ]
+
+[[move.package]]
+id = "USDY"
+source = { local = "../../on-chain-deps/USDY" }
 
 [[move.package]]
 id = "WHUSDCE"

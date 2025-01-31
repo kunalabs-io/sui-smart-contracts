@@ -2,14 +2,15 @@
 
 [move]
 version = 3
-manifest_digest = "B430C3F6D15CBC211C2F5DB08AFC39ECBA2213D5A16F1E67A09A5CB9055772A5"
-deps_digest = "397E6A9F7A624706DBDFEE056CE88391A15876868FD18A88504DA74EB458D697"
+manifest_digest = "B41C7BDB0BD33E0538F6FE53422F2AB6B53216245BEA3EA04E0BEA051CE6A602"
+deps_digest = "52B406A7A21811BEF51751CF88DA0E76DAEFFEAC888D4F4060B1A72BBE7D8D35"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
   { id = "KaiLeverage", name = "KaiLeverage" },
+  { id = "KaiLeverageSupplyPoolInit", name = "KaiLeverageSupplyPoolInit" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
-  { id = "usdc", name = "usdc" },
+  { id = "USDY", name = "USDY" },
 ]
 
 [[move.package]]
@@ -94,6 +95,18 @@ dependencies = [
   { id = "USDY", name = "USDY" },
   { id = "WHUSDCE", name = "WHUSDCE" },
   { id = "WHUSDTE", name = "WHUSDTE" },
+  { id = "usdc", name = "usdc" },
+]
+
+[[move.package]]
+id = "KaiLeverageSupplyPoolInit"
+source = { local = "../core" }
+
+dependencies = [
+  { id = "AccessManagement", name = "AccessManagement" },
+  { id = "KaiLeverage", name = "KaiLeverage" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
   { id = "usdc", name = "usdc" },
 ]
 
