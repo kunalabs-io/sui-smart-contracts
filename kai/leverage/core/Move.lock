@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "71ADB5D60EC21D43F2F1E93317ACA81CCE906B8B38463FB73A4955DA0C7C84EB"
+manifest_digest = "C9D0C8603E3AB178A8F9614C9C1F8CDC2F5C2D7606E7CE718B55CCDA65683F60"
 deps_digest = "8D8E72BAA06E63572166CA7E7F6E159CA2D11E27ADE3961B15E29922A04B0D32"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
@@ -49,7 +49,7 @@ dependencies = [
 
 [[move.package]]
 id = "BluefinSpot"
-source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "5e70db0", subdir = "" }
+source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "5dfcb03", subdir = "" }
 
 dependencies = [
   { id = "CetusClmm", name = "CetusClmm" },
