@@ -76,19 +76,19 @@ const MODULE_VERSION: u16 = 1;
 
 /* ================= errors ================= */
 
-/// Invalid position - the current price is not within the chosen range.
+// Invalid position - the current price is not within the chosen range.
 // const EInvalidTickRange: u64 = 0;
-/// Invalid position - the margin is too low at the liquidation threshold.
+// Invalid position - the margin is too low at the liquidation threshold.
 // const ELiqMarginTooLow: u64 = 1;
-/// Invalid position - the initial margin is below allowed.
+// Invalid position - the initial margin is below allowed.
 // const EInitialMarginTooLow: u64 = 2;
-/// Creating new positions is not allowed.
+// Creating new positions is not allowed.
 // const ENewPositionsNotAllowed: u64 = 3;
 /// Invalid config passed in for the position.
 const EInvalidConfig: u64 = 4;
-/// Invalid pool object passed in.
+// Invalid pool object passed in.
 // const EInvalidPool: u64 = 5;
-/// Borrowed amount is not equal to the amount needed for the position.
+// Borrowed amount is not equal to the amount needed for the position.
 // const EInvalidBorrow: u64 = 6;
 /// Invalid `PositionCap` object.
 const EInvalidPositionCap: u64 = 7;
@@ -98,15 +98,15 @@ const ETicketActive: u64 = 8;
 const EPositionMismatch: u64 = 9;
 /// The ticket is not fully exhausted, so it cannot be destroyed.
 const ETicketNotExhausted: u64 = 10;
-/// Operation not permitted because the position is below a safe margin level.
+// Operation not permitted because the position is below a safe margin level.
 // const EPositionBelowThreshold: u64 = 11;
-/// AMM price slippage exceeded the allowed tolerance.
+// AMM price slippage exceeded the allowed tolerance.
 // const ESlippageExceeded: u64 = 12;
-/// The position size limit has been exceeded.
+// The position size limit has been exceeded.
 // const EPositionSizeLimitExceeded: u64 = 13;
-/// The global vault size limit has been exceeded.
+// The global vault size limit has been exceeded.
 // const EVaultGlobalSizeLimitExceeded: u64 = 14;
-/// The creation fee amount does not match the required fee amount.
+// The creation fee amount does not match the required fee amount.
 // const EInvalidCreationFeeAmount: u64 = 15;
 /// The `PositionConfig` version does not match the module version.
 const EInvalidConfigVersion: u64 = 16;

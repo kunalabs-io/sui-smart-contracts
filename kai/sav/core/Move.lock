@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "B22CE78D9B9B80D6D22E461B0AA9AEAE162886F5385E0009F0F8DF96D5AC8CE9"
+manifest_digest = "394946E5EE11429D21595440884BF7639F5FF9AE5CC69BADF7CD949F1F31C02E"
 deps_digest = "8227D341C0550A37580C10FA45FE148A465225149C69D179737E0FE454AD6AEC"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
@@ -100,7 +100,7 @@ dependencies = [
 
 [[move.package]]
 id = "MoveStdlib"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.35.2", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.41.2", subdir = "crates/sui-framework/packages/move-stdlib" }
 
 [[move.package]]
 id = "Pyth"
@@ -181,7 +181,7 @@ dependencies = [
 
 [[move.package]]
 id = "Sui"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.35.2", subdir = "crates/sui-framework/packages/sui-framework" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.41.2", subdir = "crates/sui-framework/packages/sui-framework" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },

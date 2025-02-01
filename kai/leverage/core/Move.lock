@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "FA01518A150420215A0D5EB682F1BDB135DB6D13A2DB009E86745BCDA6EA9223"
+manifest_digest = "D945B67913F29397C72E6B99A9A9609DBAF71B959142E0C4B87772CC19FF3904"
 deps_digest = "59CF4C5FBF9CA9498217B3AC2BED47AD5D49696CE64F735BE1226EDCEF529664"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
@@ -76,7 +76,7 @@ dependencies = [
 
 [[move.package]]
 id = "MoveStdlib"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.35.2", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.41.2", subdir = "crates/sui-framework/packages/move-stdlib" }
 
 [[move.package]]
 id = "Pyth"
@@ -90,7 +90,7 @@ dependencies = [
 
 [[move.package]]
 id = "Sui"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.35.2", subdir = "crates/sui-framework/packages/sui-framework" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.41.2", subdir = "crates/sui-framework/packages/sui-framework" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -174,6 +174,11 @@ dependencies = [
   { id = "stablecoin", name = "stablecoin" },
   { id = "sui_extensions", name = "sui_extensions" },
 ]
+
+[move.toolchain-version]
+compiler-version = "1.41.1"
+edition = "2024.beta"
+flavor = "sui"
 
 [env]
 

@@ -6,8 +6,8 @@ authors = ["Krešimir Klas (kklas@kunalabs.io)"]
 published-at = "0xcc89168df227621ceab8f2309f134fef00606cc056b61c598a776847367b8e36"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.35.2", override = true }
-MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.35.2", override = true }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.41.2", override = true }
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.41.2", override = true }
 KaiLeverage = { local = "../../core" }
 KaiLeverageSupplyPoolInit = { local = "../core" }
 AccessManagement = { local = "../../../../access-management", override = true }

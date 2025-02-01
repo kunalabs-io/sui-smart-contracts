@@ -6,8 +6,8 @@ edition = "2024.beta"
 published-at = "0xe6079b606e2c6ea73511f1c22f31c2312e3610a3916908174b415147a37040d8"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.35.2", override = true }
-MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.35.2", override = true }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.41.2", override = true }
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.41.2", override = true }
 AccessManagement = { local = "../../../access-management" }
 CetusClmm = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", subdir = "sui/clmmpool", rev = "mainnet-v1.23.1" }
 TurbosCLMM = { git = "https://github.com/turbos-finance/turbos-sui-move-interface.git", subdir = "clmm", rev = "8887603" }

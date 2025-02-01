@@ -1,23 +1,29 @@
-module klsp_usdc::klusdc {
-    use kai_leverage::equity;
-    use klsp_init::init;
-    use usdc::usdc::USDC;
+module klsp_usdc::klusdc;
 
-    public struct KLUSDC has drop {}
+use kai_leverage::equity;
+use klsp_init::init;
+use usdc::usdc::USDC;
 
-    fun init(w: KLUSDC, ctx: &mut TxContext) {
-        let decimals = 6;
-        let symbol = b"klUSDC";
-        let name = b"klUSDC";
-        let description = b"Kai Leverage USDC Supply Pool LP Token";
-        let icon_url = option::none();
-        let (treasury, coin_metadata) = equity::create_treasury(
-            w, decimals, symbol, name, description, icon_url, ctx 
-        );
+public struct KLUSDC has drop {}
 
-        let sender = tx_context::sender(ctx);
-        let ticket = init::new_pool_creation_ticket<USDC, KLUSDC>(treasury, ctx);
-        transfer::public_transfer(ticket, sender);
-        transfer::public_transfer(coin_metadata, sender);
-    }
+fun init(w: KLUSDC, ctx: &mut TxContext) {
+    let decimals = 6;
+    let symbol = b"klUSDC";
+    let name = b"klUSDC";
+    let description = b"Kai Leverage USDC Supply Pool LP Token";
+    let icon_url = option::none();
+    let (treasury, coin_metadata) = equity::create_treasury(
+        w,
+        decimals,
+        symbol,
+        name,
+        description,
+        icon_url,
+        ctx,
+    );
+
+    let sender = tx_context::sender(ctx);
+    let ticket = init::new_pool_creation_ticket<USDC, KLUSDC>(treasury, ctx);
+    transfer::public_transfer(ticket, sender);
+    transfer::public_transfer(coin_metadata, sender);
 }

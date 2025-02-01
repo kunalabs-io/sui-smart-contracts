@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "FAF41D2D2D0638610660EB943D6865F2083BD16AC54D991341752B9D3019A770"
+manifest_digest = "4F749680BB6CB21F1EFD783A36423456472D9E7F4B1DF6716A1A007F3B8BA7FD"
 deps_digest = "F9B494B64F0615AED0E98FC12A85B85ECD2BC5185C22D30E7F67786BB52E507C"
 dependencies = [
   { id = "KaiLeverage", name = "KaiLeverage" },
@@ -99,7 +99,7 @@ dependencies = [
 
 [[move.package]]
 id = "MoveStdlib"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.35.2", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.41.2", subdir = "crates/sui-framework/packages/move-stdlib" }
 
 [[move.package]]
 id = "Pyth"
@@ -113,7 +113,7 @@ dependencies = [
 
 [[move.package]]
 id = "Sui"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.35.2", subdir = "crates/sui-framework/packages/sui-framework" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.41.2", subdir = "crates/sui-framework/packages/sui-framework" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -197,6 +197,11 @@ dependencies = [
   { id = "stablecoin", name = "stablecoin" },
   { id = "sui_extensions", name = "sui_extensions" },
 ]
+
+[move.toolchain-version]
+compiler-version = "1.41.1"
+edition = "2024.beta"
+flavor = "sui"
 
 [env]
 
