@@ -10,7 +10,7 @@ Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-fram
 MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.35.2", override = true }
 KaiLeverage = { local = "../../core" }
 KaiLeverageSupplyPoolInit = { local = "../core" }
-WHUSDTE = { local = "../../../on-chain-deps/0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c" }
+WHUSDTE = { local = "../../../../_vendor/whUSDTe" }
 
 [addresses]
 klsp_whusdte = "0x358b47a13abe067fe4054e414f4ee1d1524236cc60ffc716ec10931c5dbec795"

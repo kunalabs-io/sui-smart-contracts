@@ -11,14 +11,14 @@ MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/s
 AccessManagement = { local = "../../../access-management" }
 CetusClmm = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", subdir = "sui/clmmpool", rev = "mainnet-v1.23.1" }
 TurbosCLMM = { git = "https://github.com/turbos-finance/turbos-sui-move-interface.git", subdir = "clmm", rev = "8887603" }
-FlowxClmm = { local = "./vendor/flowx-clmm" }
-Pyth = { local = "./vendor/pyth" }
-WHUSDCE = { local = "../../on-chain-deps/0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf" }
-WHUSDTE = { local = "../../on-chain-deps/0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c" }
-usdc = { local = "../../on-chain-deps/USDC/usdc" }
+FlowxClmm = { local = "../../../_vendor/FlowxClmm" }
+Pyth = { local = "../../../_vendor/Pyth" }
+WHUSDCE = { local = "../../../_vendor/whUSDCe" }
+WHUSDTE = { local = "../../../_vendor/whUSDTe" }
+usdc = { local = "../../../_vendor/USDC/usdc" }
 BluefinSpot = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", subdir = "", rev = "5dfcb03" }
-SuiUsdt = { local = "../../on-chain-deps/SuiUsdt" }
-USDY = { local = "../../on-chain-deps/USDY" }
+SuiUsdt = { local = "../../../_vendor/SuiUsdt" }
+USDY = { local = "../../../_vendor/USDY" }
 
 [addresses]
 kai_leverage = "0x51e0ccce48f0763f98f1cb4856847c2e1531adacada99cdd7626ab999db57523"

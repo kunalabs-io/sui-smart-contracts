@@ -20,3 +20,11 @@ source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.18.1
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
 ]
+
+[env]
+
+[env.mainnet]
+chain-id = "35834a8a"
+original-published-id = "0xb8dc843a816b51992ee10d2ddc6d28aab4f0a1d651cd7289a7897902eb631613"
+latest-published-id = "0xb8dc843a816b51992ee10d2ddc6d28aab4f0a1d651cd7289a7897902eb631613"
+published-version = "1"

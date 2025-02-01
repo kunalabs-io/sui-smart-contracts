@@ -1,0 +1,16 @@
+[package]
+name = "ScallopProtocol"
+published-at = "0xc2596018248934aa86b3065390bf69ba5f7007e34df7e4032b736eb256f82f1c"
+
+[dependencies]
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.15.2", override = true }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.15.2", override = true }
+ScallopWhitelist = { local = "../ScallopWhitelist" }
+ScallopXOracle = { local = "../ScallopXOracle" }
+ScallopX = { local = "../ScallopX" }
+ScallopMath = { local = "../ScallopMath" }
+ScallopCoinDecimalRegistry = { local = "../ScallopCoinDecimalRegistry" }
+
+[addresses]
+scallop_protocol = "0xefe8b36d5b2e43728cc323298626b83177803521d195cfb11e15b910e892fddf"
+

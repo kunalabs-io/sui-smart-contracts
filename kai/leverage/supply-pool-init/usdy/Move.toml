@@ -11,7 +11,7 @@ MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/s
 KaiLeverage = { local = "../../core" }
 KaiLeverageSupplyPoolInit = { local = "../core" }
 AccessManagement = { local = "../../../../access-management", override = true }
-USDY = { local = "../../../on-chain-deps/USDY", override = true }
+USDY = { local = "../../../../_vendor/USDY", override = true }
 
 [addresses]
 klsp_usdy = "0xcc89168df227621ceab8f2309f134fef00606cc056b61c598a776847367b8e36"

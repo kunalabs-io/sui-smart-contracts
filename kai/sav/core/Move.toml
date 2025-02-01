@@ -1,18 +1,19 @@
 [package]
-name = "Kai"
+name = "KaiSingleAssetVault"
 edition = "2024.beta"
 published-at = "0x4845bf0d15759cbe7e2ce7b127967f23e3992ff6454dab61b9f5af43ed66c0e5"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.35.2", override = true }
 MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.35.2", override = true }
-WHUSDCE = { local = "../../on-chain-deps/0x5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf" }
-WHUSDTE = { local = "../../on-chain-deps/0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c" }
-ScallopProtocol = { local = "../../on-chain-deps/ScallopProtocol" }
-ScallopPool = { local = "../../on-chain-deps/0xec1ac7f4d01c5bf178ff4e62e523e7df7721453d81d4904a42a0ffc2686c843d" }
+WHUSDCE = { local = "../../../_vendor/whUSDCe" }
+WHUSDTE = { local = "../../../_vendor/whUSDTe" }
+ScallopProtocol = { local = "../../../_vendor/ScallopProtocol" }
+ScallopPool = { local = "../../../_vendor/ScallopPool" }
 KaiYwhUSDTeYSUI = { local = "../vault-token-init/kai-ywhusdte-ysui" }
 AccessManagement = { local = "../../../access-management" }
 KaiLeverage = { local = "../../leverage/core" }
 
 [addresses]
+kai_sav = "0x01c389a85310b47e7630a9361d4e71025bc35e4999d3a645949b1b68b26f2273"
 kai = "0x01c389a85310b47e7630a9361d4e71025bc35e4999d3a645949b1b68b26f2273"
