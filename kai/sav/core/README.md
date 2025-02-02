@@ -1,3 +1,3 @@
 # Kai Finance
 
-A yield aggregator for Sui [https://kai.finance](https://kai.finance).
+Single Asset Vault implementation for [https://kai.finance](https://kai.finance).
