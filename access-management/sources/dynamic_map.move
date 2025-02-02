@@ -1,3 +1,6 @@
+// Copyright (c) Kuna Labs d.o.o.
+// SPDX-License-Identifier: Apache-2.0
+
 /// A map collection where the keys are homogeneous and the values are heterogeneous. Both keys and
 /// values are stored using Sui's object system (dynamic fields). Values must have `store`, `copy`,
 /// and `drop` capabilities.

@@ -1,3 +1,6 @@
+// Copyright (c) Kuna Labs d.o.o.
+// SPDX-License-Identifier: Apache-2.0
+
 module kai_sav::time_locked_balance_tests;
 
 use kai_sav::time_locked_balance::{Self as tlb, TimeLockedBalance};

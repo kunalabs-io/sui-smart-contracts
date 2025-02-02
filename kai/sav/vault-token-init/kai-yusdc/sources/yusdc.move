@@ -1,3 +1,6 @@
+// Copyright (c) Kuna Labs d.o.o.
+// SPDX-License-Identifier: Apache-2.0
+
 module kai_yusdc::yusdc;
 
 use sui::coin;

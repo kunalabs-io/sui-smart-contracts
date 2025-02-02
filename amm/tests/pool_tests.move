@@ -1,3 +1,6 @@
+// Copyright (c) Kuna Labs d.o.o.
+// SPDX-License-Identifier: Apache-2.0
+
 #[test_only]
 module amm::pool_tests;
 

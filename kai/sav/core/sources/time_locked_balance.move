@@ -1,3 +1,6 @@
+// Copyright (c) Kuna Labs d.o.o.
+// SPDX-License-Identifier: Apache-2.0
+
 /// `TimeLockedBalance` locks a `Balance<T>` such that only `unlock_per_second` of the amount
 /// gets unlocked (and becomes withdrawable) every second starting from `unlock_start_ts_sec`.
 /// It allows for `unlock_per_second` and `unlock_start_ts_sec` to be safely changed and allows for

@@ -1,3 +1,6 @@
+// Copyright (c) Kuna Labs d.o.o.
+// SPDX-License-Identifier: Apache-2.0
+
 module kai_leverage::position_model_clmm;
 
 use kai_leverage::util;

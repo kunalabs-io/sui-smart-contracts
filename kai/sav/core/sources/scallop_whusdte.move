@@ -1,3 +1,6 @@
+// Copyright (c) Kuna Labs d.o.o.
+// SPDX-License-Identifier: Apache-2.0
+
 /// NOTE: This module has been deprecated due to `kai_sav::ywhusdte::YWHUSDTE` not initializing
 /// during upgrade and thus the relevant `Vault` not being able to be initialized.
 /// The new module is `kai_sav::scallop_whusdte_proper`.

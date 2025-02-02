@@ -1,3 +1,6 @@
+// Copyright (c) Kuna Labs d.o.o.
+// SPDX-License-Identifier: Apache-2.0
+
 module access_management::access_tests {
     use sui::test_utils::destroy;
     use std::ascii::{Self, String};

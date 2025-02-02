@@ -1,3 +1,6 @@
+// Copyright (c) Kuna Labs d.o.o.
+// SPDX-License-Identifier: Apache-2.0
+
 #[test_only]
 module token_distribution::time_locked_balance_tests {
     use sui::balance::{Self, Balance};

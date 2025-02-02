@@ -1,3 +1,6 @@
+// Copyright (c) Kuna Labs d.o.o.
+// SPDX-License-Identifier: Apache-2.0
+
 /// NOTE: This module is deprecated. It was added in an upgrade which means that
 /// the init function wasn't called. The related `TreasuryCap` was never created
 /// and so wasn't the `Vault`.
