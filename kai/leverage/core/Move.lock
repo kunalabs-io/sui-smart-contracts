@@ -2,12 +2,13 @@
 
 [move]
 version = 3
-manifest_digest = "D945B67913F29397C72E6B99A9A9609DBAF71B959142E0C4B87772CC19FF3904"
-deps_digest = "59CF4C5FBF9CA9498217B3AC2BED47AD5D49696CE64F735BE1226EDCEF529664"
+manifest_digest = "9BD65156A3F24DE326C16C7A62DB583EE9AFAB28BC21B3B4731D269D9980348C"
+deps_digest = "8ADDF07E60EF9ABEFEBFE3115F6D8E269A96EAED8060B41FE1C8B9AB5C34A73C"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
   { id = "BluefinSpot", name = "BluefinSpot" },
   { id = "CetusClmm", name = "CetusClmm" },
+  { id = "DEEP", name = "DEEP" },
   { id = "FlowxClmm", name = "FlowxClmm" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
@@ -46,6 +47,15 @@ source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", re
 dependencies = [
   { id = "IntegerMate", name = "IntegerMate" },
   { id = "MoveSTL", name = "MoveSTL" },
+  { id = "Sui", name = "Sui" },
+]
+
+[[move.package]]
+id = "DEEP"
+source = { local = "../../../_vendor/DEEP" }
+
+dependencies = [
+  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
 ]
 
@@ -185,5 +195,5 @@ flavor = "sui"
 [env.mainnet]
 chain-id = "35834a8a"
 original-published-id = "0x51e0ccce48f0763f98f1cb4856847c2e1531adacada99cdd7626ab999db57523"
-latest-published-id = "0xe6079b606e2c6ea73511f1c22f31c2312e3610a3916908174b415147a37040d8"
-published-version = "6"
+latest-published-id = "0x606f09f90233f7ccb01e49b1f53eea566f2e0713d0ff5717fe46cae83babdc1e"
+published-version = "7"
