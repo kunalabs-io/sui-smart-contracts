@@ -406,36 +406,7 @@ fun calc_swap_result(
         ((i_pool_value + i_value) as u128),
         ((i_pool_value + i_value - admin_fee_value) as u128),
     );
-    // help the prover verify that computing admin_fee_in_lp doesn't underflow
-    ensures((pool_lp_value as u128) * (pool_lp_value as u128) <= result_pool_lp_value_sq);
     let admin_fee_in_lp = sqrt(result_pool_lp_value_sq) - pool_lp_value;
-
-    // help the prover verify that L'^2 * A * B <= L^2 * A' * B' by making a step by step proof
-    let old_L_spec = pool_lp_value.to_int();
-    let new_L_spec = old_L_spec.add(admin_fee_in_lp.to_int());
-    let old_A_spec = i_pool_value.to_int();
-    let new_A_spec = old_A_spec.add(i_value.to_int());
-    let old_B_spec = o_pool_value.to_int();
-    let new_B_spec = old_B_spec.sub(out_value.to_int());
-    let new_A_minus_lp_fee_spec = old_A_spec.add(in_after_lp_fee.to_int());
-    let new_A_minus_admin_fee_spec = old_A_spec.add(i_value.to_int()).sub(admin_fee_value.to_int());
-    ensures(lp_fee_value <= i_value);
-    ensures(admin_fee_value <= lp_fee_value);
-    ensures(out_value <= o_pool_value);
-    ensures(old_A_spec.mul(old_B_spec).lte(new_A_minus_lp_fee_spec.mul(new_B_spec)));
-    ensures(old_L_spec.mul(old_L_spec).lte(new_A_minus_admin_fee_spec.mul(new_B_spec)));
-    ensures(new_A_minus_lp_fee_spec.lte(new_A_minus_admin_fee_spec));
-    ensures(new_L_spec.mul(new_L_spec).lte(result_pool_lp_value_sq.to_int()));
-    ensures(result_pool_lp_value_sq.to_int().mul(new_A_minus_admin_fee_spec).lte(old_L_spec.mul(old_L_spec).mul(new_A_spec)));
-    ensures(new_L_spec.mul(new_L_spec).mul(new_A_minus_admin_fee_spec).lte(old_L_spec.mul(old_L_spec).mul(new_A_spec)));
-    ensures(new_L_spec.mul(new_L_spec).mul(new_A_minus_lp_fee_spec).lte(old_L_spec.mul(old_L_spec).mul(new_A_spec)));
-    ensures(new_L_spec.mul(new_L_spec).mul(new_A_minus_lp_fee_spec).mul(new_B_spec).lte(old_L_spec.mul(old_L_spec).mul(new_A_spec).mul(new_B_spec)));
-    ensures(new_L_spec.mul(new_L_spec).mul(old_A_spec).mul(old_B_spec).lte(new_L_spec.mul(new_L_spec).mul(new_A_minus_lp_fee_spec).mul(new_B_spec)));
-    ensures(new_L_spec.mul(new_L_spec).mul(old_A_spec).mul(old_B_spec).lte(old_L_spec.mul(old_L_spec).mul(new_A_spec).mul(new_B_spec)));
-    ensures(new_L_spec.mul(new_L_spec).mul(old_A_spec).mul(old_B_spec) == new_L_spec.mul(new_L_spec).mul(old_B_spec).mul(old_A_spec));
-    ensures(old_L_spec.mul(old_L_spec).mul(new_A_spec).mul(new_B_spec) == old_L_spec.mul(old_L_spec).mul(new_B_spec).mul(new_A_spec));
-    ensures(new_L_spec.mul(new_L_spec).mul(old_B_spec).mul(old_A_spec).lte(old_L_spec.mul(old_L_spec).mul(new_B_spec).mul(new_A_spec)));
-    ensures(new_L_spec.mul(new_L_spec).lte(new_A_spec.mul(new_B_spec)));
 
     (out_value, admin_fee_in_lp)
 }
