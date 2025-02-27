@@ -32,3 +32,13 @@ In case of AMMs we want a single smart contract to be able to create multiple di
 In this implementation, (1.) was used. This is because currently there's no way to dynamically create types in Move so acquiring a new one time witness necessary for the pool creation in (2.) would require publishing a new module each time. This would mean that it would not be possible (or would be difficult) to enable users to create new pools from the client side.
 
 The limitation of (1.) though is that there can be only one `Pool` per token pair.
+
+## Sui Move Prover
+* generate boogie
+```
+sui-move build --generate-boogie
+```
+* verify boogie
+```
+boogie -doModSetAnalysis -vcsCores:12 -verifySeparately -vcsMaxKeepGoingSplits:12 -vcsSplitOnEveryAssert -vcsFinalAssertTimeout:600 output.bpl
+```
