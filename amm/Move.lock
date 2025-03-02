@@ -28,8 +28,3 @@ dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Prover", name = "Prover" },
 ]
-
-[move.toolchain-version]
-compiler-version = "1.39.0"
-edition = "2024.beta"
-flavor = "sui"
