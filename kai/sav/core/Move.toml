@@ -8,6 +8,10 @@ Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-fram
 MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.41.2", override = true }
 WHUSDCE = { local = "../../../_vendor/whUSDCe" }
 WHUSDTE = { local = "../../../_vendor/whUSDTe" }
+USDC = { local = "../../../_vendor/USDC" }
+USDY = { local = "../../../_vendor/USDY" }
+SuiUsdt = { local = "../../../_vendor/SuiUsdt" }
+DEEP = { local = "../../../_vendor/DEEP" }
 ScallopProtocol = { local = "../../../_vendor/ScallopProtocol" }
 ScallopPool = { local = "../../../_vendor/ScallopPool" }
 KaiYwhUSDTeYSUI = { local = "../vault-token-init/kai-ywhusdte-ysui" }
