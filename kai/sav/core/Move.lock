@@ -55,15 +55,6 @@ dependencies = [
 ]
 
 [[move.package]]
-id = "FlowxClmm"
-source = { local = "../../../_vendor/FlowxClmm" }
-
-dependencies = [
-  { id = "MoveStdlib", name = "MoveStdlib" },
-  { id = "Sui", name = "Sui" },
-]
-
-[[move.package]]
 id = "IntegerMate"
 source = { git = "https://github.com/CetusProtocol/integer-mate.git", rev = "mainnet-v1.23.1", subdir = "sui" }
 
@@ -80,7 +71,6 @@ dependencies = [
   { id = "BluefinSpot", name = "BluefinSpot" },
   { id = "CetusClmm", name = "CetusClmm" },
   { id = "DEEP", name = "DEEP" },
-  { id = "FlowxClmm", name = "FlowxClmm" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
@@ -91,6 +81,7 @@ dependencies = [
   { id = "WHUSDTE", name = "WHUSDTE" },
   { id = "usdc", name = "usdc" },
 ]
+
 
 [[move.package]]
 id = "KaiYwhUSDTeYSUI"

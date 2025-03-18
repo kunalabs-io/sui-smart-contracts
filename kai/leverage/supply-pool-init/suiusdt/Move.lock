@@ -43,8 +43,8 @@ dependencies = [
 ]
 
 [[move.package]]
-id = "FlowxClmm"
-source = { local = "../../../../_vendor/FlowxClmm" }
+id = "DEEP"
+source = { local = "../../../../_vendor/DEEP" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -67,7 +67,7 @@ dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
   { id = "BluefinSpot", name = "BluefinSpot" },
   { id = "CetusClmm", name = "CetusClmm" },
-  { id = "FlowxClmm", name = "FlowxClmm" },
+  { id = "DEEP", name = "DEEP" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },

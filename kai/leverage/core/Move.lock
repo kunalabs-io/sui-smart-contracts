@@ -2,14 +2,13 @@
 
 [move]
 version = 3
-manifest_digest = "9BD65156A3F24DE326C16C7A62DB583EE9AFAB28BC21B3B4731D269D9980348C"
-deps_digest = "8ADDF07E60EF9ABEFEBFE3115F6D8E269A96EAED8060B41FE1C8B9AB5C34A73C"
+manifest_digest = "E1F8D6A7627C704E5F990C5373B378DDD2C695A1448FC41642A6AB9857220729"
+deps_digest = "59CF4C5FBF9CA9498217B3AC2BED47AD5D49696CE64F735BE1226EDCEF529664"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
   { id = "BluefinSpot", name = "BluefinSpot" },
   { id = "CetusClmm", name = "CetusClmm" },
   { id = "DEEP", name = "DEEP" },
-  { id = "FlowxClmm", name = "FlowxClmm" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
@@ -53,15 +52,6 @@ dependencies = [
 [[move.package]]
 id = "DEEP"
 source = { local = "../../../_vendor/DEEP" }
-
-dependencies = [
-  { id = "MoveStdlib", name = "MoveStdlib" },
-  { id = "Sui", name = "Sui" },
-]
-
-[[move.package]]
-id = "FlowxClmm"
-source = { local = "../../../_vendor/FlowxClmm" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },

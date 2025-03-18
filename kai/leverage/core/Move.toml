@@ -11,7 +11,6 @@ MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/s
 AccessManagement = { local = "../../../access-management" }
 CetusClmm = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", subdir = "sui/clmmpool", rev = "mainnet-v1.23.1" }
 TurbosCLMM = { git = "https://github.com/turbos-finance/turbos-sui-move-interface.git", subdir = "clmm", rev = "8887603" }
-FlowxClmm = { local = "../../../_vendor/FlowxClmm" }
 Pyth = { local = "../../../_vendor/Pyth" }
 WHUSDCE = { local = "../../../_vendor/whUSDCe" }
 WHUSDTE = { local = "../../../_vendor/whUSDTe" }
