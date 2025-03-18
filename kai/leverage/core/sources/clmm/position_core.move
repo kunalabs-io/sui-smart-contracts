@@ -646,19 +646,33 @@ public(package) fun reduction_repayment_ticket_constructor<SX, SY>(
 public struct RebalanceReceipt {
     id: ID,
     position_id: ID,
+    /// The amount of X collected from AMM fees (before fees are taken).
     collected_amm_fee_x: u64,
+    /// The amount of Y collected from AMM fees (before fees are taken).
     collected_amm_fee_y: u64,
+    /// The amount other AMM rewards collected (before fees are taken).
     collected_amm_rewards: VecMap<TypeName, u64>,
+    /// The amount fees taken from collected rewards (both AMM fees and AMM rewards).
     fees_taken: VecMap<TypeName, u64>,
+    /// The amount of X taken from cx.
     taken_cx: u64,
+    /// The amount of Y taken from cy.
     taken_cy: u64,
+    /// The amount of liquidity added to the LP position.
     delta_l: u128,
+    /// The amount of X added to the LP position (corresponds to delta_l).
     delta_x: u64,
+    /// The amount of Y added to the LP position (corresponds to delta_l).
     delta_y: u64,
+    /// The amount of X debt repaid.
     x_repaid: u64,
+    /// The amount of Y debt repaid.
     y_repaid: u64,
+    /// The amount of X added to cx.
     added_cx: u64,
+    /// The amount of Y added to cy.
     added_cy: u64,
+    /// The amount rewards stashed back into the position.
     stashed_amm_rewards: VecMap<TypeName, u64>,
 }
 
@@ -882,10 +896,17 @@ public struct DeleverageInfo has copy, drop {
     model: PositionModel,
     oracle_price_x128: u256,
     sqrt_pool_price_x64: u128,
+    /// The amount of L removed from the LP position.
     delta_l: u128,
+    /// The amount of X withdrawn from the LP position (corresponds to delta_l),
+    /// and added to cx.
     delta_x: u64,
+    /// The amount of Y withdrawn from the LP position (corresponds to delta_l),
+    /// and added to cy.
     delta_y: u64,
+    /// The amount of X debt repaid with cx.
     x_repaid: u64,
+    /// The amount of Y debt repaid with cy.
     y_repaid: u64,
 }
 
@@ -931,11 +952,17 @@ public struct LiquidationInfo has copy, drop {
     position_id: ID,
     model: PositionModel,
     oracle_price_x128: u256,
+    /// The amount of X debt repaid, using the inputted repayment `Balance<X>`.
     x_repaid: u64,
+    /// The amount of Y debt repaid, using the inputted repayment `Balance<Y>`.
     y_repaid: u64,
+    /// The amount of X the liquidator receives for `y_repaid` (after fees), taken from cx.
     liquidator_reward_x: u64,
+    /// The amount of Y the liquidator receives for `x_repaid` (after fees), taken from cy.
     liquidator_reward_y: u64,
+    /// The liquidation fee taken before returning `liquidator_reward_x` to the liquidator.
     liquidation_fee_x: u64,
+    /// The liquidation fee taken before returning `liquidator_reward_y` to the liquidator.
     liquidation_fee_y: u64,
 }
 
@@ -971,12 +998,19 @@ public struct ReductionInfo has copy, drop {
     model: PositionModel,
     oracle_price_x128: u256,
     sqrt_pool_price_x64: u128,
+    /// The amount of L removed from the LP position.
     delta_l: u128,
+    /// The amount of X withdrawn from the LP position (corresponds to delta_l).
     delta_x: u64,
+    /// The amount of Y withdrawn from the LP position (corresponds to delta_l).
     delta_y: u64,
+    /// The total amount of X returned from the position (delta_x + cx).
     withdrawn_x: u64,
+    /// The total amount of Y returned from the position (delta_y + cy).
     withdrawn_y: u64,
+    /// The amount X debt repaid.
     x_repaid: u64,
+    /// The amount Y debt repaid.
     y_repaid: u64,
 }
 
