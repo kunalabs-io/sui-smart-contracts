@@ -33,7 +33,7 @@ dependencies = [
 
 [[move.package]]
 id = "CetusClmm"
-source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "mainnet-v1.23.1", subdir = "sui/clmmpool" }
+source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "mainnet-v1.26.0", subdir = "sui/cetus_clmm" }
 
 dependencies = [
   { id = "IntegerMate", name = "IntegerMate" },
@@ -44,6 +44,15 @@ dependencies = [
 [[move.package]]
 id = "DEEP"
 source = { local = "../../../../_vendor/DEEP" }
+
+dependencies = [
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+]
+
+[[move.package]]
+id = "FlowxClmm"
+source = { local = "../../../../_vendor/FlowxClmm" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -67,6 +76,7 @@ dependencies = [
   { id = "BluefinSpot", name = "BluefinSpot" },
   { id = "CetusClmm", name = "CetusClmm" },
   { id = "DEEP", name = "DEEP" },
+  { id = "FlowxClmm", name = "FlowxClmm" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
@@ -200,7 +210,7 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.41.1"
+compiler-version = "1.44.3"
 edition = "2024.beta"
 flavor = "sui"
 
