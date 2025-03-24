@@ -3,14 +3,15 @@ name = "KaiLeverage"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
 edition = "2024.beta"
-published-at = "0x606f09f90233f7ccb01e49b1f53eea566f2e0713d0ff5717fe46cae83babdc1e"
+published-at = "0x3243f917288858e2c4fcfd2a937dda02b29384cc13d3063a720969c331920e45"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.41.2", override = true }
 MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.41.2", override = true }
 AccessManagement = { local = "../../../access-management" }
-CetusClmm = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", subdir = "sui/clmmpool", rev = "mainnet-v1.23.1" }
+CetusClmm = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", subdir = "sui/cetus_clmm", rev = "mainnet-v1.26.0", override = true }
 TurbosCLMM = { git = "https://github.com/turbos-finance/turbos-sui-move-interface.git", subdir = "clmm", rev = "8887603" }
+FlowxClmm = { local = "../../../_vendor/FlowxClmm" }
 Pyth = { local = "../../../_vendor/Pyth" }
 WHUSDCE = { local = "../../../_vendor/whUSDCe" }
 WHUSDTE = { local = "../../../_vendor/whUSDTe" }

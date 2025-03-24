@@ -2,13 +2,14 @@
 
 [move]
 version = 3
-manifest_digest = "E1F8D6A7627C704E5F990C5373B378DDD2C695A1448FC41642A6AB9857220729"
-deps_digest = "59CF4C5FBF9CA9498217B3AC2BED47AD5D49696CE64F735BE1226EDCEF529664"
+manifest_digest = "A7E715C2514D528A8F8FAC663B531ACD4F8D57049AEDFD9845916A3A604DA5DD"
+deps_digest = "8ADDF07E60EF9ABEFEBFE3115F6D8E269A96EAED8060B41FE1C8B9AB5C34A73C"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
   { id = "BluefinSpot", name = "BluefinSpot" },
   { id = "CetusClmm", name = "CetusClmm" },
   { id = "DEEP", name = "DEEP" },
+  { id = "FlowxClmm", name = "FlowxClmm" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
@@ -41,7 +42,7 @@ dependencies = [
 
 [[move.package]]
 id = "CetusClmm"
-source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "mainnet-v1.23.1", subdir = "sui/clmmpool" }
+source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "mainnet-v1.26.0", subdir = "sui/cetus_clmm" }
 
 dependencies = [
   { id = "IntegerMate", name = "IntegerMate" },
@@ -52,6 +53,15 @@ dependencies = [
 [[move.package]]
 id = "DEEP"
 source = { local = "../../../_vendor/DEEP" }
+
+dependencies = [
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+]
+
+[[move.package]]
+id = "FlowxClmm"
+source = { local = "../../../_vendor/FlowxClmm" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -176,7 +186,7 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.41.1"
+compiler-version = "1.44.3"
 edition = "2024.beta"
 flavor = "sui"
 
@@ -185,5 +195,5 @@ flavor = "sui"
 [env.mainnet]
 chain-id = "35834a8a"
 original-published-id = "0x51e0ccce48f0763f98f1cb4856847c2e1531adacada99cdd7626ab999db57523"
-latest-published-id = "0x606f09f90233f7ccb01e49b1f53eea566f2e0713d0ff5717fe46cae83babdc1e"
-published-version = "7"
+latest-published-id = "0x3243f917288858e2c4fcfd2a937dda02b29384cc13d3063a720969c331920e45"
+published-version = "8"
