@@ -3,7 +3,7 @@ name = "AccessManagement"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
 edition = "2024.beta"
-published-at = "0x0d9dd55ac7eb676dc78f7d0ae3bc5529d7fd6b52ac0d0edb2d7820c52d080026"
+published-at = "0x6f57ba9757d97ac3ad435c0cf4ab93413654d7af44fc723b1091c5dc2c83d1ae"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.41.2", override = true }

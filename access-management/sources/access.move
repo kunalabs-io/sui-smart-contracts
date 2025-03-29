@@ -33,6 +33,8 @@ const EInvalidPolicyVersion: u64 = 8;
 /// The migration is not allowed because the object version is higher or equal to the module
 /// version.
 const ENotUpgrade: u64 = 9;
+/// The action does not match the action in the request.
+const EActionMismatch: u64 = 10;
 
 /* ================= constants ================= */
 
@@ -233,11 +235,11 @@ public fun add_action_to_rule<Action: drop>(
     check_version(policy);
     assert!(policy.package == admin.package, ENotPolicyAdmin);
 
+    let orig_package = type_name::get_with_original_ids<Action>().get_address();
+    assert!(orig_package == admin.package, ENotActionAdmin);
+
     let rule = &mut policy.rules[&rule_id];
     let action_name = type_name::get<Action>();
-    let action_package = action_name.get_address();
-    assert!(action_package == admin.package, ENotActionAdmin);
-
     rule.actions.insert(action_name);
 }
 
@@ -521,6 +523,8 @@ public fun approve_request(
     context.force_drop();
 }
 
+/// Note: this will not work if the action type was added in an upgrade. Use
+/// `admin_approve_request_with_original_id_and_return_context` instead.
 public fun admin_approve_request_and_return_context(
     request: ActionRequest,
     admin: &PackageAdmin,
@@ -536,6 +540,8 @@ public fun admin_approve_request_and_return_context(
     context
 }
 
+/// Note: this will not work if the action type was added in an upgrade. Use
+/// `admin_approve_request_with_original_id` instead.
 /// Note: Drops the request context without checking if it's empty. This means that the
 /// storage rebate for these dynamic fields will not be returned to the caller.
 public fun admin_approve_request(request: ActionRequest, admin: &PackageAdmin) {
@@ -543,11 +549,38 @@ public fun admin_approve_request(request: ActionRequest, admin: &PackageAdmin) {
     context.force_drop();
 }
 
+public fun admin_approve_request_with_original_id_and_return_context<Action: drop>(
+    request: ActionRequest,
+    admin: &PackageAdmin,
+): DynamicMap<String> {
+    assert!(type_name::get<Action>() == request.action_name, EActionMismatch);
+
+    let orig_package = type_name::get_with_original_ids<Action>().get_address();
+    assert!(orig_package == admin.package, ENotActionAdmin);
+
+    let ActionRequest {
+        action_name: _,
+        context,
+        approved_conditions: _,
+    } = request;
+    context
+}
+
+/// Note: Drops the request context without checking if it's empty. This means that the
+/// storage rebate for these dynamic fields will not be returned to the caller.
+public fun admin_approve_request_with_original_id<Action: drop>(
+    request: ActionRequest,
+    admin: &PackageAdmin,
+) {
+    let context = admin_approve_request_with_original_id_and_return_context<Action>(request, admin);
+    context.force_drop();
+}
+
 /* ================= testing ================= */
 
 #[test_only]
 public fun create_admin_for_testing<W>(ctx: &mut TxContext): PackageAdmin {
-    let package = type_name::get<W>().get_address();
+    let package = type_name::get_with_original_ids<W>().get_address();
     PackageAdmin {
         id: object::new(ctx),
         package,
