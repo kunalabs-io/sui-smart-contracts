@@ -17,7 +17,7 @@ module token_distribution::time_locked_balance {
 
     /// Wraps a `Balance<T>` and allows only `unlock_per_second` of it to be withdrawn
     /// per second starting from `unlock_start_ts_sec`. All timestamp fields are unix timestamp.
-    struct TimeLockedBalance<phantom T> has store {
+    public struct TimeLockedBalance<phantom T> has store {
         locked_balance: Balance<T>,
         unlock_start_ts_sec: u64,
         unlock_per_second: u64,

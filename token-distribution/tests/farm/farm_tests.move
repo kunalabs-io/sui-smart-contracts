@@ -12,8 +12,8 @@ module token_distribution::farm_tests {
     use token_distribution::farm::{Self, ForcefulRemovalReceipt};
 
     // witness types for test coins
-    struct FOO has drop {}
-    struct BAR has drop {}
+    public struct FOO has drop {}
+    public struct BAR has drop {}
 
     fun assert_and_destroy_balance<T>(balance: Balance<T>, value: u64) {
         assert!(balance::value(&balance) == value, 0);
@@ -21,14 +21,14 @@ module token_distribution::farm_tests {
     }
 
     fun vector_two<T>(first: T, second: T): vector<T> {
-        let ret = vector::empty();
+        let mut ret = vector::empty();
         vector::push_back(&mut ret, first);
         vector::push_back(&mut ret, second);
         ret
     }
 
     fun create_clock_at_sec(ts: u64, ctx: &mut TxContext): Clock {
-        let clock = clock::create_for_testing(ctx);
+        let mut clock = clock::create_for_testing(ctx);
         clock::set_for_testing(&mut clock, ts * 1000);
         clock
     }
@@ -40,11 +40,11 @@ module token_distribution::farm_tests {
     #[test]
     public fun test_add_and_remove_member() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         assert!(farm::key_memberships(&key) == 0, 0); // sanity checks
         assert!(farm::size(&farm) == 0, 0);
 
@@ -65,12 +65,12 @@ module token_distribution::farm_tests {
         assert!(farm::size(&farm) == 0, 0);
 
         // add members
-        let keys = vector_two(key, farm::create_member_key(ctx));
+        let mut keys = vector_two(key, farm::create_member_key(ctx));
 
         farm::add_members(&cap, &mut farm, &mut keys, vector_two(100, 300), &clock);
 
-        let key2 = vector::pop_back(&mut keys);
-        let key1 = vector::pop_back(&mut keys);
+        let mut key2 = vector::pop_back(&mut keys);
+        let mut key1 = vector::pop_back(&mut keys);
 
         assert!(farm::key_memberships(&key1) == 1, 0);
         assert!(farm::key_memberships(&key2) == 1, 0);
@@ -104,10 +104,10 @@ module token_distribution::farm_tests {
         let ctx = &mut tx_context::dummy();
         let clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
         let (farm2, wrong_cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         farm::add_member(&wrong_cap, &mut farm, &mut key, 100, &clock); // aborts here
 
         // clean up
@@ -125,9 +125,9 @@ module token_distribution::farm_tests {
         let ctx = &mut tx_context::dummy();
         let clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         farm::add_member(&cap, &mut farm, &mut key, 100, &clock);
         farm::add_member(&cap, &mut farm, &mut key, 100, &clock); // aborts here
 
@@ -144,9 +144,9 @@ module token_distribution::farm_tests {
         let ctx = &mut tx_context::dummy();
         let clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         let ticket = farm::new_withdraw_all_ticket(&mut key);
 
         farm::add_member(&cap, &mut farm, &mut key, 100, &clock); // aborts here
@@ -165,10 +165,10 @@ module token_distribution::farm_tests {
         let ctx = &mut tx_context::dummy();
         let clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
         let (farm2, wrong_cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let keys = vector::singleton(farm::create_member_key(ctx));
+        let mut keys = vector::singleton(farm::create_member_key(ctx));
 
         farm::add_members(&wrong_cap, &mut farm, &mut keys, vector::singleton(100), &clock); // aborts here
 
@@ -189,12 +189,12 @@ module token_distribution::farm_tests {
         let ctx = &mut tx_context::dummy();
         let clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         farm::add_member(&cap, &mut farm, &mut key, 100, &clock);
 
-        let keys = vector_two(farm::create_member_key(ctx), key);
+        let mut keys = vector_two(farm::create_member_key(ctx), key);
         farm::add_members(&cap, &mut farm, &mut keys, vector_two(100, 100), &clock); // aborts here
 
         // clean up
@@ -214,17 +214,17 @@ module token_distribution::farm_tests {
         let ctx = &mut tx_context::dummy();
         let clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let key1 = farm::create_member_key(ctx);
+        let mut key1 = farm::create_member_key(ctx);
         farm::add_member(&cap, &mut farm, &mut key1, 100, &clock);
 
         let ticket = farm::new_withdraw_all_ticket(&mut key1);
-        let keys = vector_two(farm::create_member_key(ctx), key1);
+        let mut keys = vector_two(farm::create_member_key(ctx), key1);
         farm::add_members(&cap, &mut farm, &mut keys, vector_two(100, 100), &clock); // aborts here
 
         // clean up
-        let key1 = vector::pop_back(&mut keys);
+        let mut key1 = vector::pop_back(&mut keys);
         farm::destroy_withdraw_all_ticket(ticket, &mut key1);
         farm::destroy_member_key(key1);
         let key2 = vector::pop_back(&mut keys);
@@ -241,9 +241,9 @@ module token_distribution::farm_tests {
         let ctx = &mut tx_context::dummy();
         let clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         farm::add_member(&cap, &mut farm, &mut key, 100, &clock);
 
         let ticket = farm::new_withdraw_all_ticket(&mut key);
@@ -261,17 +261,17 @@ module token_distribution::farm_tests {
     #[test]
     public fun test_forcefully_remove_member() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         farm::add_member(&cap, &mut farm, &mut key, 100, &clock);
         farm::change_unlock_per_second(&cap, &mut farm, 10, &clock);
         assert!(farm::key_memberships(&key) == 1, 0); // sanity checks
         assert!(farm::size(&farm) == 1, 0);
 
-        let scenario = test_scenario::begin(@0xABBA);
+        let mut scenario = test_scenario::begin(@0xABBA);
         {
             let ctx = test_scenario::ctx(&mut scenario);
 
@@ -284,7 +284,7 @@ module token_distribution::farm_tests {
         };
         test_scenario::next_tx(&mut scenario, @0xABBA);
         {
-            let receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
+            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
 
             let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut key);
             assert_and_destroy_balance(balance, 100);
@@ -306,17 +306,17 @@ module token_distribution::farm_tests {
     #[expected_failure(abort_code = farm::EReceiptSpent)]
     public fun test_forcefully_remove_member_aborts_on_spent_receipt() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         farm::add_member(&cap, &mut farm, &mut key, 100, &clock);
         farm::change_unlock_per_second(&cap, &mut farm, 10, &clock);
         assert!(farm::key_memberships(&key) == 1, 0); // sanity checks
         assert!(farm::size(&farm) == 1, 0);
 
-        let scenario = test_scenario::begin(@0xABBA);
+        let mut scenario = test_scenario::begin(@0xABBA);
         {
             let ctx = test_scenario::ctx(&mut scenario);
 
@@ -329,7 +329,7 @@ module token_distribution::farm_tests {
         };
         test_scenario::next_tx(&mut scenario, @0xABBA);
         {
-            let receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
+            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
 
             let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut key);
             assert_and_destroy_balance(balance, 100);
@@ -340,7 +340,7 @@ module token_distribution::farm_tests {
         };
         test_scenario::next_tx(&mut scenario, @0xABBA);
         {
-            let receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
+            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
 
             let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut key); // aborts here
             balance::destroy_for_testing(balance);
@@ -360,15 +360,15 @@ module token_distribution::farm_tests {
     #[expected_failure(abort_code = farm::EInvalidKey)]
     public fun test_redeem_forceful_removal_receipt_aborts_on_invalid_key() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         farm::add_member(&cap, &mut farm, &mut key, 100, &clock);
         farm::change_unlock_per_second(&cap, &mut farm, 10, &clock);
 
-        let scenario = test_scenario::begin(@0xABBA);
+        let mut scenario = test_scenario::begin(@0xABBA);
         {
             let ctx = test_scenario::ctx(&mut scenario);
 
@@ -379,9 +379,9 @@ module token_distribution::farm_tests {
         };
         test_scenario::next_tx(&mut scenario, @0xABBA);
         {
-            let receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
+            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
 
-            let wrong_key = farm::create_member_key(ctx);
+            let mut wrong_key = farm::create_member_key(ctx);
             let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut wrong_key); // aborts here
             balance::destroy_for_testing(balance);
             assert!(farm::key_memberships(&key) == 0, 0);
@@ -403,15 +403,15 @@ module token_distribution::farm_tests {
     #[expected_failure(abort_code = farm::EKeyLocked)]
     public fun test_redeem_forceful_removal_receipt_aborts_on_key_locked() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         farm::add_member(&cap, &mut farm, &mut key, 100, &clock);
         farm::change_unlock_per_second(&cap, &mut farm, 10, &clock);
 
-        let scenario = test_scenario::begin(@0xABBA);
+        let mut scenario = test_scenario::begin(@0xABBA);
         {
             let ctx = test_scenario::ctx(&mut scenario);
 
@@ -422,7 +422,7 @@ module token_distribution::farm_tests {
         };
         test_scenario::next_tx(&mut scenario, @0xABBA);
         {
-            let receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
+            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
 
             let ticket = farm::new_withdraw_all_ticket(&mut key);
             let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut key); // aborts here
@@ -445,19 +445,19 @@ module token_distribution::farm_tests {
     #[test]
     public fun test_withdraw_from_multiple_using_ticket() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm1, cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (farm2, cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
+        let (mut farm1, cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm2, cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         farm::add_member(&cap1, &mut farm1, &mut key, 100, &clock);
         farm::add_member(&cap2, &mut farm2, &mut key, 100, &clock);
         farm::change_unlock_per_second(&cap1, &mut farm1, 10, &clock);
         farm::change_unlock_per_second(&cap2, &mut farm2, 10, &clock);
 
         set_clock_sec(&mut clock, 110);
-        let ticket = farm::new_withdraw_all_ticket(&mut key);
+        let mut ticket = farm::new_withdraw_all_ticket(&mut key);
         let balance1 = farm::member_withdraw_all_with_ticket(&mut farm1, &mut ticket, &clock);
         let balance2 = farm::member_withdraw_all_with_ticket(&mut farm2, &mut ticket, &clock);
         farm::destroy_withdraw_all_ticket(ticket, &mut key);
@@ -479,16 +479,16 @@ module token_distribution::farm_tests {
     #[expected_failure(abort_code = farm::EAlreadyWithdrawn)]
     public fun test_destroy_withdraw_all_ticket_aborts_when_already_withdrawn() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         farm::add_member(&cap, &mut farm, &mut key, 100, &clock);
         farm::change_unlock_per_second(&cap, &mut farm, 10, &clock);
 
         set_clock_sec(&mut clock, 110);
-        let ticket = farm::new_withdraw_all_ticket(&mut key);
+        let mut ticket = farm::new_withdraw_all_ticket(&mut key);
         let balance = farm::member_withdraw_all_with_ticket(&mut farm, &mut ticket, &clock);
         balance::destroy_for_testing(balance);
         let balance = farm::member_withdraw_all_with_ticket(&mut farm, &mut ticket, &clock); // aborts here
@@ -508,19 +508,19 @@ module token_distribution::farm_tests {
     #[expected_failure(abort_code = farm::ENotAllWithdrawn)]
     public fun test_destroy_withdraw_all_ticket_aborts_when_not_all_withdrawn() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm1, cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (farm2, cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
+        let (mut farm1, cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm2, cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         farm::add_member(&cap1, &mut farm1, &mut key, 100, &clock);
         farm::add_member(&cap2, &mut farm2, &mut key, 100, &clock);
         farm::change_unlock_per_second(&cap1, &mut farm1, 10, &clock);
         farm::change_unlock_per_second(&cap2, &mut farm2, 10, &clock);
 
         set_clock_sec(&mut clock, 110);
-        let ticket = farm::new_withdraw_all_ticket(&mut key);
+        let mut ticket = farm::new_withdraw_all_ticket(&mut key);
         let balance1 = farm::member_withdraw_all_with_ticket(&mut farm1, &mut ticket, &clock);
         assert_and_destroy_balance(balance1, 100);
         farm::destroy_withdraw_all_ticket(ticket, &mut key); // aborts here
@@ -540,20 +540,20 @@ module token_distribution::farm_tests {
     #[expected_failure(abort_code = farm::EInvalidKey)]
     public fun test_destroy_withdraw_all_ticket_aborts_when_invalid_key() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
-        let key = farm::create_member_key(ctx);
+        let mut key = farm::create_member_key(ctx);
         farm::add_member(&cap, &mut farm, &mut key, 100, &clock);
         farm::change_unlock_per_second(&cap, &mut farm, 10, &clock);
 
         set_clock_sec(&mut clock, 110);
-        let ticket = farm::new_withdraw_all_ticket(&mut key);
+        let mut ticket = farm::new_withdraw_all_ticket(&mut key);
         let balance = farm::member_withdraw_all_with_ticket(&mut farm, &mut ticket, &clock);
         balance::destroy_for_testing(balance);
 
-        let wrong_key = farm::create_member_key(ctx);
+        let mut wrong_key = farm::create_member_key(ctx);
         farm::destroy_withdraw_all_ticket(ticket, &mut wrong_key); 
 
         // clean up

@@ -10,7 +10,7 @@ module token_distribution::time_distributor_tests {
     use token_distribution::time_distributor as td;
     use token_distribution::time_distributor::{TimeDistributor};
 
-    struct FOO has drop {}
+    public struct FOO has drop {}
 
     fun assert_values<T, K: copy>(
         td: &TimeDistributor<T, K>, total_weight: u64, unlocked_balance: u64, update_ts: u64
@@ -27,7 +27,7 @@ module token_distribution::time_distributor_tests {
     }
 
     fun create_clock_at_sec(ts: u64, ctx: &mut TxContext): Clock {
-        let clock = clock::create_for_testing(ctx);
+        let mut clock = clock::create_for_testing(ctx);
         clock::set_for_testing(&mut clock, ts * 1000);
         clock
     }
@@ -43,9 +43,9 @@ module token_distribution::time_distributor_tests {
     #[test]
     public fun test_no_balance() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let td = td::create(balance::create_for_testing<FOO>(0), 10);
+        let mut td = td::create(balance::create_for_testing<FOO>(0), 10);
 
         assert_values(&td, 0, 0, 0); // sanity checks
         td::assert_members_size(&td, 0);
@@ -85,9 +85,9 @@ module token_distribution::time_distributor_tests {
     #[test]
     public fun test_with_one_member() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let td = td::create_with_members(
+        let mut td = td::create_with_members(
             balance::create_for_testing<FOO>(1000),
             vector::singleton(0),
             vector::singleton(100),
@@ -169,16 +169,16 @@ module token_distribution::time_distributor_tests {
     #[test]
     public fun test_with_two_members() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let keys = vector::empty();
+        let mut keys = vector::empty();
         vector::push_back(&mut keys, 0);
         vector::push_back(&mut keys, 1);
-        let weights = vector::empty();
+        let mut weights = vector::empty();
         vector::push_back(&mut weights, 300);
         vector::push_back(&mut weights, 100);
 
-        let td = td::create_with_members(
+        let mut td = td::create_with_members(
             balance::create_for_testing<FOO>(1000),
             keys,
             weights,
@@ -271,9 +271,9 @@ module token_distribution::time_distributor_tests {
     #[test]
     public fun test_add_member() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let td = td::create_with_members(
+        let mut td = td::create_with_members(
             balance::create_for_testing<FOO>(1000),
             vector::singleton(0),
             vector::singleton(100),
@@ -331,7 +331,7 @@ module token_distribution::time_distributor_tests {
         let ctx = &mut tx_context::dummy();
         let clock = create_clock_at_sec(50, ctx);
 
-        let td = td::create_with_members(
+        let mut td = td::create_with_members(
             balance::create_for_testing<FOO>(1000),
             vector::singleton(0),
             vector::singleton(100),
@@ -350,20 +350,20 @@ module token_distribution::time_distributor_tests {
     #[test]
     public fun test_remove_member() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let keys = vector::empty();
+        let mut keys = vector::empty();
         vector::push_back(&mut keys, 0);
         vector::push_back(&mut keys, 1);
         vector::push_back(&mut keys, 2);
         vector::push_back(&mut keys, 3);
-        let weights = vector::empty();
+        let mut weights = vector::empty();
         vector::push_back(&mut weights, 100);
         vector::push_back(&mut weights, 100); 
         vector::push_back(&mut weights, 100); 
         vector::push_back(&mut weights, 100); 
 
-        let td = td::create_with_members(
+        let mut td = td::create_with_members(
             balance::create_for_testing<FOO>(1000),
             keys,
             weights,
@@ -431,16 +431,16 @@ module token_distribution::time_distributor_tests {
     #[test]
     public fun test_change_weights() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let keys = vector::empty();
+        let mut keys = vector::empty();
         vector::push_back(&mut keys, 0);
         vector::push_back(&mut keys, 1);
-        let weights = vector::empty();
+        let mut weights = vector::empty();
         vector::push_back(&mut weights, 100);
         vector::push_back(&mut weights, 100); 
 
-        let td = td::create_with_members(
+        let mut td = td::create_with_members(
             balance::create_for_testing<FOO>(1000),
             keys,
             weights,
@@ -458,10 +458,10 @@ module token_distribution::time_distributor_tests {
         // change weights before start
         set_clock_sec(&mut clock, 300);
 
-        let idxs = vector::empty();
+        let mut idxs = vector::empty();
         vector::push_back(&mut idxs, 0);
         vector::push_back(&mut idxs, 1);
-        let weights = vector::empty();
+        let mut weights = vector::empty();
         vector::push_back(&mut weights, 300);
         vector::push_back(&mut weights, 100);
 
@@ -475,9 +475,9 @@ module token_distribution::time_distributor_tests {
         // change weights after start
         set_clock_sec(&mut clock, 520);
 
-        let idxs = vector::empty();
+        let mut idxs = vector::empty();
         vector::push_back(&mut idxs, 0);
-        let weights = vector::empty();
+        let mut weights = vector::empty();
         vector::push_back(&mut weights, 200);
 
         td::change_weights_by_idxs(&mut td, idxs, weights, &clock);
@@ -490,9 +490,9 @@ module token_distribution::time_distributor_tests {
         // change weights after end
         set_clock_sec(&mut clock, 600);
 
-        let idxs = vector::empty();
+        let mut idxs = vector::empty();
         vector::push_back(&mut idxs, 0);
-        let weights = vector::empty();
+        let mut weights = vector::empty();
         vector::push_back(&mut weights, 100);
 
         td::change_weights_by_idxs(&mut td, idxs, weights, &clock);
@@ -505,9 +505,9 @@ module token_distribution::time_distributor_tests {
         // once more after end
         increment_clock_sec(&mut clock, 1);
 
-        let idxs = vector::empty();
+        let mut idxs = vector::empty();
         vector::push_back(&mut idxs, 0);
-        let weights = vector::empty();
+        let mut weights = vector::empty();
         vector::push_back(&mut weights, 200);
 
         td::change_weights_by_idxs(&mut td, idxs, weights, &clock);
@@ -527,9 +527,9 @@ module token_distribution::time_distributor_tests {
     #[test]
     public fun test_change_unlock_per_second() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let td = td::create_with_members(
+        let mut td = td::create_with_members(
             balance::create_for_testing<FOO>(1000),
             vector::singleton(0),
             vector::singleton(100),
@@ -589,9 +589,9 @@ module token_distribution::time_distributor_tests {
     #[expected_failure(abort_code = td::ENoMembers)]
     public fun test_change_unlock_per_second_fails_when_no_members() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let td = td::create_with_members(
+        let mut td = td::create_with_members(
             balance::create_for_testing<FOO>(1000),
             vector::singleton(0),
             vector::singleton(100),
@@ -626,9 +626,9 @@ module token_distribution::time_distributor_tests {
     #[test]
     public fun test_change_unlock_start_ts() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let td = td::create_with_members(
+        let mut td = td::create_with_members(
             balance::create_for_testing<FOO>(1000),
             vector::singleton(0),
             vector::singleton(100),
@@ -700,9 +700,9 @@ module token_distribution::time_distributor_tests {
     #[test]
     public fun test_top_up() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let td = td::create_with_members(
+        let mut td = td::create_with_members(
             balance::create_for_testing<FOO>(1000),
             vector::singleton(0),
             vector::singleton(100),
@@ -773,16 +773,16 @@ module token_distribution::time_distributor_tests {
     #[test]
     public fun test_withdraw_all_then_update() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let keys = vector::empty();
+        let mut keys = vector::empty();
         vector::push_back(&mut keys, 0);
         vector::push_back(&mut keys, 1);
-        let weights = vector::empty();
+        let mut weights = vector::empty();
         vector::push_back(&mut weights, 300);
         vector::push_back(&mut weights, 100);
 
-        let td = td::create_with_members(
+        let mut td = td::create_with_members(
             balance::create_for_testing<FOO>(1000),
             keys,
             weights,
@@ -864,16 +864,16 @@ module token_distribution::time_distributor_tests {
     #[test]
     public fun test_after_finish() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let keys = vector::empty();
+        let mut keys = vector::empty();
         vector::push_back(&mut keys, 0);
         vector::push_back(&mut keys, 1);
-        let weights = vector::empty();
+        let mut weights = vector::empty();
         vector::push_back(&mut weights, 300);
         vector::push_back(&mut weights, 100);
 
-        let td = td::create_with_members(
+        let mut td = td::create_with_members(
             balance::create_for_testing<FOO>(1000),
             keys,
             weights,

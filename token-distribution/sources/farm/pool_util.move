@@ -13,7 +13,7 @@ module token_distribution::pool_util {
     public fun single_deposit_shares_new<T, S>(
         farm: &mut Farm<T>, pool: &mut Pool<S>, balance: Balance<S>, clock: &Clock, ctx: &mut TxContext
     ): Stake<S> {
-        let ticket = pool::new_top_up_ticket(pool);
+        let mut ticket = pool::new_top_up_ticket(pool);
         pool::top_up(farm, pool, &mut ticket, clock);
         pool::deposit_shares_new(pool, balance, ticket, ctx)
     }
@@ -28,7 +28,7 @@ module token_distribution::pool_util {
     public fun single_deposit_shares<T, S>(
         farm: &mut Farm<T>, pool: &mut Pool<S>, stake: &mut Stake<S>, balance: Balance<S>, clock: &Clock
     ) {
-        let ticket = pool::new_top_up_ticket(pool);
+        let mut ticket = pool::new_top_up_ticket(pool);
         pool::top_up(farm, pool, &mut ticket, clock);
         pool::deposit_shares(pool, stake, balance, ticket);
     }
@@ -42,7 +42,7 @@ module token_distribution::pool_util {
     public fun single_withdraw_shares<T, S>(
         farm: &mut Farm<T>, pool: &mut Pool<S>, stake: &mut Stake<S>, amount: u64, clock: &Clock
     ): Balance<S> {
-        let ticket = pool::new_top_up_ticket(pool);
+        let mut ticket = pool::new_top_up_ticket(pool);
         pool::top_up(farm, pool, &mut ticket, clock);
         pool::withdraw_shares(pool, stake, amount, ticket)
     }
@@ -57,7 +57,7 @@ module token_distribution::pool_util {
     public fun single_collect_all_rewards<T, S>(
         farm: &mut Farm<T>, pool: &mut Pool<S>, stake: &mut Stake<S>, clock: &Clock
     ): Balance<T> {
-        let ticket = pool::new_top_up_ticket(pool);
+        let mut ticket = pool::new_top_up_ticket(pool);
         pool::top_up(farm, pool, &mut ticket, clock);
         pool::collect_all_rewards(pool, stake, ticket)
     }

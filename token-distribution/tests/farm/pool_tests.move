@@ -12,9 +12,9 @@ module token_distribution::pool_tests {
     use token_distribution::pool;
 
     // witness types for test coins
-    struct FOO has drop {}
-    struct BAR has drop {}
-    struct SHARES has drop {}
+    public struct FOO has drop {}
+    public struct BAR has drop {}
+    public struct SHARES has drop {}
 
     fun assert_and_destroy_balance<T>(balance: Balance<T>, value: u64) {
         assert!(balance::value(&balance) == value, 0);
@@ -22,7 +22,7 @@ module token_distribution::pool_tests {
     }
 
     fun create_clock_at_sec(ts: u64, ctx: &mut TxContext): Clock {
-        let clock = clock::create_for_testing(ctx);
+        let mut clock = clock::create_for_testing(ctx);
         clock::set_for_testing(&mut clock, ts * 1000);
         clock
     }
@@ -34,11 +34,11 @@ module token_distribution::pool_tests {
     #[test]
     public fun test_deposit_and_withdraw() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm1, farm_cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (farm2, farm_cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
-        let (pool, pool_cap) = pool::create<SHARES>(ctx);
+        let (mut farm1, farm_cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm2, farm_cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
+        let (mut pool, pool_cap) = pool::create<SHARES>(ctx);
         pool::add_to_farm(&farm_cap1, &mut farm1, &pool_cap, &mut pool, 100, &clock);
         pool::add_to_farm(&farm_cap2, &mut farm2, &pool_cap, &mut pool, 100, &clock);
         farm::change_unlock_per_second(&farm_cap1, &mut farm1, 10, &clock);
@@ -46,17 +46,17 @@ module token_distribution::pool_tests {
 
         // deposit shares new
         set_clock_sec(&mut clock, 110); // increment clock by 10 seconds
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
-        let stake = pool::deposit_shares_new(
+        let mut stake = pool::deposit_shares_new(
             &mut pool, balance::create_for_testing<SHARES>(100), ticket, ctx
         );
         pool::assert_stake_shares_amount(&stake, 100);
 
         // withdraw shares
         set_clock_sec(&mut clock, 120);
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
         let balance = pool::withdraw_shares(
@@ -67,7 +67,7 @@ module token_distribution::pool_tests {
 
         // deposit shares
         set_clock_sec(&mut clock, 130);
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
         pool::deposit_shares(
@@ -77,7 +77,7 @@ module token_distribution::pool_tests {
 
         // withdraw shares
         set_clock_sec(&mut clock, 140);
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
         let balance = pool::withdraw_shares(
@@ -116,11 +116,11 @@ module token_distribution::pool_tests {
     #[expected_failure(abort_code = farm::ENotAllWithdrawn)]
     public fun test_deposit_shares_new_fails_when_not_fully_topped_up() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm1, farm_cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (farm2, farm_cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
-        let (pool, pool_cap) = pool::create<SHARES>(ctx);
+        let (mut farm1, farm_cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm2, farm_cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
+        let (mut pool, pool_cap) = pool::create<SHARES>(ctx);
         pool::add_to_farm(&farm_cap1, &mut farm1, &pool_cap, &mut pool, 100, &clock);
         pool::add_to_farm(&farm_cap2, &mut farm2, &pool_cap, &mut pool, 100, &clock);
         farm::change_unlock_per_second(&farm_cap1, &mut farm1, 10, &clock);
@@ -128,7 +128,7 @@ module token_distribution::pool_tests {
 
         // deposit shares new
         set_clock_sec(&mut clock, 110); // increment clock by 10 seconds
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         let stake = pool::deposit_shares_new(
             &mut pool, balance::create_for_testing<SHARES>(100), ticket, ctx
@@ -158,11 +158,11 @@ module token_distribution::pool_tests {
     #[expected_failure(abort_code = farm::ENotAllWithdrawn)]
     public fun test_deposit_shares_fails_when_not_fully_topped_up() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm1, farm_cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (farm2, farm_cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
-        let (pool, pool_cap) = pool::create<SHARES>(ctx);
+        let (mut farm1, farm_cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm2, farm_cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
+        let (mut pool, pool_cap) = pool::create<SHARES>(ctx);
         pool::add_to_farm(&farm_cap1, &mut farm1, &pool_cap, &mut pool, 100, &clock);
         pool::add_to_farm(&farm_cap2, &mut farm2, &pool_cap, &mut pool, 100, &clock);
         farm::change_unlock_per_second(&farm_cap1, &mut farm1, 10, &clock);
@@ -170,16 +170,16 @@ module token_distribution::pool_tests {
 
         // deposit shares new
         set_clock_sec(&mut clock, 110); // increment clock by 10 seconds
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
-        let stake = pool::deposit_shares_new(
+        let mut stake = pool::deposit_shares_new(
             &mut pool, balance::create_for_testing<SHARES>(100), ticket, ctx
         );
 
         // deposit shares
         set_clock_sec(&mut clock, 120); // increment clock by 10 seconds
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::deposit_shares(
             &mut pool, &mut stake, balance::create_for_testing<SHARES>(100), ticket
@@ -209,11 +209,11 @@ module token_distribution::pool_tests {
     #[expected_failure(abort_code = farm::ENotAllWithdrawn)]
     public fun test_withdraw_shares_fails_when_not_fully_topped_up() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm1, farm_cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (farm2, farm_cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
-        let (pool, pool_cap) = pool::create<SHARES>(ctx);
+        let (mut farm1, farm_cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm2, farm_cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
+        let (mut pool, pool_cap) = pool::create<SHARES>(ctx);
         pool::add_to_farm(&farm_cap1, &mut farm1, &pool_cap, &mut pool, 100, &clock);
         pool::add_to_farm(&farm_cap2, &mut farm2, &pool_cap, &mut pool, 100, &clock);
         farm::change_unlock_per_second(&farm_cap1, &mut farm1, 10, &clock);
@@ -221,16 +221,16 @@ module token_distribution::pool_tests {
 
         // deposit shares new
         set_clock_sec(&mut clock, 110); // increment clock by 10 seconds
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
-        let stake = pool::deposit_shares_new(
+        let mut stake = pool::deposit_shares_new(
             &mut pool, balance::create_for_testing<SHARES>(100), ticket, ctx
         );
 
         // withdraw shares
         set_clock_sec(&mut clock, 120); // increment clock by 10 seconds
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         let balance = pool::withdraw_shares(
             &mut pool, &mut stake, 100, ticket
@@ -260,18 +260,18 @@ module token_distribution::pool_tests {
     #[test]
     public fun test_merge_stakes() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm, farm_cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (pool, pool_cap) = pool::create<SHARES>(ctx);
+        let (mut farm, farm_cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut pool, pool_cap) = pool::create<SHARES>(ctx);
         pool::add_to_farm(&farm_cap, &mut farm, &pool_cap, &mut pool, 100, &clock);
         farm::change_unlock_per_second(&farm_cap, &mut farm, 10, &clock);
 
         // deposit shares new
         set_clock_sec(&mut clock, 110); // increment clock by 10 seconds
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm, &mut pool, &mut ticket, &clock);
-        let stake1 = pool::deposit_shares_new(
+        let mut stake1 = pool::deposit_shares_new(
             &mut pool, balance::create_for_testing<SHARES>(100), ticket, ctx
         );
         pool::assert_stake_shares_amount(&stake1, 100);
@@ -279,7 +279,7 @@ module token_distribution::pool_tests {
 
         // deposit shares new again
         set_clock_sec(&mut clock, 120); // increment clock by 10 seconds
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm, &mut pool, &mut ticket, &clock);
         let stake2 = pool::deposit_shares_new(
             &mut pool, balance::create_for_testing<SHARES>(100), ticket, ctx
@@ -289,7 +289,7 @@ module token_distribution::pool_tests {
 
         // deposit new zero stake just to trigger update
         set_clock_sec(&mut clock, 130); // increment clock by 10 seconds
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm, &mut pool, &mut ticket, &clock);
         let stake3 = pool::deposit_shares_new(
             &mut pool, balance::create_for_testing<SHARES>(0), ticket, ctx
@@ -304,7 +304,7 @@ module token_distribution::pool_tests {
 
         // withdraw
         set_clock_sec(&mut clock, 140); // increment clock by 10 seconds
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm, &mut pool, &mut ticket, &clock);
         let balance = pool::withdraw_shares(&mut pool, &mut stake1, 200, ticket);
         assert_and_destroy_balance(balance, 200);
@@ -330,11 +330,11 @@ module token_distribution::pool_tests {
     #[test]
     public fun test_collect_rewards() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm1, farm_cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (farm2, farm_cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
-        let (pool, pool_cap) = pool::create<SHARES>(ctx);
+        let (mut farm1, farm_cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm2, farm_cap2) = farm::create(balance::create_for_testing<BAR>(1000), 100, ctx);
+        let (mut pool, pool_cap) = pool::create<SHARES>(ctx);
         pool::add_to_farm(&farm_cap1, &mut farm1, &pool_cap, &mut pool, 100, &clock);
         pool::add_to_farm(&farm_cap2, &mut farm2, &pool_cap, &mut pool, 100, &clock);
         farm::change_unlock_per_second(&farm_cap1, &mut farm1, 10, &clock);
@@ -342,29 +342,29 @@ module token_distribution::pool_tests {
 
         // deposit shares
         set_clock_sec(&mut clock, 110);
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
-        let stake1 = pool::deposit_shares_new(
+        let mut stake1 = pool::deposit_shares_new(
             &mut pool, balance::create_for_testing(100), ticket, ctx
         );
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
-        let stake2 = pool::deposit_shares_new(
+        let mut stake2 = pool::deposit_shares_new(
             &mut pool, balance::create_for_testing(300), ticket, ctx
         );
 
         // withdraw
         set_clock_sec(&mut clock, 120);
 
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
         let balance: Balance<FOO> = pool::collect_all_rewards(&mut pool, &mut stake1, ticket);
         assert_and_destroy_balance(balance, 25);
 
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
         let balance: Balance<FOO> = pool::collect_rewards(&mut pool, &mut stake2, 25, ticket);
@@ -377,25 +377,25 @@ module token_distribution::pool_tests {
         // withdraw all
         set_clock_sec(&mut clock, 130);
 
-        let ticket = pool::new_top_up_ticket(&mut pool); // stake1
+        let mut ticket = pool::new_top_up_ticket(&mut pool); // stake1
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
         let balance: Balance<FOO> = pool::collect_all_rewards(&mut pool, &mut stake1, ticket);
         assert_and_destroy_balance(balance, 25);
 
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
         let balance: Balance<BAR> = pool::collect_all_rewards(&mut pool, &mut stake1, ticket);
         assert_and_destroy_balance(balance, 50);
 
-        let ticket = pool::new_top_up_ticket(&mut pool); // stake2
+        let mut ticket = pool::new_top_up_ticket(&mut pool); // stake2
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
         let balance: Balance<FOO> = pool::collect_all_rewards(&mut pool, &mut stake2, ticket);
         assert_and_destroy_balance(balance, 100);
 
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm1, &mut pool, &mut ticket, &clock);
         pool::top_up(&mut farm2, &mut pool, &mut ticket, &clock);
         let balance: Balance<BAR> = pool::collect_all_rewards(&mut pool, &mut stake2, ticket);
@@ -432,18 +432,18 @@ module token_distribution::pool_tests {
     #[test]
     public fun test_remove_from_farm() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm, farm_cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (pool, pool_cap) = pool::create<SHARES>(ctx);
+        let (mut farm, farm_cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut pool, pool_cap) = pool::create<SHARES>(ctx);
         pool::add_to_farm(&farm_cap, &mut farm, &pool_cap, &mut pool, 100, &clock);
         farm::change_unlock_per_second(&farm_cap, &mut farm, 10, &clock);
 
         // deposit shares new
         set_clock_sec(&mut clock, 90); // increment clock by 10 seconds
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm, &mut pool, &mut ticket, &clock);
-        let stake = pool::deposit_shares_new(
+        let mut stake = pool::deposit_shares_new(
             &mut pool, balance::create_for_testing<SHARES>(100), ticket, ctx
         );
 
@@ -484,8 +484,8 @@ module token_distribution::pool_tests {
         let ctx = &mut tx_context::dummy();
         let clock = create_clock_at_sec(50, ctx);
 
-        let (farm, farm_cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (pool, pool_cap) = pool::create<SHARES>(ctx);
+        let (mut farm, farm_cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut pool, pool_cap) = pool::create<SHARES>(ctx);
         let (pool2, wrong_cap) = pool::create<SHARES>(ctx);
 
         pool::add_to_farm(&farm_cap, &mut farm, &wrong_cap, &mut pool, 100, &clock); // aborts here
@@ -504,23 +504,23 @@ module token_distribution::pool_tests {
     #[test]
     public fun test_redeem_forceful_removal_receipt() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm, farm_cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (pool, pool_cap) = pool::create<SHARES>(ctx);
+        let (mut farm, farm_cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut pool, pool_cap) = pool::create<SHARES>(ctx);
         pool::add_to_farm(&farm_cap, &mut farm, &pool_cap, &mut pool, 100, &clock);
         farm::change_unlock_per_second(&farm_cap, &mut farm, 10, &clock);
 
         // deposit shares new
         set_clock_sec(&mut clock, 90); // increment clock by 10 seconds
-        let ticket = pool::new_top_up_ticket(&mut pool);
+        let mut ticket = pool::new_top_up_ticket(&mut pool);
         pool::top_up(&mut farm, &mut pool, &mut ticket, &clock);
-        let stake = pool::deposit_shares_new(
+        let mut stake = pool::deposit_shares_new(
             &mut pool, balance::create_for_testing<SHARES>(100), ticket, ctx
         );
 
         // forcefully remove
-        let scenario = test_scenario::begin(@0xABBA);
+        let mut scenario = test_scenario::begin(@0xABBA);
         {
             set_clock_sec(&mut clock, 110);
 
@@ -531,7 +531,7 @@ module token_distribution::pool_tests {
         // redeem receipt
         test_scenario::next_tx(&mut scenario, @0xABBA);
         {
-            let receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
+            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
 
             set_clock_sec(&mut clock, 130);
             pool::redeem_forceful_removal_receipt(&mut pool, &mut receipt);

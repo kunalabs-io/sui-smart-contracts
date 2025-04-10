@@ -9,7 +9,7 @@ module token_distribution::time_locked_balance_tests {
     use token_distribution::time_locked_balance as tlb;
     use token_distribution::time_locked_balance::{TimeLockedBalance};
 
-    struct FOO has  drop {}
+    public struct FOO has  drop {}
 
     fun assert_tlb_values<T>(
         tlb: &TimeLockedBalance<T>,
@@ -39,7 +39,7 @@ module token_distribution::time_locked_balance_tests {
     }
 
     fun create_clock_at_sec(ts: u64, ctx: &mut TxContext): Clock {
-        let clock = clock::create_for_testing(ctx);
+        let mut clock = clock::create_for_testing(ctx);
         clock::set_for_testing(&mut clock, ts * 1000);
         clock
     }
@@ -102,9 +102,9 @@ module token_distribution::time_locked_balance_tests {
     #[test]
     fun test_max_withdrawable() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(100, ctx);
+        let mut clock = create_clock_at_sec(100, ctx);
 
-        let tlb = tlb::create(
+        let mut tlb = tlb::create(
             balance::create_for_testing<FOO>(1021), 158, 13
         );
         assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity check
@@ -130,7 +130,7 @@ module token_distribution::time_locked_balance_tests {
 
         // clock 161, withdraw
         clock::destroy_for_testing(clock);
-        let clock = create_clock_at_sec(161, ctx);
+        let mut clock = create_clock_at_sec(161, ctx);
 
         balance::destroy_for_testing(tlb::withdraw(&mut tlb, 0, &clock));
         assert_tlb_values(&tlb, 982, 158, 13, 39, 236); // sanity check
@@ -154,14 +154,14 @@ module token_distribution::time_locked_balance_tests {
         tlb::destroy_empty(tlb); 
 
         // unlock per second 0
-        let tlb = tlb::create(
+        let mut tlb = tlb::create(
             balance::create_for_testing<FOO>(1021), 158, 0
         );
         assert_tlb_values(&tlb, 1021, 158, 0, 0, 0); // sanity check
 
 
         clock::destroy_for_testing(clock);
-        let clock = create_clock_at_sec(100, ctx);
+        let mut clock = create_clock_at_sec(100, ctx);
         assert!(tlb::max_withdrawable(&mut tlb, &clock) == 0, 0);
         set_clock_sec(&mut clock, 200);
         assert!(tlb::max_withdrawable(&mut tlb, &clock) == 0, 0);
@@ -173,13 +173,13 @@ module token_distribution::time_locked_balance_tests {
         tlb::destroy_empty(tlb); 
 
         // initial balance 0
-        let tlb = tlb::create(
+        let mut tlb = tlb::create(
             balance::create_for_testing<FOO>(0), 158, 13
         );
         assert_tlb_values(&tlb, 0, 158, 13, 0, 158); // sanity check
 
         clock::destroy_for_testing(clock);
-        let clock = create_clock_at_sec(100, ctx);
+        let mut clock = create_clock_at_sec(100, ctx);
         assert!(tlb::max_withdrawable(&mut tlb, &clock) == 0, 0);
         set_clock_sec(&mut clock, 200);
         assert!(tlb::max_withdrawable(&mut tlb, &clock) == 0, 0);
@@ -194,9 +194,9 @@ module token_distribution::time_locked_balance_tests {
     #[test]
     public fun test_remaining_unlock() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(100, ctx);
+        let mut clock = create_clock_at_sec(100, ctx);
 
-        let tlb = tlb::create(
+        let mut tlb = tlb::create(
             balance::create_for_testing<FOO>(1021), 158, 13
         );
         assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity check
@@ -243,9 +243,9 @@ module token_distribution::time_locked_balance_tests {
     #[test]
     public fun test_withdraw() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(100, ctx);
+        let mut clock = create_clock_at_sec(100, ctx);
 
-        let tlb = tlb::create(
+        let mut tlb = tlb::create(
             balance::create_for_testing<FOO>(1021), 158, 13
         );
         assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity check
@@ -295,9 +295,9 @@ module token_distribution::time_locked_balance_tests {
     #[expected_failure(abort_code = balance::ENotEnough)]
     public fun test_withdraw_fails_on_amount_too_large() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(100, ctx);
+        let mut clock = create_clock_at_sec(100, ctx);
 
-        let tlb = tlb::create(
+        let mut tlb = tlb::create(
             balance::create_for_testing<FOO>(1021), 158, 13
         );
         assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity check 
@@ -315,9 +315,9 @@ module token_distribution::time_locked_balance_tests {
     #[test]
     public fun test_withdraw_all() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(100, ctx);
+        let mut clock = create_clock_at_sec(100, ctx);
 
-        let tlb = tlb::create(
+        let mut tlb = tlb::create(
             balance::create_for_testing<FOO>(1021), 158, 13
         );
         assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity check
@@ -357,9 +357,9 @@ module token_distribution::time_locked_balance_tests {
     #[test]
     public fun test_top_up() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(100, ctx);
+        let mut clock = create_clock_at_sec(100, ctx);
 
-        let tlb = tlb::create(
+        let mut tlb = tlb::create(
             balance::create_for_testing<FOO>(1021), 158, 13
         );
         assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity checks
@@ -400,9 +400,9 @@ module token_distribution::time_locked_balance_tests {
     #[test]
     public fun test_change_unlock_per_second() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(100, ctx);
+        let mut clock = create_clock_at_sec(100, ctx);
 
-        let tlb = tlb::create(
+        let mut tlb = tlb::create(
             balance::create_for_testing<FOO>(1021), 158, 13
         );
         assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity check
@@ -458,9 +458,9 @@ module token_distribution::time_locked_balance_tests {
     #[test]
     public fun test_change_unlock_start_ts() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(100, ctx);
+        let mut clock = create_clock_at_sec(100, ctx);
 
-        let tlb = tlb::create(
+        let mut tlb = tlb::create(
             balance::create_for_testing<FOO>(1021), 158, 13
         );
         assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity check 
@@ -493,7 +493,7 @@ module token_distribution::time_locked_balance_tests {
         let ctx = &mut tx_context::dummy();
         let clock = create_clock_at_sec(100, ctx);
 
-        let tlb = tlb::create(
+        let mut tlb = tlb::create(
             balance::create_for_testing<FOO>(1021), 158, 13
         );
         assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity check

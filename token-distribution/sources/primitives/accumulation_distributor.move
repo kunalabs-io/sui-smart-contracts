@@ -51,7 +51,7 @@ module token_distribution::accumulation_distributor {
 
     /* ================= AccumulationDistributor ================= */
 
-    struct AccumulationDistributor has store {
+    public struct AccumulationDistributor has store {
         id: UID,
         // `Bag` that holds balances to be claimed by stake holders.
         balances: Bag,
@@ -99,14 +99,14 @@ module token_distribution::accumulation_distributor {
     /* ================= Position ================= */
 
     /// Internal struct used for balance accounting of currencies handled by the distributor for a `Position`.
-    struct PositionBalance has store {
+    public struct PositionBalance has store {
         available_rewards: u64,
         last_acc_rewards_per_share_x64: u256
     }
 
     /// `Position` represents a stake in the distributor and its owner can collect any balances
     /// accumulated for the amount of shares that are held within it.
-    struct Position has store {
+    public struct Position has store {
         ad_id: ID,
         shares: u64,
         balances: VecMap<TypeName, PositionBalance>
@@ -233,9 +233,9 @@ module token_distribution::accumulation_distributor {
     public fun deposit_shares_new(
         self: &mut AccumulationDistributor, amount: u64
     ): Position {
-        let balances = vec_map::empty<TypeName, PositionBalance>();
+        let mut balances = vec_map::empty<TypeName, PositionBalance>();
 
-        let i = 0;
+        let mut i = 0;
         let n = vec_map::size(&self.acc_rewards_per_share_x64);
         while (i < n) {
             let (currency_type, acc_rewards_per_share_x64) = vec_map::get_entry_by_idx(
@@ -265,7 +265,7 @@ module token_distribution::accumulation_distributor {
         let start = vec_map::size(&position.balances);
         let end = vec_map::size(&self.acc_rewards_per_share_x64);
 
-        let i = start;
+        let mut i = start;
         while (i < end) {
             let (currency_type, _) = vec_map::get_entry_by_idx(&self.acc_rewards_per_share_x64, i);
             vec_map::insert(
@@ -327,7 +327,7 @@ module token_distribution::accumulation_distributor {
     ) {
         position_add_missing_balances(self, position);
 
-        let i = 0;
+        let mut i = 0;
         let n = vec_map::size(&self.acc_rewards_per_share_x64);
         while (i < n) {
             update_position_single(self, position, i);
@@ -363,7 +363,7 @@ module token_distribution::accumulation_distributor {
 
     /// Merge two positions into a single.
     public fun merge_positions(
-        self: &mut AccumulationDistributor, into: &mut Position, from: Position
+        self: &mut AccumulationDistributor, into: &mut Position, mut from: Position
     ) {
         let id = object::uid_as_inner(&self.id);
         assert!(&from.ad_id == id, EInvalidPosition);
@@ -372,7 +372,7 @@ module token_distribution::accumulation_distributor {
         update_position(self, &mut from);
         update_position(self, into);
 
-        let i = 0;
+        let mut i = 0;
         let n = vec_map::size(&into.balances);
         while (i < n) {
             let idx = n - 1 - i;
@@ -398,9 +398,9 @@ module token_distribution::accumulation_distributor {
     public fun position_destroy_empty(position: Position) {
         assert!(position.shares == 0, ENotEmpty);
 
-        let Position { ad_id: _, shares: _, balances} = position;
+        let Position { ad_id: _, shares: _, mut balances} = position;
 
-        let i = 0;
+        let mut i = 0;
         let n = vec_map::size(&balances);
         while (i < n) {
             let (_, balance) = vec_map::pop(&mut balances);
@@ -575,7 +575,7 @@ module token_distribution::accumulation_distributor {
         assert!(vector::length(&types) == len, 0);
         assert!(vector::length(&values) == len, 0);
 
-        let i = 0;
+        let mut i = 0;
         while (i < len) {
             let (act_k, act_v)  = vec_map::get_entry_by_idx(&self.acc_rewards_per_share_x64, i);
             assert!(vector::borrow(&types, i) == act_k, 0);
@@ -612,7 +612,7 @@ module token_distribution::accumulation_distributor {
         assert!(vector::length(&available_rewards) == len, 0);
         assert!(vector::length(&last_acc_rewards_per_share_x64) == len, 0);
 
-        let i = 0;
+        let mut i = 0;
         while (i < len) {
             let (act_type, balance)  = vec_map::get_entry_by_idx(&position.balances, i);
             assert!(vector::borrow(&types, i) == act_type, 0);

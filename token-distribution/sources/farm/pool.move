@@ -48,7 +48,7 @@ module token_distribution::pool {
     /* ================= AdminCap ================= */
 
     /// Capability that is used to give admin permissions over a farm.
-    struct AdminCap has key, store {
+    public struct AdminCap has key, store {
         id: UID
     }
 
@@ -63,7 +63,7 @@ module token_distribution::pool {
     /// `Pool` is essentially a wrapper around `AccumulationDistributor` that is able to join a `Farm`
     /// as a member, collect rewards from its distribution, and then distribute them to its depositors
     /// (stake holders).
-    struct Pool<phantom S> has key, store {
+    public struct Pool<phantom S> has key, store {
         id: UID,
         admin_id: ID,
         acc: AccumulationDistributor,
@@ -123,7 +123,7 @@ module token_distribution::pool {
         clock: &Clock,
         ctx: &mut TxContext
     ): AdminCap {
-        let (pool, pool_cap) = create<S>(ctx);
+        let (mut pool, pool_cap) = create<S>(ctx);
         add_to_farm(farm_cap, farm, &pool_cap, &mut pool, weight, clock);
         transfer::share_object(pool);
 
@@ -153,7 +153,7 @@ module token_distribution::pool {
 
     /// Represents a stake (deposited coins) in the `Pool`. Recieves rewards proportional to the
     /// total stake in the `Pool`.
-    struct Stake<phantom S> has key, store {
+    public struct Stake<phantom S> has key, store {
         id: UID,
         position: Position,
         balance: Balance<S>
@@ -181,7 +181,7 @@ module token_distribution::pool {
     // NOTE: in theory, it would be safe to use the `Pool` even when it hasn't been fully updated with rewards
     // from all the `Farms`, but then this would have to be implemented on the client-side for the `Stake`s to
     // receive their rightful rewards in time. So for correctness and safety, this is done on the contract side.
-    struct TopUpTicket {
+    public struct TopUpTicket {
         withdraw_all_ticket: MemberWithdrawAllTicket
     }
     

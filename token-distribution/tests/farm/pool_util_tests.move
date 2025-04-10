@@ -12,9 +12,9 @@ module token_distribution::pool_util_tests {
     use token_distribution::pool_util;
 
     // witness types for test coins
-    struct FOO has drop {}
-    struct BAR has drop {}
-    struct SHARES has drop {}
+    public struct FOO has drop {}
+    public struct BAR has drop {}
+    public struct SHARES has drop {}
 
     fun assert_and_destroy_balance<T>(balance: Balance<T>, value: u64) {
         assert!(balance::value(&balance) == value, 0);
@@ -22,7 +22,7 @@ module token_distribution::pool_util_tests {
     }
 
     fun create_clock_at_sec(ts: u64, ctx: &mut TxContext): Clock {
-        let clock = clock::create_for_testing(ctx);
+        let mut clock = clock::create_for_testing(ctx);
         clock::set_for_testing(&mut clock, ts * 1000);
         clock
     }
@@ -34,16 +34,16 @@ module token_distribution::pool_util_tests {
     #[test]
     public fun test_single_deposit_and_withdraw_shares() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm, farm_cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (pool, pool_cap) = pool::create<SHARES>(ctx);
+        let (mut farm, farm_cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut pool, pool_cap) = pool::create<SHARES>(ctx);
         pool::add_to_farm(&farm_cap, &mut farm, &pool_cap, &mut pool, 100, &clock);
         farm::change_unlock_per_second(&farm_cap, &mut farm, 10, &clock);
 
         // deposit shares new
         set_clock_sec(&mut clock, 110); // increment clock by 10 seconds
-        let stake = pool_util::single_deposit_shares_new(
+        let mut stake = pool_util::single_deposit_shares_new(
             &mut farm, &mut pool, balance::create_for_testing<SHARES>(100), &clock, ctx
         );
         pool::assert_stake_shares_amount(&stake, 100);
@@ -93,11 +93,11 @@ module token_distribution::pool_util_tests {
     #[expected_failure(abort_code = farm::ENotAllWithdrawn)]
     public fun test_single_deposit_shares_aborts_when_pool_is_member_of_multiple_farms() {
         let ctx = &mut tx_context::dummy();
-        let clock = create_clock_at_sec(50, ctx);
+        let mut clock = create_clock_at_sec(50, ctx);
 
-        let (farm1, farm_cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (farm2, farm_cap2) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
-        let (pool, pool_cap) = pool::create<SHARES>(ctx);
+        let (mut farm1, farm_cap1) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut farm2, farm_cap2) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
+        let (mut pool, pool_cap) = pool::create<SHARES>(ctx);
         pool::add_to_farm(&farm_cap1, &mut farm1, &pool_cap, &mut pool, 100, &clock);
         pool::add_to_farm(&farm_cap2, &mut farm2, &pool_cap, &mut pool, 100, &clock);
         farm::change_unlock_per_second(&farm_cap1, &mut farm1, 10, &clock);

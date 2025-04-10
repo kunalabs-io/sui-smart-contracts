@@ -61,7 +61,7 @@ module token_distribution::farm {
     /* ================= AdminCap ================= */
 
     /// Capability that is used to give admin permissions over a farm.
-    struct AdminCap has key, store {
+    public struct AdminCap has key, store {
         id: UID
     }
 
@@ -75,7 +75,7 @@ module token_distribution::farm {
 
     /// `FarmMemberKey` is used to join `Farms` and collect rewards they distribute.
     /// Any key can be a member of multiple different `Farms` simultaneously.
-    struct FarmMemberKey has key, store {
+    public struct FarmMemberKey has key, store {
         id: UID,
         unique_memberships: u16,
         locked: bool
@@ -108,7 +108,7 @@ module token_distribution::farm {
 
     /// `Farm` is essentially a wrapper around `TimeDistributor` that allows the admin to add
     /// members and change parameters and members (`FarmMemberKey` holders) to collect rewards.
-    struct Farm<phantom T> has key, store {
+    public struct Farm<phantom T> has key, store {
         id: UID,
         admin_id: ID,
         td: TimeDistributor<T, ID>,
@@ -197,8 +197,8 @@ module token_distribution::farm {
     ) {
         assert_admin_cap(farm, cap);
 
-        let ids = vector::empty();
-        let i = 0;
+        let mut ids = vector::empty();
+        let mut i = 0;
         let n = vector::length(keys);
         while (i < n) {
             let key = vector::borrow_mut(keys, i);
@@ -230,7 +230,7 @@ module token_distribution::farm {
 
     /* ================= ForcefulRemovalReceipt ================= */
 
-    struct ForcefulRemovalReceipt<phantom T> has key, store {
+    public struct ForcefulRemovalReceipt<phantom T> has key, store {
         id: UID,
         key_id: ID,
         balance: Balance<T>,
@@ -296,7 +296,7 @@ module token_distribution::farm {
     /// NOTE: It's also possible to withdraw rewards from the `Farm` by using the `member_withdraw_all
     /// function directly just with the `FarmMemberKey`, but then it's up to the `FarmMemberKey` holder
     /// to make sure that its rewards are being collected correctly.
-    struct MemberWithdrawAllTicket {
+    public struct MemberWithdrawAllTicket {
         key_id: ID,
         farm_ids: VecSet<ID>
     }
