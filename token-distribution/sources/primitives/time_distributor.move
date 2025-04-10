@@ -27,10 +27,8 @@
 /// ```
 
 module token_distribution::time_distributor {
-    use std::vector;
     use sui::vec_map::{Self, VecMap};
     use sui::balance::{Self, Balance};
-    use sui::math;
     use sui::clock::Clock;
     use token_distribution::time_locked_balance::{TimeLockedBalance};
     use token_distribution::time_locked_balance as tlb;
@@ -130,8 +128,8 @@ module token_distribution::time_distributor {
     fun member_unlock<T, K: copy>(
         self: &mut TimeDistributor<T, K>, idx: u64, clock: &Clock
     ) {
-        let unlock_from_ts = math::max(self.update_ts_sec, tlb::unlock_start_ts_sec(&self.tlb));
-        let unlock_until_ts = math::min(tlb::final_unlock_ts_sec(&self.tlb), timestamp_sec(clock));
+        let unlock_from_ts = std::u64::max(self.update_ts_sec, tlb::unlock_start_ts_sec(&self.tlb));
+        let unlock_until_ts = std::u64::min(tlb::final_unlock_ts_sec(&self.tlb), timestamp_sec(clock));
         let unlock_per_second = tlb::unlock_per_second(&self.tlb);        
 
         let (_, member) = vec_map::get_entry_by_idx_mut(&mut self.members, idx);
@@ -258,7 +256,7 @@ module token_distribution::time_distributor {
     public fun remove_member<T, K: copy>(
         self: &mut TimeDistributor<T, K>, key: &K, clock: &Clock
     ): (K, Balance<T>) {
-        let idx = vec_map::get_idx(&mut self.members, key);
+        let idx = vec_map::get_idx(&self.members, key);
         remove_member_by_idx(self, idx, clock)
     }
 
@@ -353,7 +351,7 @@ module token_distribution::time_distributor {
     public fun member_withdraw_all<T, K: copy>(
         self: &mut TimeDistributor<T, K>, key: &K, clock: &Clock
     ): Balance<T> {
-        let idx = vec_map::get_idx(&mut self.members, key);
+        let idx = vec_map::get_idx(&self.members, key);
         member_withdraw_all_by_idx(self, idx, clock)
     }
 

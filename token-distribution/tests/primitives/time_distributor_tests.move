@@ -3,9 +3,7 @@
 
 #[test_only]
 module token_distribution::time_distributor_tests {
-    use std::vector;
     use sui::balance::{Self, Balance};
-    use sui::tx_context::{Self, TxContext};
     use sui::clock::{Self, Clock};
     use token_distribution::time_distributor as td;
     use token_distribution::time_distributor::{TimeDistributor};

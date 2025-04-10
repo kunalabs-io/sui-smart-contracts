@@ -3,9 +3,7 @@
 
 #[test_only]
 module token_distribution::pool_tests {
-    use sui::tx_context;
     use sui::balance::{Self, Balance};
-    use sui::tx_context::TxContext;
     use sui::test_scenario;
     use sui::clock::{Self, Clock};
     use token_distribution::farm::{Self, ForcefulRemovalReceipt};
@@ -531,7 +529,7 @@ module token_distribution::pool_tests {
         // redeem receipt
         test_scenario::next_tx(&mut scenario, @0xABBA);
         {
-            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
+            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&scenario);
 
             set_clock_sec(&mut clock, 130);
             pool::redeem_forceful_removal_receipt(&mut pool, &mut receipt);

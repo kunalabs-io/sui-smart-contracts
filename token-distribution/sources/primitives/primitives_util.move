@@ -6,9 +6,6 @@ module token_distribution::primitives_util {
         clock::timestamp_ms(clock) / 1000
     }
 
-    #[test_only]
-    use sui::tx_context;
-
     #[test]
     fun test_timstamp_sec() {
         let mut ctx = tx_context::dummy();

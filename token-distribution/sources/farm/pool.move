@@ -31,10 +31,7 @@
 /// ```
 
 module token_distribution::pool {
-    use sui::object::{Self, UID, ID};
     use sui::balance::{Self, Balance};
-    use sui::tx_context::{TxContext};
-    use sui::transfer;
     use sui::clock::Clock;
     use token_distribution::accumulation_distributor::{Self as acc, AccumulationDistributor, Position};
     use token_distribution::farm::{AdminCap as FarmAdminCap};

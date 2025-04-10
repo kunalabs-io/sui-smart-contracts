@@ -3,10 +3,8 @@
 
 #[test_only]
 module token_distribution::pool_util_tests {
-    use sui::tx_context;
     use sui::balance::{Self, Balance};
     use sui::clock::{Self, Clock};
-    use sui::tx_context::TxContext;
     use token_distribution::farm;
     use token_distribution::pool;
     use token_distribution::pool_util;

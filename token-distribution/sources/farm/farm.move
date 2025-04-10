@@ -31,11 +31,7 @@
 /// ```
 
 module token_distribution::farm {
-    use std::vector;
-    use sui::object::{Self, UID, ID};
     use sui::balance::{Self, Balance};
-    use sui::tx_context::{Self, TxContext};
-    use sui::transfer;
     use sui::coin::{Self, Coin};
     use sui::vec_set::{Self, VecSet};
     use sui::clock::Clock;
@@ -87,6 +83,7 @@ module token_distribution::farm {
     }
 
     /// Create a new `FarmMemberKey` and transfer it to TX sender.
+    #[allow(lint(self_transfer))]
     public fun create_and_transfer_member_key(ctx: &mut TxContext) {
         transfer::transfer(create_member_key(ctx), tx_context::sender(ctx));
     }

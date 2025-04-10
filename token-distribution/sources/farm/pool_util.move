@@ -3,8 +3,6 @@
 
 module token_distribution::pool_util {
     use sui::balance::{Balance};
-    use sui::tx_context::{Self, TxContext};
-    use sui::transfer;
     use sui::coin::{Self, Coin};
     use sui::clock::Clock;
     use token_distribution::farm::{Farm};
@@ -18,6 +16,7 @@ module token_distribution::pool_util {
         pool::deposit_shares_new(pool, balance, ticket, ctx)
     }
 
+    #[allow(lint(self_transfer))]
     public fun single_deposit_shares_new_and_transfer<T, S>(
         farm: &mut Farm<T>, pool: &mut Pool<S>, coin: Coin<S>, clock: &Clock, ctx: &mut TxContext
     ) {
@@ -47,6 +46,7 @@ module token_distribution::pool_util {
         pool::withdraw_shares(pool, stake, amount, ticket)
     }
 
+    #[allow(lint(self_transfer))]
     public fun single_withdraw_shares_and_transfer<T, S>(
         farm: &mut Farm<T>, pool: &mut Pool<S>, stake: &mut Stake<S>, amount: u64, clock: &Clock, ctx: &mut TxContext
     ) {
@@ -62,6 +62,7 @@ module token_distribution::pool_util {
         pool::collect_all_rewards(pool, stake, ticket)
     }
 
+    #[allow(lint(self_transfer))]
     public fun single_collect_all_rewards_and_transfer<T, S>(
         farm: &mut Farm<T>, pool: &mut Pool<S>, stake: &mut Stake<S>, clock: &Clock, ctx: &mut TxContext
     ) {

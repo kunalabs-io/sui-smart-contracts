@@ -3,9 +3,7 @@
 
 #[test_only]
 module token_distribution::accumulation_distributor_tests {
-    use std::vector;
     use std::type_name;
-    use sui::tx_context;
     use sui::balance::{Self, Balance};
     use sui::vec_map;
     use token_distribution::accumulation_distributor as ad;

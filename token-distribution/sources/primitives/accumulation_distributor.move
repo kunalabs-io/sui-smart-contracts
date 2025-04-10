@@ -28,10 +28,7 @@
 
 module token_distribution::accumulation_distributor {
     use std::type_name::{Self, TypeName};
-    use std::option;
     use sui::balance::{Self, Balance};
-    use sui::object::{Self, UID, ID};
-    use sui::tx_context::{TxContext};
     use sui::bag::{Self, Bag};
     use sui::vec_map::{Self, VecMap};
 
@@ -488,9 +485,6 @@ module token_distribution::accumulation_distributor {
     }
 
     /* ================= test only ================= */
-
-    #[test_only]
-    use std::vector;
 
     #[test_only]
     public fun assert_balances_length(self: &AccumulationDistributor, len: u64) {

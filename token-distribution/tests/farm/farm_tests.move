@@ -3,10 +3,7 @@
 
 #[test_only]
 module token_distribution::farm_tests {
-    use std::vector;
-    use sui::tx_context::{Self, TxContext};
     use sui::balance::{Self, Balance};
-    use sui::object;
     use sui::test_scenario;
     use sui::clock::{Self, Clock};
     use token_distribution::farm::{Self, ForcefulRemovalReceipt};
@@ -284,7 +281,7 @@ module token_distribution::farm_tests {
         };
         test_scenario::next_tx(&mut scenario, @0xABBA);
         {
-            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
+            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&scenario);
 
             let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut key);
             assert_and_destroy_balance(balance, 100);
@@ -329,7 +326,7 @@ module token_distribution::farm_tests {
         };
         test_scenario::next_tx(&mut scenario, @0xABBA);
         {
-            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
+            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&scenario);
 
             let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut key);
             assert_and_destroy_balance(balance, 100);
@@ -340,7 +337,7 @@ module token_distribution::farm_tests {
         };
         test_scenario::next_tx(&mut scenario, @0xABBA);
         {
-            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
+            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&scenario);
 
             let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut key); // aborts here
             balance::destroy_for_testing(balance);
@@ -379,7 +376,7 @@ module token_distribution::farm_tests {
         };
         test_scenario::next_tx(&mut scenario, @0xABBA);
         {
-            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
+            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&scenario);
 
             let mut wrong_key = farm::create_member_key(ctx);
             let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut wrong_key); // aborts here
@@ -422,7 +419,7 @@ module token_distribution::farm_tests {
         };
         test_scenario::next_tx(&mut scenario, @0xABBA);
         {
-            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&mut scenario);
+            let mut receipt = test_scenario::take_shared<ForcefulRemovalReceipt<FOO>>(&scenario);
 
             let ticket = farm::new_withdraw_all_ticket(&mut key);
             let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut key); // aborts here
