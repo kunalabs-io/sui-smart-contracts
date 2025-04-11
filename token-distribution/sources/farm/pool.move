@@ -340,7 +340,7 @@ public fun destroy_for_testing<S>(pool: Pool<S>) {
 
 #[test_only]
 public fun assert_stake_shares_amount<S>(stake: &Stake<S>, value: u64) {
-    assert!(stake_balance(stake) == value, 0);
+    assert!(stake_balance(stake) == value);
     acc::assert_position_shares(&stake.position, value);
 }
 

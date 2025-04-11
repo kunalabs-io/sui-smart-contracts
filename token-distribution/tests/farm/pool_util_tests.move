@@ -16,7 +16,7 @@ public struct BAR has drop {}
 public struct SHARES has drop {}
 
 fun assert_and_destroy_balance<T>(balance: Balance<T>, value: u64) {
-    assert!(balance::value(&balance) == value, 0);
+    assert!(balance::value(&balance) == value);
     balance::destroy_for_testing(balance);
 }
 

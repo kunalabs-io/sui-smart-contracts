@@ -14,7 +14,7 @@ public struct FOO has drop {}
 public struct BAR has drop {}
 
 fun assert_and_destroy_balance<T>(balance: Balance<T>, value: u64) {
-    assert!(balance::value(&balance) == value, 0);
+    assert!(balance::value(&balance) == value);
     balance::destroy_for_testing(balance);
 }
 
@@ -43,14 +43,14 @@ public fun test_add_and_remove_member() {
     let (mut farm, cap) = farm::create(balance::create_for_testing<FOO>(1000), 100, ctx);
 
     let mut key = farm::create_member_key(ctx);
-    assert!(farm::key_memberships(&key) == 0, 0); // sanity checks
-    assert!(farm::size(&farm) == 0, 0);
+    assert!(farm::key_memberships(&key) == 0); // sanity checks
+    assert!(farm::size(&farm) == 0);
 
     // add member
     farm::add_member(&cap, &mut farm, &mut key, 100, &clock);
 
-    assert!(farm::key_memberships(&key) == 1, 0);
-    assert!(farm::size(&farm) == 1, 0);
+    assert!(farm::key_memberships(&key) == 1);
+    assert!(farm::size(&farm) == 1);
 
     // remove member
     farm::change_unlock_per_second(&cap, &mut farm, 10, &clock);
@@ -59,8 +59,8 @@ public fun test_add_and_remove_member() {
     let balance = farm::remove_member(&mut farm, &mut key, &clock);
     assert_and_destroy_balance(balance, 100);
 
-    assert!(farm::key_memberships(&key) == 0, 0);
-    assert!(farm::size(&farm) == 0, 0);
+    assert!(farm::key_memberships(&key) == 0);
+    assert!(farm::size(&farm) == 0);
 
     // add members
     let mut keys = vector_two(key, farm::create_member_key(ctx));
@@ -70,9 +70,9 @@ public fun test_add_and_remove_member() {
     let mut key2 = vector::pop_back(&mut keys);
     let mut key1 = vector::pop_back(&mut keys);
 
-    assert!(farm::key_memberships(&key1) == 1, 0);
-    assert!(farm::key_memberships(&key2) == 1, 0);
-    assert!(farm::size(&farm) == 2, 0);
+    assert!(farm::key_memberships(&key1) == 1);
+    assert!(farm::key_memberships(&key2) == 1);
+    assert!(farm::size(&farm) == 2);
 
     // remove members
     farm::change_unlock_per_second(&cap, &mut farm, 10, &clock);
@@ -83,9 +83,9 @@ public fun test_add_and_remove_member() {
     let balance = farm::remove_member(&mut farm, &mut key2, &clock);
     assert_and_destroy_balance(balance, 75);
 
-    assert!(farm::key_memberships(&key1) == 0, 0);
-    assert!(farm::key_memberships(&key2) == 0, 0);
-    assert!(farm::size(&farm) == 0, 0);
+    assert!(farm::key_memberships(&key1) == 0);
+    assert!(farm::key_memberships(&key2) == 0);
+    assert!(farm::size(&farm) == 0);
 
     // clean up
     vector::destroy_empty(keys);
@@ -266,8 +266,8 @@ public fun test_forcefully_remove_member() {
     let mut key = farm::create_member_key(ctx);
     farm::add_member(&cap, &mut farm, &mut key, 100, &clock);
     farm::change_unlock_per_second(&cap, &mut farm, 10, &clock);
-    assert!(farm::key_memberships(&key) == 1, 0); // sanity checks
-    assert!(farm::size(&farm) == 1, 0);
+    assert!(farm::key_memberships(&key) == 1); // sanity checks
+    assert!(farm::size(&farm) == 1);
 
     let mut scenario = test_scenario::begin(@0xABBA);
     {
@@ -281,8 +281,8 @@ public fun test_forcefully_remove_member() {
             &clock,
             ctx,
         );
-        assert!(farm::key_memberships(&key) == 1, 0); // sanity checks
-        assert!(farm::size(&farm) == 0, 0);
+        assert!(farm::key_memberships(&key) == 1); // sanity checks
+        assert!(farm::size(&farm) == 0);
     };
     test_scenario::next_tx(&mut scenario, @0xABBA);
     {
@@ -290,8 +290,8 @@ public fun test_forcefully_remove_member() {
 
         let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut key);
         assert_and_destroy_balance(balance, 100);
-        assert!(farm::key_memberships(&key) == 0, 0);
-        assert!(farm::size(&farm) == 0, 0);
+        assert!(farm::key_memberships(&key) == 0);
+        assert!(farm::size(&farm) == 0);
 
         test_scenario::return_shared(receipt);
     };
@@ -315,8 +315,8 @@ public fun test_forcefully_remove_member_aborts_on_spent_receipt() {
     let mut key = farm::create_member_key(ctx);
     farm::add_member(&cap, &mut farm, &mut key, 100, &clock);
     farm::change_unlock_per_second(&cap, &mut farm, 10, &clock);
-    assert!(farm::key_memberships(&key) == 1, 0); // sanity checks
-    assert!(farm::size(&farm) == 1, 0);
+    assert!(farm::key_memberships(&key) == 1); // sanity checks
+    assert!(farm::size(&farm) == 1);
 
     let mut scenario = test_scenario::begin(@0xABBA);
     {
@@ -330,8 +330,8 @@ public fun test_forcefully_remove_member_aborts_on_spent_receipt() {
             &clock,
             ctx,
         );
-        assert!(farm::key_memberships(&key) == 1, 0); // sanity checks
-        assert!(farm::size(&farm) == 0, 0);
+        assert!(farm::key_memberships(&key) == 1); // sanity checks
+        assert!(farm::size(&farm) == 0);
     };
     test_scenario::next_tx(&mut scenario, @0xABBA);
     {
@@ -339,8 +339,8 @@ public fun test_forcefully_remove_member_aborts_on_spent_receipt() {
 
         let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut key);
         assert_and_destroy_balance(balance, 100);
-        assert!(farm::key_memberships(&key) == 0, 0);
-        assert!(farm::size(&farm) == 0, 0);
+        assert!(farm::key_memberships(&key) == 0);
+        assert!(farm::size(&farm) == 0);
 
         test_scenario::return_shared(receipt);
     };
@@ -394,8 +394,8 @@ public fun test_redeem_forceful_removal_receipt_aborts_on_invalid_key() {
         let mut wrong_key = farm::create_member_key(ctx);
         let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut wrong_key); // aborts here
         balance::destroy_for_testing(balance);
-        assert!(farm::key_memberships(&key) == 0, 0);
-        assert!(farm::size(&farm) == 0, 0);
+        assert!(farm::key_memberships(&key) == 0);
+        assert!(farm::size(&farm) == 0);
 
         farm::destroy_member_key(wrong_key);
         test_scenario::return_shared(receipt);
@@ -441,8 +441,8 @@ public fun test_redeem_forceful_removal_receipt_aborts_on_key_locked() {
         let ticket = farm::new_withdraw_all_ticket(&mut key);
         let balance = farm::redeem_forceful_removal_receipt(&mut receipt, &mut key); // aborts here
         balance::destroy_for_testing(balance);
-        assert!(farm::key_memberships(&key) == 0, 0);
-        assert!(farm::size(&farm) == 0, 0);
+        assert!(farm::key_memberships(&key) == 0);
+        assert!(farm::size(&farm) == 0);
 
         farm::destroy_withdraw_all_ticket(ticket, &mut key);
         test_scenario::return_shared(receipt);

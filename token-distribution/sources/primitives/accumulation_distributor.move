@@ -514,7 +514,7 @@ public fun withdraw_all_rewards<T>(
 
 #[test_only]
 public fun assert_balances_length(self: &AccumulationDistributor, len: u64) {
-    assert!(bag::length(&self.balances) == len, 0);
+    assert!(bag::length(&self.balances) == len);
 }
 
 #[test_only]
@@ -522,7 +522,7 @@ public fun assert_balance_value<T>(self: &AccumulationDistributor, value: u64) {
     let key = type_name::get<T>();
     let balance: &Balance<T> = bag::borrow(&self.balances, key);
 
-    assert!(balance::value(balance) == value, 0);
+    assert!(balance::value(balance) == value);
 }
 
 #[test_only]
@@ -537,14 +537,14 @@ public fun assert_and_destroy_balance<T>(self: &mut AccumulationDistributor, val
     let key = type_name::get<T>();
     let balance: Balance<T> = bag::remove(&mut self.balances, key);
 
-    assert!(balance::value(&balance) == value, 0);
+    assert!(balance::value(&balance) == value);
 
     balance::destroy_for_testing(balance);
 }
 
 #[test_only]
 public fun assert_extraneous_balances_length(self: &AccumulationDistributor, len: u64) {
-    assert!(bag::length(&self.extraneous_balances) == len, 0);
+    assert!(bag::length(&self.extraneous_balances) == len);
 }
 
 #[test_only]
@@ -552,7 +552,7 @@ public fun assert_extraneous_balance_value<T>(self: &AccumulationDistributor, va
     let key = type_name::get<T>();
     let balance: &Balance<T> = bag::borrow(&self.extraneous_balances, key);
 
-    assert!(balance::value(balance) == value, 0);
+    assert!(balance::value(balance) == value);
 }
 
 #[test_only]
@@ -568,7 +568,7 @@ public fun assert_and_destroy_extraneous_balance<T>(
     let key = type_name::get<T>();
     let balance: Balance<T> = bag::remove(&mut self.extraneous_balances, key);
 
-    assert!(balance::value(&balance) == value, 0);
+    assert!(balance::value(&balance) == value);
 
     balance::destroy_for_testing(balance);
 }
@@ -595,14 +595,14 @@ public fun assert_acc_rewards_per_share_x64(
     values: vector<u256>,
 ) {
     let len = vec_map::size(&self.acc_rewards_per_share_x64);
-    assert!(vector::length(&types) == len, 0);
-    assert!(vector::length(&values) == len, 0);
+    assert!(vector::length(&types) == len);
+    assert!(vector::length(&values) == len);
 
     let mut i = 0;
     while (i < len) {
         let (act_k, act_v) = vec_map::get_entry_by_idx(&self.acc_rewards_per_share_x64, i);
-        assert!(vector::borrow(&types, i) == act_k, 0);
-        assert!(vector::borrow(&values, i) == act_v, 0);
+        assert!(vector::borrow(&types, i) == act_k);
+        assert!(vector::borrow(&values, i) == act_v);
 
         i = i + 1;
     }
@@ -610,7 +610,7 @@ public fun assert_acc_rewards_per_share_x64(
 
 #[test_only]
 public fun assert_total_shares(self: &AccumulationDistributor, val: u64) {
-    assert!(self.total_shares == val, 0);
+    assert!(self.total_shares == val);
 }
 
 #[test_only]
@@ -631,15 +631,15 @@ public fun assert_position_balances(
     last_acc_rewards_per_share_x64: vector<u256>,
 ) {
     let len = vec_map::size(&position.balances);
-    assert!(vector::length(&types) == len, 0);
-    assert!(vector::length(&available_rewards) == len, 0);
-    assert!(vector::length(&last_acc_rewards_per_share_x64) == len, 0);
+    assert!(vector::length(&types) == len);
+    assert!(vector::length(&available_rewards) == len);
+    assert!(vector::length(&last_acc_rewards_per_share_x64) == len);
 
     let mut i = 0;
     while (i < len) {
         let (act_type, balance) = vec_map::get_entry_by_idx(&position.balances, i);
-        assert!(vector::borrow(&types, i) == act_type, 0);
-        assert!(vector::borrow(&available_rewards, i) == &balance.available_rewards, 0);
+        assert!(vector::borrow(&types, i) == act_type);
+        assert!(vector::borrow(&available_rewards, i) == &balance.available_rewards);
         assert!(
             vector::borrow(&last_acc_rewards_per_share_x64, i) == &balance.last_acc_rewards_per_share_x64,
             0,

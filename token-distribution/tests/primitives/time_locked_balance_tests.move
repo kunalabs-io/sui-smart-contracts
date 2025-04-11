@@ -25,15 +25,15 @@ fun assert_tlb_values<T>(
         act_unlocked_value,
         act_final_unlock_ts,
     ) = tlb::get_all_values(tlb);
-    assert!(exp_locked_value == act_locked_value, 0);
-    assert!(exp_unlock_start_ts == act_unlock_start_ts, 0);
-    assert!(exp_unlock_per_second == act_unlock_per_second, 0);
-    assert!(exp_unlocked_value == act_unlocked_value, 0);
-    assert!(exp_final_unlock_ts == act_final_unlock_ts, 0);
+    assert!(exp_locked_value == act_locked_value);
+    assert!(exp_unlock_start_ts == act_unlock_start_ts);
+    assert!(exp_unlock_per_second == act_unlock_per_second);
+    assert!(exp_unlocked_value == act_unlocked_value);
+    assert!(exp_final_unlock_ts == act_final_unlock_ts);
 }
 
 fun assert_and_destroy_balance<T>(balance: Balance<T>, value: u64) {
-    assert!(balance::value(&balance) == value, 0);
+    assert!(balance::value(&balance) == value);
     balance::destroy_for_testing(balance);
 }
 
@@ -97,7 +97,7 @@ fun test_extraneous_locked_amount() {
         158,
         13,
     );
-    assert!(tlb::extraneous_locked_amount(&tlb) == 7, 0);
+    assert!(tlb::extraneous_locked_amount(&tlb) == 7);
     tlb::destroy_for_testing(tlb);
 
     // unlock_per_second is 0
@@ -106,7 +106,7 @@ fun test_extraneous_locked_amount() {
         158,
         0,
     );
-    assert!(tlb::extraneous_locked_amount(&tlb) == 1021, 0);
+    assert!(tlb::extraneous_locked_amount(&tlb) == 1021);
     tlb::destroy_for_testing(tlb);
 }
 
@@ -123,23 +123,23 @@ fun test_max_withdrawable() {
     assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity check
 
     // clock 100
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 0);
 
     // clock 158
     set_clock_sec(&mut clock, 158);
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 0);
 
     // clock 159
     increment_clock_sec(&mut clock, 1);
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 13, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 13);
 
     // clock 161
     increment_clock_sec(&mut clock, 2);
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 39, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 39);
 
     // clock 400
     set_clock_sec(&mut clock, 400);
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 1014, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 1014);
 
     // clock 161, withdraw
     clock::destroy_for_testing(clock);
@@ -147,19 +147,19 @@ fun test_max_withdrawable() {
 
     balance::destroy_for_testing(tlb::withdraw(&mut tlb, 0, &clock));
     assert_tlb_values(&tlb, 982, 158, 13, 39, 236); // sanity check
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 39, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 39);
 
     balance::destroy_for_testing(tlb::withdraw(&mut tlb, 15, &clock));
     assert_tlb_values(&tlb, 982, 158, 13, 24, 236); // sanity check
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 24, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 24);
 
     // clock 164
     increment_clock_sec(&mut clock, 3);
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 63, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 63);
 
     // clock 400
     set_clock_sec(&mut clock, 400);
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 999, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 999);
 
     // clean up
     assert_and_destroy_balance(tlb::withdraw_all(&mut tlb, &clock), 999);
@@ -176,11 +176,11 @@ fun test_max_withdrawable() {
 
     clock::destroy_for_testing(clock);
     let mut clock = create_clock_at_sec(100, ctx);
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 0);
     set_clock_sec(&mut clock, 200);
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 0);
     set_clock_sec(&mut clock, 400);
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 0);
 
     // clean up
     assert_and_destroy_balance(tlb::skim_extraneous_balance(&mut tlb), 1021);
@@ -196,11 +196,11 @@ fun test_max_withdrawable() {
 
     clock::destroy_for_testing(clock);
     let mut clock = create_clock_at_sec(100, ctx);
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 0);
     set_clock_sec(&mut clock, 200);
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 0);
     set_clock_sec(&mut clock, 400);
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 0, 0);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 0);
 
     // clean up
     tlb::destroy_empty(tlb);
@@ -220,38 +220,38 @@ public fun test_remaining_unlock() {
     assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity check
 
     // before start
-    assert!(tlb::remaining_unlock(&tlb, &clock) == 1014, 0);
+    assert!(tlb::remaining_unlock(&tlb, &clock) == 1014);
 
     // at start
     set_clock_sec(&mut clock, 158);
-    assert!(tlb::remaining_unlock(&tlb, &clock) == 1014, 0);
+    assert!(tlb::remaining_unlock(&tlb, &clock) == 1014);
     assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity check
 
     // one second later
     set_clock_sec(&mut clock, 159);
-    assert!(tlb::remaining_unlock(&tlb, &clock) == 1001, 0);
-    assert!(tlb::max_withdrawable(&tlb, &clock) == 13, 0); // sanity check
+    assert!(tlb::remaining_unlock(&tlb, &clock) == 1001);
+    assert!(tlb::max_withdrawable(&tlb, &clock) == 13); // sanity check
     assert_and_destroy_balance(tlb::withdraw_all(&mut tlb, &clock), 13); // sanity check
     assert_tlb_values(&tlb, 1008, 158, 13, 0, 236); // sanity check
 
     // unlock_per_second 0
     tlb::change_unlock_per_second(&mut tlb, 0, &clock);
-    assert!(tlb::remaining_unlock(&tlb, &clock) == 0, 0);
+    assert!(tlb::remaining_unlock(&tlb, &clock) == 0);
     assert_tlb_values(&tlb, 1008, 158, 0, 0, 0); // sanity check
     tlb::change_unlock_per_second(&mut tlb, 13, &clock); // change back to 13
     assert_tlb_values(&tlb, 1008, 158, 13, 0, 236); // sanity check
 
     // one second before end
     set_clock_sec(&mut clock, 235);
-    assert!(tlb::remaining_unlock(&tlb, &clock) == 13, 0);
+    assert!(tlb::remaining_unlock(&tlb, &clock) == 13);
 
     // at end
     set_clock_sec(&mut clock, 236);
-    assert!(tlb::remaining_unlock(&tlb, &clock) == 0, 0);
+    assert!(tlb::remaining_unlock(&tlb, &clock) == 0);
 
     // after end
     set_clock_sec(&mut clock, 300);
-    assert!(tlb::remaining_unlock(&tlb, &clock) == 0, 0);
+    assert!(tlb::remaining_unlock(&tlb, &clock) == 0);
 
     // clean up
     tlb::destroy_for_testing(tlb);
@@ -389,28 +389,28 @@ public fun test_top_up() {
         13,
     );
     assert_tlb_values(&tlb, 1021, 158, 13, 0, 236); // sanity checks
-    assert!(tlb::extraneous_locked_amount(&tlb) == 7, 0);
+    assert!(tlb::extraneous_locked_amount(&tlb) == 7);
 
     // add round
     tlb::top_up(&mut tlb, balance::create_for_testing<FOO>(13), &clock);
     assert_tlb_values(&tlb, 1034, 158, 13, 0, 237);
-    assert!(tlb::extraneous_locked_amount(&tlb) == 7, 0);
+    assert!(tlb::extraneous_locked_amount(&tlb) == 7);
 
     // add not enough to round
     tlb::top_up(&mut tlb, balance::create_for_testing<FOO>(5), &clock);
     assert_tlb_values(&tlb, 1039, 158, 13, 0, 237);
-    assert!(tlb::extraneous_locked_amount(&tlb) == 12, 0);
+    assert!(tlb::extraneous_locked_amount(&tlb) == 12);
 
     // add just enough to round
     tlb::top_up(&mut tlb, balance::create_for_testing<FOO>(1), &clock);
     assert_tlb_values(&tlb, 1040, 158, 13, 0, 238);
-    assert!(tlb::extraneous_locked_amount(&tlb) == 0, 0);
+    assert!(tlb::extraneous_locked_amount(&tlb) == 0);
 
     // after start
     set_clock_sec(&mut clock, 159);
     tlb::top_up(&mut tlb, balance::create_for_testing(25), &clock);
     assert_tlb_values(&tlb, 1052, 158, 13, 13, 239);
-    assert!(tlb::extraneous_locked_amount(&tlb) == 12, 0);
+    assert!(tlb::extraneous_locked_amount(&tlb) == 12);
 
     // after finish
     set_clock_sec(&mut clock, 300);

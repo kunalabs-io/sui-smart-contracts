@@ -417,13 +417,13 @@ public fun assert_member_values<T, K: copy>(
     unlocked_since_update: u64,
 ) {
     let (k, member) = vec_map::get_entry_by_idx(&self.members, idx);
-    assert!(k == key, 0);
-    assert!(member.weight == weight, 0);
-    assert!(balance::value(&member.unlocked_balance) == unlocked_balance, 0);
-    assert!(member.unlocked_since_update == unlocked_since_update, 0);
+    assert!(k == key);
+    assert!(member.weight == weight);
+    assert!(balance::value(&member.unlocked_balance) == unlocked_balance);
+    assert!(member.unlocked_since_update == unlocked_since_update);
 }
 
 #[test_only]
 public fun assert_members_size<T, K: copy>(self: &TimeDistributor<T, K>, size: u64) {
-    assert!(size(self) == size, 0);
+    assert!(size(self) == size);
 }

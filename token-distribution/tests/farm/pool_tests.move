@@ -16,7 +16,7 @@ public struct BAR has drop {}
 public struct SHARES has drop {}
 
 fun assert_and_destroy_balance<T>(balance: Balance<T>, value: u64) {
-    assert!(balance::value(&balance) == value, 0);
+    assert!(balance::value(&balance) == value);
     balance::destroy_for_testing(balance);
 }
 
@@ -306,7 +306,7 @@ public fun test_merge_stakes() {
         ctx,
     );
     pool::assert_stake_shares_amount(&stake1, 100);
-    assert!(pool::total_shares(&pool) == 100, 0);
+    assert!(pool::total_shares(&pool) == 100);
 
     // deposit shares new again
     set_clock_sec(&mut clock, 120); // increment clock by 10 seconds
@@ -319,7 +319,7 @@ public fun test_merge_stakes() {
         ctx,
     );
     pool::assert_stake_shares_amount(&stake2, 100);
-    assert!(pool::total_shares(&pool) == 200, 0);
+    assert!(pool::total_shares(&pool) == 200);
 
     // deposit new zero stake just to trigger update
     set_clock_sec(&mut clock, 130); // increment clock by 10 seconds
@@ -332,12 +332,12 @@ public fun test_merge_stakes() {
         ctx,
     );
     pool::destroy_empty_stake(stake3);
-    assert!(pool::total_shares(&pool) == 200, 0);
+    assert!(pool::total_shares(&pool) == 200);
 
     // merge
     pool::merge_stakes(&mut pool, &mut stake1, stake2);
     pool::assert_stake_shares_amount(&stake1, 200);
-    assert!(pool::total_shares(&pool) == 200, 0);
+    assert!(pool::total_shares(&pool) == 200);
 
     // withdraw
     set_clock_sec(&mut clock, 140); // increment clock by 10 seconds

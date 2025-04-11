@@ -13,7 +13,7 @@ public struct FOO has drop {}
 public struct BAR has drop {}
 
 fun assert_and_destroy_balance<T>(balance: Balance<T>, value: u64) {
-    assert!(balance::value(&balance) == value, 0);
+    assert!(balance::value(&balance) == value);
     balance::destroy_for_testing(balance);
 }
 
@@ -91,11 +91,11 @@ public fun test_vec_map_pushes_back() {
     vec_map::insert(&mut map, 22, 22222);
 
     let (k, v) = vec_map::get_entry_by_idx(&map, 0);
-    assert!(k == &11, 0);
-    assert!(v == &11111, 0);
+    assert!(k == &11);
+    assert!(v == &11111);
     let (k, v) = vec_map::get_entry_by_idx(&map, 1);
-    assert!(k == &22, 0);
-    assert!(v == &22222, 0);
+    assert!(k == &22);
+    assert!(v == &22222);
 }
 
 #[test]
@@ -1021,21 +1021,21 @@ public fun test_has_balance() {
     let mut ctx = tx_context::dummy();
     let mut ad = ad::create(&mut ctx);
 
-    assert!(ad::has_balance(&ad, &type_name::get<FOO>()) == false, 0);
-    assert!(ad::has_balance_with_type<FOO>(&ad) == false, 0);
+    assert!(ad::has_balance(&ad, &type_name::get<FOO>()) == false);
+    assert!(ad::has_balance_with_type<FOO>(&ad) == false);
 
     let mut position = ad::deposit_shares_new(&mut ad, 100);
     ad::top_up(&mut ad, balance::create_for_testing<FOO>(0));
 
-    assert!(ad::has_balance(&ad, &type_name::get<FOO>()) == true, 0);
-    assert!(ad::has_balance_with_type<FOO>(&ad) == true, 0);
+    assert!(ad::has_balance(&ad, &type_name::get<FOO>()) == true);
+    assert!(ad::has_balance_with_type<FOO>(&ad) == true);
 
-    assert!(ad::has_balance(&ad, &type_name::get<BAR>()) == false, 0);
-    assert!(ad::has_balance_with_type<BAR>(&ad) == false, 0);
+    assert!(ad::has_balance(&ad, &type_name::get<BAR>()) == false);
+    assert!(ad::has_balance_with_type<BAR>(&ad) == false);
 
     ad::top_up(&mut ad, balance::create_for_testing<BAR>(0));
-    assert!(ad::has_balance(&ad, &type_name::get<BAR>()) == true, 0);
-    assert!(ad::has_balance_with_type<BAR>(&ad) == true, 0);
+    assert!(ad::has_balance(&ad, &type_name::get<BAR>()) == true);
+    assert!(ad::has_balance_with_type<BAR>(&ad) == true);
 
     // clean up
     ad::withdraw_shares(&mut ad, &mut position, 100);
@@ -1055,28 +1055,28 @@ public fun test_position_unlocked_balance_value() {
     ad::top_up(&mut ad, balance::create_for_testing<FOO>(0));
 
     // check empty
-    assert!(ad::position_rewards_value(&ad, &position, type_name::get<FOO>()) == 0, 0);
-    assert!(ad::position_rewards_value_with_type<FOO>(&ad, &position) == 0, 0);
+    assert!(ad::position_rewards_value(&ad, &position, type_name::get<FOO>()) == 0);
+    assert!(ad::position_rewards_value_with_type<FOO>(&ad, &position) == 0);
 
     // top up and check
     ad::top_up(&mut ad, balance::create_for_testing<FOO>(100));
-    assert!(ad::position_rewards_value(&ad, &position, type_name::get<FOO>()) == 100, 0);
-    assert!(ad::position_rewards_value_with_type<FOO>(&ad, &position) == 100, 0);
+    assert!(ad::position_rewards_value(&ad, &position, type_name::get<FOO>()) == 100);
+    assert!(ad::position_rewards_value_with_type<FOO>(&ad, &position) == 100);
 
     // withdraw and check
     assert_and_destroy_balance(
         ad::withdraw_rewards<FOO>(&mut ad, &mut position, 50),
         50,
     );
-    assert!(ad::position_rewards_value(&ad, &position, type_name::get<FOO>()) == 50, 0);
-    assert!(ad::position_rewards_value_with_type<FOO>(&ad, &position) == 50, 0);
+    assert!(ad::position_rewards_value(&ad, &position, type_name::get<FOO>()) == 50);
+    assert!(ad::position_rewards_value_with_type<FOO>(&ad, &position) == 50);
 
     // top up other and check
     ad::top_up(&mut ad, balance::create_for_testing<BAR>(111));
-    assert!(ad::position_rewards_value(&ad, &position, type_name::get<FOO>()) == 50, 0);
-    assert!(ad::position_rewards_value_with_type<FOO>(&ad, &position) == 50, 0);
-    assert!(ad::position_rewards_value(&ad, &position, type_name::get<BAR>()) == 110, 0);
-    assert!(ad::position_rewards_value_with_type<BAR>(&ad, &position) == 110, 0);
+    assert!(ad::position_rewards_value(&ad, &position, type_name::get<FOO>()) == 50);
+    assert!(ad::position_rewards_value_with_type<FOO>(&ad, &position) == 50);
+    assert!(ad::position_rewards_value(&ad, &position, type_name::get<BAR>()) == 110);
+    assert!(ad::position_rewards_value_with_type<BAR>(&ad, &position) == 110);
 
     // clean up
     ad::withdraw_shares(&mut ad, &mut position, 100);

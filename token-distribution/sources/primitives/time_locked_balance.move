@@ -199,12 +199,12 @@ fun calc_final_unlock_ts_sec(start_ts: u64, amount_to_issue: u64, unlock_per_sec
 
 #[test]
 fun test_calc_final_unlock_ts_sec() {
-    assert!(calc_final_unlock_ts_sec(100, 30, 20) == 101, 0);
-    assert!(calc_final_unlock_ts_sec(100, 60, 30) == 102, 0);
-    assert!(calc_final_unlock_ts_sec(100, 29, 30) == 100, 0);
-    assert!(calc_final_unlock_ts_sec(100, 60, 0) == 0, 0);
-    assert!(calc_final_unlock_ts_sec(100, 0, 20) == 100, 0);
-    assert!(calc_final_unlock_ts_sec(100, 0, 0) == 0, 0);
+    assert!(calc_final_unlock_ts_sec(100, 30, 20) == 101);
+    assert!(calc_final_unlock_ts_sec(100, 60, 30) == 102);
+    assert!(calc_final_unlock_ts_sec(100, 29, 30) == 100);
+    assert!(calc_final_unlock_ts_sec(100, 60, 0) == 0);
+    assert!(calc_final_unlock_ts_sec(100, 0, 20) == 100);
+    assert!(calc_final_unlock_ts_sec(100, 0, 0) == 0);
 }
 
 /// Returns the amount of `locked_balance` that can be unlocked at this time.
