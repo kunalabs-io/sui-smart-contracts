@@ -1,10 +1,10 @@
 /// `TimeDistributor` is component that locks a `Balance<T>` and then distributes it over time to
 /// multiple (arbitrary) members where each member recieves a share proportional to its "weight".
-/// 
+///
 /// For example, if the distributor has a balance of 100 with an unlock rate of 10 per second and 2 members with
 /// wieghts of 100 and 300, the the duration of the distribution will be 10 seconds and the members
 /// will recieve 25 and 75 of the original balance respectively.
-/// 
+///
 /// The difference between this module and `accumulation_distributor` is that here the distribution balance is
 /// pre-allocated and distributed over time using the internal `time_locked_balance` continueously instead of
 /// being distributed using manual top-ups discretely. Also, since member weights are all stored in the distributor
@@ -12,8 +12,8 @@
 /// a limit to the number of members since most of the operations are `O(n)`).
 ///
 /// This module doesn't implement any permission functionality and it's intended to be used as a
-/// building block for other modules.  
-/// 
+/// building block for other modules.
+///
 /// Usage:
 /// ```
 /// // create time distributor
@@ -21,12 +21,13 @@
 /// let id: ID = <...>;
 /// td::add_member(&mut td, id, 100, clock);
 /// td::change_unlock_per_second(&mut td, id, clock);
-/// 
+///
 /// // after some time... member withdraw
 /// let balance = member_withdraw_all(&mut td, &id, clock);
 /// ```
 
 module token_distribution::time_distributor {
+    use std::u64;
     use sui::vec_map::{Self, VecMap};
     use sui::balance::{Self, Balance};
     use sui::clock::Clock;
@@ -116,7 +117,7 @@ module token_distribution::time_distributor {
     public fun size<T, K: copy>(self: &TimeDistributor<T, K>): u64 {
         vec_map::size(&self.members)
     }
- 
+
     /// Calculates (a * b) / c. Errors if result doesn't fit into u64.
     fun muldiv(a: u64, b: u64, c: u64): u64 {
         (((a as u128) * (b as u128)) / (c as u128) as u64)
@@ -128,9 +129,9 @@ module token_distribution::time_distributor {
     fun member_unlock<T, K: copy>(
         self: &mut TimeDistributor<T, K>, idx: u64, clock: &Clock
     ) {
-        let unlock_from_ts = std::u64::max(self.update_ts_sec, tlb::unlock_start_ts_sec(&self.tlb));
-        let unlock_until_ts = std::u64::min(tlb::final_unlock_ts_sec(&self.tlb), timestamp_sec(clock));
-        let unlock_per_second = tlb::unlock_per_second(&self.tlb);        
+        let unlock_from_ts = u64::max(self.update_ts_sec, tlb::unlock_start_ts_sec(&self.tlb));
+        let unlock_until_ts = u64::min(tlb::final_unlock_ts_sec(&self.tlb), timestamp_sec(clock));
+        let unlock_per_second = tlb::unlock_per_second(&self.tlb);
 
         let (_, member) = vec_map::get_entry_by_idx_mut(&mut self.members, idx);
 
@@ -144,7 +145,7 @@ module token_distribution::time_distributor {
                 balance::split(&mut self.unlocked_balance, unlock_amt)
             );
             member.unlocked_since_update = member.unlocked_since_update + unlock_amt;
-        }; 
+        };
     }
 
     // Does an O(n) update calling `member_unlock` for all members updating them to the current timestamp.
@@ -174,7 +175,7 @@ module token_distribution::time_distributor {
             member.unlocked_since_update = 0;
 
             i = i + 1;
-        };  
+        };
 
         let val = balance::value(&self.unlocked_balance);
         tlb::top_up(
@@ -222,7 +223,7 @@ module token_distribution::time_distributor {
 
             i = i + 1;
         };
-        vector::destroy_empty(member_keys); 
+        vector::destroy_empty(member_keys);
     }
 
     /// Adds a member to the distributor with specified key and weight. O(n).
