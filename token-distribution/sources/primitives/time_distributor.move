@@ -85,8 +85,28 @@ public fun create_with_members<T, K: copy>(
     self
 }
 
-public fun time_locked_balance<T, K: copy>(self: &TimeDistributor<T, K>): &TimeLockedBalance<T> {
-    &self.tlb
+public fun unlock_per_second<T, K: copy>(self: &TimeDistributor<T, K>): u64 {
+    tlb::unlock_per_second(&self.tlb)
+}
+
+public fun unlock_start_ts_sec<T, K: copy>(self: &TimeDistributor<T, K>): u64 {
+    tlb::unlock_start_ts_sec(&self.tlb)
+}
+
+/// The value of extraneous balance (see `time_locked_balance` module docs for more details).
+/// This balance is retreivable using the `skim_extraneous_balance` function.
+public fun extraneous_locked_amount<T, K: copy>(self: &TimeDistributor<T, K>): u64 {
+    tlb::extraneous_locked_amount(&self.tlb)
+}
+
+/// Withdraws all of the extraneous balance.
+public fun skim_extraneous_balance<T, K: copy>(self: &mut TimeDistributor<T, K>): Balance<T> {
+    tlb::skim_extraneous_balance(&mut self.tlb)
+}
+
+/// Returns the timestamp at which the last unlock will be distributed to members.
+public fun final_unlock_ts_sec<T, K: copy>(self: &TimeDistributor<T, K>): u64 {
+    tlb::final_unlock_ts_sec(&self.tlb)
 }
 
 /// Returns the number of members.

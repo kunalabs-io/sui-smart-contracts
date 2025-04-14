@@ -440,7 +440,7 @@ public fun test_remove_member() {
 
     assert_values(&td, 0, 0, 700);
     td::assert_members_size(&td, 0);
-    assert!(td.time_locked_balance().unlock_per_second() == 0);
+    assert!(td::unlock_per_second(&td) == 0);
 
     // clean up
     td::destroy_for_testing(td);
@@ -536,7 +536,7 @@ public fun test_change_weights() {
     td::assert_member_values(&td, 0, &0, 200, 686, 0);
     td::assert_member_values(&td, 1, &1, 100, 313, 0);
 
-    assert!(td.time_locked_balance().extraneous_locked_amount() == 1);
+    assert!(td::extraneous_locked_amount(&td) == 1);
 
     // clean up
     td::destroy_for_testing(td);
@@ -567,7 +567,7 @@ public fun test_change_unlock_per_second() {
 
     td::change_unlock_per_second(&mut td, 50, &clock);
 
-    assert!(td.time_locked_balance().unlock_per_second() == 50);
+    assert!(td::unlock_per_second(&td) == 50);
     assert_values(&td, 100, 0, 100);
     td::assert_members_size(&td, 1);
     td::assert_member_values(&td, 0, &0, 100, 0, 0);
@@ -577,7 +577,7 @@ public fun test_change_unlock_per_second() {
 
     td::change_unlock_per_second(&mut td, 13, &clock);
 
-    assert!(td.time_locked_balance().unlock_per_second() == 13);
+    assert!(td::unlock_per_second(&td) == 13);
     assert_values(&td, 100, 0, 510);
     td::assert_members_size(&td, 1);
     td::assert_member_values(&td, 0, &0, 100, 500, 0);
@@ -587,7 +587,7 @@ public fun test_change_unlock_per_second() {
 
     td::change_unlock_per_second(&mut td, 5, &clock);
 
-    assert!(td.time_locked_balance().unlock_per_second() == 5);
+    assert!(td::unlock_per_second(&td) == 5);
     assert_values(&td, 100, 0, 600);
     td::assert_members_size(&td, 1);
     td::assert_member_values(&td, 0, &0, 100, 994, 0);
@@ -667,7 +667,7 @@ public fun test_change_unlock_start_ts() {
 
     td::change_unlock_start_ts_sec(&mut td, 200, &clock);
 
-    assert!(td.time_locked_balance().unlock_start_ts_sec() == 200);
+    assert!(td::unlock_start_ts_sec(&td) == 200);
     assert_values(&td, 100, 0, 70);
     td::assert_members_size(&td, 1);
     td::assert_member_values(&td, 0, &0, 100, 0, 0);
@@ -677,7 +677,7 @@ public fun test_change_unlock_start_ts() {
 
     td::change_unlock_start_ts_sec(&mut td, 300, &clock);
 
-    assert!(td.time_locked_balance().unlock_start_ts_sec() == 300);
+    assert!(td::unlock_start_ts_sec(&td) == 300);
     assert_values(&td, 100, 0, 210);
     td::assert_members_size(&td, 1);
     td::assert_member_values(&td, 0, &0, 100, 130, 0);
@@ -690,7 +690,7 @@ public fun test_change_unlock_start_ts() {
         260,
     );
 
-    assert!(td.time_locked_balance().unlock_start_ts_sec() == 300);
+    assert!(td::unlock_start_ts_sec(&td) == 300);
     assert_values(&td, 100, 0, 210);
     td::assert_members_size(&td, 1);
     td::assert_member_values(&td, 0, &0, 100, 0, 130);
@@ -698,7 +698,7 @@ public fun test_change_unlock_start_ts() {
     set_clock_sec(&mut clock, 320);
     td::change_unlock_start_ts_sec(&mut td, 200, &clock);
 
-    assert!(td.time_locked_balance().unlock_start_ts_sec() == 320);
+    assert!(td::unlock_start_ts_sec(&td) == 320);
     assert_values(&td, 100, 0, 320);
     td::assert_members_size(&td, 1);
     td::assert_member_values(&td, 0, &0, 100, 130, 0);
@@ -708,7 +708,7 @@ public fun test_change_unlock_start_ts() {
 
     td::change_unlock_start_ts_sec(&mut td, 1010, &clock);
 
-    assert!(td.time_locked_balance().unlock_start_ts_sec() == 1010);
+    assert!(td::unlock_start_ts_sec(&td) == 1010);
     assert_values(&td, 100, 0, 1000);
     td::assert_members_size(&td, 1);
     td::assert_member_values(&td, 0, &0, 100, 728, 0);
@@ -733,7 +733,7 @@ public fun test_top_up() {
     );
 
     // sanity check
-    assert!(td.time_locked_balance().final_unlock_ts_sec() == 576);
+    assert!(td::final_unlock_ts_sec(&td) == 576);
     assert_values(&td, 100, 0, 50);
     td::assert_members_size(&td, 1);
     td::assert_member_values(&td, 0, &0, 100, 0, 0);
@@ -743,7 +743,7 @@ public fun test_top_up() {
 
     td::top_up(&mut td, balance::create_for_testing(100), &clock);
 
-    assert!(td.time_locked_balance().final_unlock_ts_sec() == 584);
+    assert!(td::final_unlock_ts_sec(&td) == 584);
     assert_values(&td, 100, 0, 50);
     td::assert_members_size(&td, 1);
     td::assert_member_values(&td, 0, &0, 100, 0, 0);
@@ -753,7 +753,7 @@ public fun test_top_up() {
 
     td::top_up(&mut td, balance::create_for_testing(100), &clock);
 
-    assert!(td.time_locked_balance().final_unlock_ts_sec() == 592);
+    assert!(td::final_unlock_ts_sec(&td) == 592);
     assert_values(&td, 100, 0, 50);
     td::assert_members_size(&td, 1);
     td::assert_member_values(&td, 0, &0, 100, 0, 0);
@@ -773,7 +773,7 @@ public fun test_top_up() {
         13,
     );
 
-    assert!(td.time_locked_balance().final_unlock_ts_sec() == 593);
+    assert!(td::final_unlock_ts_sec(&td) == 593);
     assert_values(&td, 100, 0, 50);
     td::assert_members_size(&td, 1);
     td::assert_member_values(&td, 0, &0, 100, 0, 1209);
@@ -783,7 +783,7 @@ public fun test_top_up() {
 
     td::top_up(&mut td, balance::create_for_testing(103), &clock);
 
-    assert!(td.time_locked_balance().final_unlock_ts_sec() == 708);
+    assert!(td::final_unlock_ts_sec(&td) == 708);
     assert_values(&td, 100, 0, 700);
     td::assert_members_size(&td, 1);
     td::assert_member_values(&td, 0, &0, 100, 0, 0);
@@ -954,13 +954,13 @@ public fun test_after_finish() {
 
     assert_values(&td, 0, 0, 611);
     td::assert_members_size(&td, 0);
-    assert!(td.time_locked_balance().extraneous_locked_amount() == 0);
+    assert!(td::extraneous_locked_amount(&td) == 0);
 
     // increment clock and top up
     set_clock_sec(&mut clock, 700);
 
     td::top_up(&mut td, balance::create_for_testing(100), &clock);
-    assert!(td.time_locked_balance().extraneous_locked_amount() == 100);
+    assert!(td::extraneous_locked_amount(&td) == 100);
 
     td::add_member(&mut td, 0, 100, &clock);
     td::change_unlock_per_second(&mut td, 50, &clock);
