@@ -112,6 +112,10 @@ public struct Farm<phantom T> has key, store {
     td: TimeDistributor<T, ID>,
 }
 
+public fun time_distributor<T>(farm: &Farm<T>): &TimeDistributor<T, ID> {
+    &farm.td
+}
+
 /// Create a new `Farm` with provided initial balance, unlock start timestamp (in seconds), and `AdminCap` that will be
 /// the admin for this `Farm`.
 public fun create<T>(
