@@ -469,7 +469,7 @@ macro fun requires_balance_sum_no_overflow<$T>($balance0: &Balance<$T>, $balance
 
 /* ================= specs ================= */
 
-#[spec(verify)]
+#[spec(prove)]
 fun create_spec<A, B>(
     init_a: Balance<A>,
     init_b: Balance<B>,
@@ -488,7 +488,7 @@ fun create_spec<A, B>(
     result
 }
 
-#[spec(verify)]
+#[spec(prove)]
 fun deposit_spec<A, B>(
     pool: &mut Pool<A, B>,
     input_a: Balance<A>,
@@ -511,7 +511,7 @@ fun deposit_spec<A, B>(
     (result_input_a, result_input_b, result_lp)
 }
 
-#[spec(verify)]
+#[spec(prove)]
 fun generic_deposit_spec(
     input_a_value: u64,
     input_b_value: u64,
@@ -565,7 +565,7 @@ fun generic_deposit_spec(
     (deposit_a, deposit_b, lp_to_issue)
 }
 
-#[spec(verify)]
+#[spec(prove)]
 fun withdraw_spec<A, B>(
     pool: &mut Pool<A, B>,
     lp_in: Balance<LP<A, B>>
@@ -588,7 +588,7 @@ fun withdraw_spec<A, B>(
     (result_a, result_b)
 }
 
-#[spec(verify)]
+#[spec(prove)]
 fun swap_a_spec<A, B>(
     pool: &mut Pool<A, B>,
     input: Balance<A>,
@@ -621,7 +621,7 @@ fun swap_a_spec<A, B>(
     result
 }
 
-#[spec(verify)]
+#[spec(prove)]
 fun swap_b_spec<A, B>(
     pool: &mut Pool<A, B>,
     input: Balance<B>,
@@ -654,7 +654,7 @@ fun swap_b_spec<A, B>(
     result
 }
 
-#[spec(verify)]
+#[spec(prove)]
 fun calc_swap_result_spec(
     i_value: u64,
     i_pool_value: u64,
@@ -710,7 +710,7 @@ fun calc_swap_result_spec(
     (out_value, admin_fee_in_lp)
 }
 
-#[spec(verify)]
+#[spec(prove)]
 fun admin_set_fees_spec<A, B>(
     pool: &mut Pool<A, B>,
     cap: &AdminCap,
