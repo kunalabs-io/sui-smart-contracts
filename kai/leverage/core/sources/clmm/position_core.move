@@ -2650,15 +2650,15 @@ public(package) macro fun rebalance_collect_reward<$X, $Y, $T, $Pool, $LP>(
     reward
 }
 
-public(package) macro fun rebalance_add_liquidity_with_receipt<$X, $Y, $Pool, $LP, $CetusReceipt>(
+public(package) macro fun rebalance_add_liquidity_with_receipt<$X, $Y, $Pool, $LP, $Receipt>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
     $receipt: &mut RebalanceReceipt,
     $price_info: &PythPriceInfo,
     $debt_info: &DebtInfo,
     $pool_object: &mut $Pool,
-    $add_liquidity_lambda: |&mut $Pool, &mut $LP| -> (u128, u64, u64),
-): $CetusReceipt {
+    $add_liquidity_lambda: |&mut $Pool, &mut $LP| -> (u128, u64, u64, $Receipt),
+): $Receipt {
     let receipt = $receipt;
     let position = $position;
 
