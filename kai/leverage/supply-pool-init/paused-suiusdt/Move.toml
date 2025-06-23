@@ -1,9 +1,9 @@
 [package]
-name = "KaiLeverageSupplyPoolInitUsdc"
+name = "Paused_KaiLeverageSupplyPoolInitSuiUsdt"
 edition = "2024.beta"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
-published-at = "0xa47906ee2160b8d1d89591a2bb37ed71053bfb3ed1b39581f03358950a91ca79"
+published-at = "0xfd3e54e465577273b7eb211212a01ca17418c667aec490eaf7fa5592bfd799f8"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.41.2", override = true }
@@ -11,7 +11,7 @@ MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/s
 KaiLeverage = { local = "../../core" }
 KaiLeverageSupplyPoolInit = { local = "../core" }
 AccessManagement = { local = "../../../../access-management", override = true }
-usdc = { local = "../../../../_vendor/USDC/usdc", override = true }
+SuiUsdt = { local = "../../../../_vendor/SuiUsdt", override = true }
 
 [addresses]
-klsp_usdc = "0xa47906ee2160b8d1d89591a2bb37ed71053bfb3ed1b39581f03358950a91ca79"
+paused_klsp_suiusdt = "0xfd3e54e465577273b7eb211212a01ca17418c667aec490eaf7fa5592bfd799f8"

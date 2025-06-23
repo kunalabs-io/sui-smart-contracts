@@ -23,17 +23,16 @@ dependencies = [
 
 [[move.package]]
 id = "BluefinSpot"
-source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "5dfcb03", subdir = "" }
+source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "f825f19", subdir = "" }
 
 dependencies = [
-  { id = "CetusClmm", name = "CetusClmm" },
   { id = "IntegerMate", name = "IntegerMate" },
   { id = "Sui", name = "Sui" },
 ]
 
 [[move.package]]
 id = "CetusClmm"
-source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "mainnet-v1.26.0", subdir = "sui/cetus_clmm" }
+source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "c822f41", subdir = "sui/cetus_clmm" }
 
 dependencies = [
   { id = "IntegerMate", name = "IntegerMate" },
@@ -51,17 +50,8 @@ dependencies = [
 ]
 
 [[move.package]]
-id = "FlowxClmm"
-source = { local = "../../../../_vendor/FlowxClmm" }
-
-dependencies = [
-  { id = "MoveStdlib", name = "MoveStdlib" },
-  { id = "Sui", name = "Sui" },
-]
-
-[[move.package]]
 id = "IntegerMate"
-source = { git = "https://github.com/CetusProtocol/integer-mate.git", rev = "mainnet-v1.23.1", subdir = "sui" }
+source = { git = "https://github.com/CetusProtocol/integer-mate.git", rev = "sui-v1.1.2", subdir = "sui" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -76,12 +66,10 @@ dependencies = [
   { id = "BluefinSpot", name = "BluefinSpot" },
   { id = "CetusClmm", name = "CetusClmm" },
   { id = "DEEP", name = "DEEP" },
-  { id = "FlowxClmm", name = "FlowxClmm" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
   { id = "SuiUsdt", name = "SuiUsdt" },
-  { id = "TurbosCLMM", name = "TurbosCLMM" },
   { id = "USDY", name = "USDY" },
   { id = "WHUSDCE", name = "WHUSDCE" },
   { id = "WHUSDTE", name = "WHUSDTE" },
@@ -90,7 +78,7 @@ dependencies = [
 
 [[move.package]]
 id = "MoveSTL"
-source = { git = "https://github.com/CetusProtocol/move-stl.git", rev = "mainnet-v1.23.1", subdir = "sui" }
+source = { git = "https://github.com/CetusProtocol/move-stl.git", rev = "mainnet-v1.48.2", subdir = "sui" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -121,10 +109,6 @@ dependencies = [
 [[move.package]]
 id = "SuiUsdt"
 source = { local = "../../../../_vendor/SuiUsdt" }
-
-[[move.package]]
-id = "TurbosCLMM"
-source = { git = "https://github.com/turbos-finance/turbos-sui-move-interface.git", rev = "8887603", subdir = "clmm" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -198,7 +182,7 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.44.3"
+compiler-version = "1.48.2"
 edition = "2024.beta"
 flavor = "sui"
 

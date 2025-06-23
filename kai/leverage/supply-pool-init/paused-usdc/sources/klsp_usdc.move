@@ -1,19 +1,19 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
-module klsp_suiusdt::klsuiusdt;
+module paused_klsp_usdc::klusdc;
 
 use kai_leverage::equity;
 use klsp_init::init;
-use suiusdt::usdt::USDT as SUIUSDT;
+use usdc::usdc::USDC;
 
-public struct KLSUIUSDT has drop {}
+public struct KLUSDC has drop {}
 
-fun init(w: KLSUIUSDT, ctx: &mut TxContext) {
+fun init(w: KLUSDC, ctx: &mut TxContext) {
     let decimals = 6;
-    let symbol = b"klsuiUSDT";
-    let name = b"klsuiUSDT";
-    let description = b"Kai Leverage suiUSDT Supply Pool LP Token";
+    let symbol = b"klUSDC";
+    let name = b"klUSDC";
+    let description = b"Kai Leverage USDC Supply Pool LP Token";
     let icon_url = option::none();
     let (treasury, coin_metadata) = equity::create_treasury(
         w,
@@ -26,7 +26,7 @@ fun init(w: KLSUIUSDT, ctx: &mut TxContext) {
     );
 
     let sender = tx_context::sender(ctx);
-    let ticket = init::new_pool_creation_ticket<SUIUSDT, KLSUIUSDT>(treasury, ctx);
+    let ticket = init::new_pool_creation_ticket<USDC, KLUSDC>(treasury, ctx);
     transfer::public_transfer(ticket, sender);
     transfer::public_transfer(coin_metadata, sender);
 }

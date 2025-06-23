@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "84729B8E11E9B37C038A02543D4527FA939E23A15A64259FC6744489924ACB22"
+manifest_digest = "CC8BAC175FEF38182A0DA69D71D26759ED485ECB831B90ACD35DD94EB97F4457"
 deps_digest = "52B406A7A21811BEF51751CF88DA0E76DAEFFEAC888D4F4060B1A72BBE7D8D35"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
@@ -10,7 +10,7 @@ dependencies = [
   { id = "KaiLeverageSupplyPoolInit", name = "KaiLeverageSupplyPoolInit" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
-  { id = "usdc", name = "usdc" },
+  { id = "SuiUsdt", name = "SuiUsdt" },
 ]
 
 [[move.package]]
@@ -24,17 +24,26 @@ dependencies = [
 
 [[move.package]]
 id = "BluefinSpot"
-source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "5dfcb03", subdir = "" }
+source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "f825f19", subdir = "" }
 
 dependencies = [
-  { id = "CetusClmm", name = "CetusClmm" },
   { id = "IntegerMate", name = "IntegerMate" },
   { id = "Sui", name = "Sui" },
 ]
 
 [[move.package]]
+id = "Bridge"
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "3802482bd4e3", subdir = "crates/sui-framework/packages/bridge" }
+
+dependencies = [
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
+]
+
+[[move.package]]
 id = "CetusClmm"
-source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "mainnet-v1.26.0", subdir = "sui/cetus_clmm" }
+source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "c822f41", subdir = "sui/cetus_clmm" }
 
 dependencies = [
   { id = "IntegerMate", name = "IntegerMate" },
@@ -52,17 +61,8 @@ dependencies = [
 ]
 
 [[move.package]]
-id = "FlowxClmm"
-source = { local = "../../../../_vendor/FlowxClmm" }
-
-dependencies = [
-  { id = "MoveStdlib", name = "MoveStdlib" },
-  { id = "Sui", name = "Sui" },
-]
-
-[[move.package]]
 id = "IntegerMate"
-source = { git = "https://github.com/CetusProtocol/integer-mate.git", rev = "mainnet-v1.23.1", subdir = "sui" }
+source = { git = "https://github.com/CetusProtocol/integer-mate.git", rev = "sui-v1.1.2", subdir = "sui" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -77,12 +77,10 @@ dependencies = [
   { id = "BluefinSpot", name = "BluefinSpot" },
   { id = "CetusClmm", name = "CetusClmm" },
   { id = "DEEP", name = "DEEP" },
-  { id = "FlowxClmm", name = "FlowxClmm" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
   { id = "SuiUsdt", name = "SuiUsdt" },
-  { id = "TurbosCLMM", name = "TurbosCLMM" },
   { id = "USDY", name = "USDY" },
   { id = "WHUSDCE", name = "WHUSDCE" },
   { id = "WHUSDTE", name = "WHUSDTE" },
@@ -103,7 +101,7 @@ dependencies = [
 
 [[move.package]]
 id = "MoveSTL"
-source = { git = "https://github.com/CetusProtocol/move-stl.git", rev = "mainnet-v1.23.1", subdir = "sui" }
+source = { git = "https://github.com/CetusProtocol/move-stl.git", rev = "mainnet-v1.48.2", subdir = "sui" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -132,15 +130,23 @@ dependencies = [
 ]
 
 [[move.package]]
+id = "SuiSystem"
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "3802482bd4e3", subdir = "crates/sui-framework/packages/sui-system" }
+
+dependencies = [
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+]
+
+[[move.package]]
 id = "SuiUsdt"
 source = { local = "../../../../_vendor/SuiUsdt" }
 
-[[move.package]]
-id = "TurbosCLMM"
-source = { git = "https://github.com/turbos-finance/turbos-sui-move-interface.git", rev = "8887603", subdir = "clmm" }
-
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -219,6 +225,6 @@ flavor = "sui"
 
 [env.mainnet]
 chain-id = "35834a8a"
-original-published-id = "0xa47906ee2160b8d1d89591a2bb37ed71053bfb3ed1b39581f03358950a91ca79"
-latest-published-id = "0xa47906ee2160b8d1d89591a2bb37ed71053bfb3ed1b39581f03358950a91ca79"
+original-published-id = "0xfd3e54e465577273b7eb211212a01ca17418c667aec490eaf7fa5592bfd799f8"
+latest-published-id = "0xfd3e54e465577273b7eb211212a01ca17418c667aec490eaf7fa5592bfd799f8"
 published-version = "1"

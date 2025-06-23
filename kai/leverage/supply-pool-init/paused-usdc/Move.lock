@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "5942C4B102AAF5BE2CC3DF5D0FFF27DC9AACF890E25AD00E058591147913B3D5"
+manifest_digest = "B109F1E03CDF33A39D5DF92A6A95EB4EB631FE096E88D3BCEAC7F0327FDC2B93"
 deps_digest = "52B406A7A21811BEF51751CF88DA0E76DAEFFEAC888D4F4060B1A72BBE7D8D35"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
@@ -10,7 +10,7 @@ dependencies = [
   { id = "KaiLeverageSupplyPoolInit", name = "KaiLeverageSupplyPoolInit" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
-  { id = "SuiUsdt", name = "SuiUsdt" },
+  { id = "usdc", name = "usdc" },
 ]
 
 [[move.package]]
@@ -24,17 +24,16 @@ dependencies = [
 
 [[move.package]]
 id = "BluefinSpot"
-source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "5dfcb03", subdir = "" }
+source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "f825f19", subdir = "" }
 
 dependencies = [
-  { id = "CetusClmm", name = "CetusClmm" },
   { id = "IntegerMate", name = "IntegerMate" },
   { id = "Sui", name = "Sui" },
 ]
 
 [[move.package]]
 id = "CetusClmm"
-source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "mainnet-v1.26.0", subdir = "sui/cetus_clmm" }
+source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "c822f41", subdir = "sui/cetus_clmm" }
 
 dependencies = [
   { id = "IntegerMate", name = "IntegerMate" },
@@ -52,17 +51,8 @@ dependencies = [
 ]
 
 [[move.package]]
-id = "FlowxClmm"
-source = { local = "../../../../_vendor/FlowxClmm" }
-
-dependencies = [
-  { id = "MoveStdlib", name = "MoveStdlib" },
-  { id = "Sui", name = "Sui" },
-]
-
-[[move.package]]
 id = "IntegerMate"
-source = { git = "https://github.com/CetusProtocol/integer-mate.git", rev = "mainnet-v1.23.1", subdir = "sui" }
+source = { git = "https://github.com/CetusProtocol/integer-mate.git", rev = "sui-v1.1.2", subdir = "sui" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -77,12 +67,10 @@ dependencies = [
   { id = "BluefinSpot", name = "BluefinSpot" },
   { id = "CetusClmm", name = "CetusClmm" },
   { id = "DEEP", name = "DEEP" },
-  { id = "FlowxClmm", name = "FlowxClmm" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
   { id = "SuiUsdt", name = "SuiUsdt" },
-  { id = "TurbosCLMM", name = "TurbosCLMM" },
   { id = "USDY", name = "USDY" },
   { id = "WHUSDCE", name = "WHUSDCE" },
   { id = "WHUSDTE", name = "WHUSDTE" },
@@ -103,7 +91,7 @@ dependencies = [
 
 [[move.package]]
 id = "MoveSTL"
-source = { git = "https://github.com/CetusProtocol/move-stl.git", rev = "mainnet-v1.23.1", subdir = "sui" }
+source = { git = "https://github.com/CetusProtocol/move-stl.git", rev = "mainnet-v1.48.2", subdir = "sui" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -134,10 +122,6 @@ dependencies = [
 [[move.package]]
 id = "SuiUsdt"
 source = { local = "../../../../_vendor/SuiUsdt" }
-
-[[move.package]]
-id = "TurbosCLMM"
-source = { git = "https://github.com/turbos-finance/turbos-sui-move-interface.git", rev = "8887603", subdir = "clmm" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -219,6 +203,6 @@ flavor = "sui"
 
 [env.mainnet]
 chain-id = "35834a8a"
-original-published-id = "0xfd3e54e465577273b7eb211212a01ca17418c667aec490eaf7fa5592bfd799f8"
-latest-published-id = "0xfd3e54e465577273b7eb211212a01ca17418c667aec490eaf7fa5592bfd799f8"
+original-published-id = "0xa47906ee2160b8d1d89591a2bb37ed71053bfb3ed1b39581f03358950a91ca79"
+latest-published-id = "0xa47906ee2160b8d1d89591a2bb37ed71053bfb3ed1b39581f03358950a91ca79"
 published-version = "1"
