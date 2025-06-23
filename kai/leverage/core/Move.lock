@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "36FB86BEEA0CBF84FF5BB8E00ADCDD8B6A03F7A58A6F6E417D4B6DAC61558E69"
+manifest_digest = "3A6A51A00B6EE43EF496074FDCD80429F1A822F1AEA320708E10FEFE3F320519"
 deps_digest = "8D8E72BAA06E63572166CA7E7F6E159CA2D11E27ADE3961B15E29922A04B0D32"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
@@ -30,9 +30,10 @@ dependencies = [
 
 [[move.package]]
 id = "BluefinSpot"
-source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "f825f19", subdir = "" }
+source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "dddb0dd", subdir = "" }
 
 dependencies = [
+  { id = "IntegerLibrary", name = "IntegerLibrary" },
   { id = "IntegerMate", name = "IntegerMate" },
   { id = "Sui", name = "Sui" },
 ]
@@ -53,6 +54,14 @@ source = { local = "../../../_vendor/DEEP" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+]
+
+[[move.package]]
+id = "IntegerLibrary"
+source = { git = "https://github.com/fireflyprotocol/integer-library.git", rev = "v1.0.1", subdir = "" }
+
+dependencies = [
   { id = "Sui", name = "Sui" },
 ]
 
@@ -179,5 +188,5 @@ flavor = "sui"
 [env.mainnet]
 chain-id = "35834a8a"
 original-published-id = "0x51e0ccce48f0763f98f1cb4856847c2e1531adacada99cdd7626ab999db57523"
-latest-published-id = "0x014ecd52a8a8e5c9283250c5fae31dfcd755dda2febe077ef578c6091fd7f420"
-published-version = "9"
+latest-published-id = "0x8e0d78aecb4488da5a6f8c089106934d756a91b757b0f9404b03f966288cd7cb"
+published-version = "10"

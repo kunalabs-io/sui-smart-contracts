@@ -3,7 +3,7 @@ name = "KaiLeverage"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
 edition = "2024.beta"
-published-at = "0x014ecd52a8a8e5c9283250c5fae31dfcd755dda2febe077ef578c6091fd7f420"
+published-at = "0x8e0d78aecb4488da5a6f8c089106934d756a91b757b0f9404b03f966288cd7cb"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.41.2", override = true }
@@ -14,7 +14,7 @@ Pyth = { local = "../../../_vendor/Pyth" }
 WHUSDCE = { local = "../../../_vendor/whUSDCe" }
 WHUSDTE = { local = "../../../_vendor/whUSDTe" }
 usdc = { local = "../../../_vendor/USDC/usdc" }
-BluefinSpot = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", subdir = "", rev = "f825f19" }
+BluefinSpot = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", subdir = "", rev = "dddb0dd" }
 SuiUsdt = { local = "../../../_vendor/SuiUsdt" }
 USDY = { local = "../../../_vendor/USDY" }
 DEEP = { local = "../../../_vendor/DEEP" }
