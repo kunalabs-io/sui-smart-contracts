@@ -3,13 +3,16 @@ name = "KaiLeverage"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
 edition = "2024.beta"
-published-at = "0x49691904e57eff80e1409e6c71f643fecb5b7eeec97a1b4b97205a7317bed12a"
+published-at = "0x7afd8492de6e367d17c6a3056393ecf5544489eaf0234affcf2f5e9fff9240e3"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.41.2", override = true }
 MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.41.2", override = true }
 AccessManagement = { local = "../../../access-management" }
-CetusClmm = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", subdir = "sui/cetus_clmm", rev = "c822f41", override = true }
+CetusClmm = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", subdir = "sui/cetus_clmm", rev = "mainnet-v1.49.2", override = true }
+Bridge = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/bridge", rev = "mainnet-v1.41.2", override = true }
+SuiSystem = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-system", rev = "mainnet-v1.41.2", override = true }
+IntegerMate = { git = "https://github.com/CetusProtocol/integer-mate", subdir = "sui", rev = "c502cff", override = true }
 Pyth = { local = "../../../_vendor/Pyth" }
 WHUSDCE = { local = "../../../_vendor/whUSDCe" }
 WHUSDTE = { local = "../../../_vendor/whUSDTe" }

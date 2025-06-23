@@ -3,12 +3,13 @@
 
 module kai_leverage::cetus;
 
-use access_management::access::ActionRequest;
+use access_management::access::{Self, ActionRequest};
 use cetus_clmm::config as cetus_config;
 use cetus_clmm::pool as cetus_pool;
 use cetus_clmm::position::Position as CetusPosition;
 use cetus_clmm::rewarder::RewarderGlobalVault;
 use integer_mate::i32::{Self, I32};
+use kai_leverage::balance_bag::BalanceBag;
 use kai_leverage::debt_info::DebtInfo;
 use kai_leverage::position_core_clmm::{
     Self as core,
@@ -26,6 +27,10 @@ use kai_leverage::supply_pool::SupplyPool;
 use sui::balance::{Self, Balance};
 use sui::clock::Clock;
 use sui::sui::SUI;
+
+/* ================= access ================= */
+
+public struct AHandleExploitedPosition() has drop;
 
 /* ================= util ================= */
 
@@ -585,6 +590,103 @@ public fun rebalance_add_liquidity_by_fix_coin<X, Y>(
             (delta_l, delta_x, delta_y, receipt)
         },
     )
+}
+
+/* ================= cetus incident recovery ================= */
+
+public fun sync_exploited_position_liquidity_by_small_withdraw<X, Y>(
+    position: &mut Position<X, Y, CetusPosition>,
+    config: &mut PositionConfig,
+    cetus_config: &cetus_config::GlobalConfig,
+    cetus_pool: &mut cetus_pool::Pool<X, Y>,
+    balance_bag: &mut BalanceBag,
+    clock: &Clock,
+    ctx: &mut TxContext,
+): ActionRequest {
+    core::check_versions(position, config);
+    assert!(position.config_id() == object::id(config)); // EInvalidConfig
+    assert!(config.pool_object_id() == object::id(cetus_pool)); // EInvalidPool
+    assert!(position.ticket_active() == false); // ETicketActive
+
+    let position_id = object::id(position.lp_position());
+    assert!(cetus_pool.is_attacked_position(position_id)); // EPositionNotExploited
+
+    let position_info = cetus_pool.borrow_position_info(position_id);
+    let info_liquidity = position_info.info_liquidity();
+    assert!(info_liquidity != position.lp_position().liquidity()); // EPositionAlreadySynced
+
+    let delta_l = 1;
+    let initial_liquidity = position.lp_position().liquidity();
+
+    let (delta_x, delta_y) = remove_liquidity(
+        cetus_config,
+        cetus_pool,
+        position.lp_position_mut(),
+        delta_l,
+        clock,
+    );
+    config.decrease_current_global_l(initial_liquidity - position.lp_position().liquidity());
+
+    balance_bag.add(delta_x);
+    balance_bag.add(delta_y);
+
+    access::new_request(AHandleExploitedPosition(), ctx)
+}
+
+public fun destruct_exploited_position_and_return_lp<X, Y>(
+    position: Position<X, Y, CetusPosition>,
+    config: &PositionConfig,
+    cap: PositionCap,
+    cetus_pool: &mut cetus_pool::Pool<X, Y>,
+    ctx: &mut TxContext,
+): CetusPosition {
+    core::check_versions(&position, config);
+    assert!(position.config_id() == object::id(config)); // EInvalidConfig
+    assert!(cap.position_id() == object::id(&position)); // EInvalidPositionCap
+    assert!(position.ticket_active() == false); // ETicketActive
+    assert!(!config.delete_position_disabled()); // EDeletePositionDisabled
+
+    let position_id = object::id(position.lp_position());
+    assert!(cetus_pool.is_attacked_position(position_id)); // EPositionNotExploited
+
+    // delete position
+    let (
+        id,
+        _config_id,
+        lp_position,
+        col_x,
+        col_y,
+        debt_bag,
+        collected_fees,
+        owner_reward_stash,
+        _ticket_active,
+        _version,
+    ) = core::position_deconstructor(position);
+
+    id.delete();
+    col_x.destroy_zero();
+    col_y.destroy_zero();
+    debt_bag.destroy_empty();
+    owner_reward_stash.destroy_empty();
+
+    // delete cap
+    let (id, position_id) = core::position_cap_deconstructor(cap);
+    let cap_id = id.to_inner();
+    id.delete();
+
+    if (collected_fees.is_empty()) {
+        collected_fees.destroy_empty()
+    } else {
+        core::share_deleted_position_collected_fees(
+            position_id,
+            collected_fees,
+            ctx,
+        );
+    };
+
+    core::emit_delete_position_info(position_id, cap_id);
+
+    lp_position
 }
 
 /* ================= read ================= */

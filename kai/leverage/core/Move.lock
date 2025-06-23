@@ -2,13 +2,14 @@
 
 [move]
 version = 3
-manifest_digest = "702188B43ED2F6E2827A78173CD99C44C2290B167C1996F3363311A00196C1AA"
-deps_digest = "8D8E72BAA06E63572166CA7E7F6E159CA2D11E27ADE3961B15E29922A04B0D32"
+manifest_digest = "DCF5866265FA32381101A4AB2FBB9E9B844C78B7195C1D1C8AD7C11088EBF344"
+deps_digest = "6D210678E7B9B4E83C17FF0E0EC8DB9C0E7C31AB2A9B1587A9F3F210AA7C1213"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
   { id = "BluefinSpot", name = "BluefinSpot" },
   { id = "CetusClmm", name = "CetusClmm" },
   { id = "DEEP", name = "DEEP" },
+  { id = "IntegerMate", name = "IntegerMate" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
@@ -40,7 +41,7 @@ dependencies = [
 
 [[move.package]]
 id = "CetusClmm"
-source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "c822f41", subdir = "sui/cetus_clmm" }
+source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "mainnet-v1.49.2", subdir = "sui/cetus_clmm" }
 
 dependencies = [
   { id = "IntegerMate", name = "IntegerMate" },
@@ -67,7 +68,7 @@ dependencies = [
 
 [[move.package]]
 id = "IntegerMate"
-source = { git = "https://github.com/CetusProtocol/integer-mate.git", rev = "sui-v1.1.2", subdir = "sui" }
+source = { git = "https://github.com/CetusProtocol/integer-mate", rev = "c502cff", subdir = "sui" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -188,5 +189,5 @@ flavor = "sui"
 [env.mainnet]
 chain-id = "35834a8a"
 original-published-id = "0x51e0ccce48f0763f98f1cb4856847c2e1531adacada99cdd7626ab999db57523"
-latest-published-id = "0x49691904e57eff80e1409e6c71f643fecb5b7eeec97a1b4b97205a7317bed12a"
-published-version = "11"
+latest-published-id = "0x7afd8492de6e367d17c6a3056393ecf5544489eaf0234affcf2f5e9fff9240e3"
+published-version = "12"
