@@ -1,0 +1,17 @@
+[package]
+name = "KaiLeverageSupplyPoolInitUsdc"
+edition = "2024.beta"
+license = "Apache 2.0"
+authors = ["Krešimir Klas (kklas@kunalabs.io)"]
+published-at = "0x3f110dd8b324ce4c5df8b344b7d71bdd939083a9ea6f454161667dba872f99d6"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.41.2", override = true }
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.41.2", override = true }
+KaiLeverage = { local = "../../core" }
+KaiLeverageSupplyPoolInit = { local = "../core" }
+AccessManagement = { local = "../../../../access-management", override = true }
+usdc = { local = "../../../../_vendor/USDC/usdc", override = true }
+
+[addresses]
+klsp_usdc = "0x3f110dd8b324ce4c5df8b344b7d71bdd939083a9ea6f454161667dba872f99d6"
