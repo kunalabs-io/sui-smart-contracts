@@ -1,5 +1,5 @@
 [package]
-name = "KaiYSUIUSDT"
+name = "PausedKaiYSUIUSDT"
 edition = "2024.beta"
 published-at = "0xaa1365f35a163f785b2a660b97831298dc145a3bc71e993407a5991722974e70"
 
@@ -7,4 +7,4 @@ published-at = "0xaa1365f35a163f785b2a660b97831298dc145a3bc71e993407a5991722974e
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.41.2", override = true }
 
 [addresses]
-kai_ysuiusdt = "0xaa1365f35a163f785b2a660b97831298dc145a3bc71e993407a5991722974e70"
+paused_kai_ysuiusdt = "0xaa1365f35a163f785b2a660b97831298dc145a3bc71e993407a5991722974e70"

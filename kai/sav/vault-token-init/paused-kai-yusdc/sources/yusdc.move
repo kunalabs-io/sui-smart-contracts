@@ -1,20 +1,20 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
-module kai_ysuiusdt::ysuiusdt;
+module paused_kai_yusdc::yusdc;
 
 use sui::coin;
 
-public struct YSUIUSDT has drop {}
+public struct YUSDC has drop {}
 
 #[lint_allow(share_owned)]
-fun init(witness: YSUIUSDT, ctx: &mut TxContext) {
+fun init(witness: YUSDC, ctx: &mut TxContext) {
     let (treasury, meta) = coin::create_currency(
         witness,
         6,
-        b"ysuiUSDT",
-        b"Kai Vault suiUSDT",
-        b"Kai Vault yield-bearing suiUSDT",
+        b"yUSDC",
+        b"",
+        b"",
         option::none(),
         ctx,
     );
