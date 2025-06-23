@@ -9,6 +9,7 @@ use std::u64;
 use sui::balance::{Self, Balance};
 use sui::clock::Clock;
 use sui::coin::{Self, TreasuryCap};
+use sui::dynamic_field as df;
 use sui::event;
 use sui::package::UpgradeCap;
 use sui::vec_map::{Self, VecMap};
@@ -16,7 +17,7 @@ use sui::vec_set;
 
 /* ================= constants ================= */
 
-const MODULE_VERSION: u64 = 1;
+const MODULE_VERSION: u64 = 2;
 
 const BPS_IN_100_PCT: u64 = 10000;
 
@@ -63,6 +64,9 @@ const EInvalidUpgradeCap: u64 = 11;
 
 /// Treasury supply has to be 0
 const ETreasurySupplyPositive: u64 = 12;
+
+/// Withdrawals are disabled for this vault
+const EWithdrawalsDisabled: u64 = 13;
 
 /* ================= events ================= */
 
@@ -443,6 +447,30 @@ public fun remove_strategy<T, YT>(
     set_strategy_target_alloc_weights_bps(cap, vault, ids_for_weights, weights_bps);
 }
 
+entry fun set_withdrawals_disabled<T, YT>(
+    _cap: &AdminCap<YT>,
+    vault: &mut Vault<T, YT>,
+    withdrawals_disabled: bool,
+) {
+    assert_version(vault);
+
+    if (df::exists_(&vault.id, b"withdrawals_disabled")) {
+        let val = df::borrow_mut(&mut vault.id, b"withdrawals_disabled");
+        *val = withdrawals_disabled;
+    } else {
+        df::add(&mut vault.id, b"withdrawals_disabled", withdrawals_disabled);
+    }
+}
+
+public fun withdrawals_disabled<T, YT>(vault: &Vault<T, YT>): bool {
+    if (df::exists_(&vault.id, b"withdrawals_disabled")) {
+        let val = df::borrow(&vault.id, b"withdrawals_disabled");
+        *val
+    } else {
+        false
+    }
+}
+
 entry fun migrate<T, YT>(_cap: &AdminCap<YT>, vault: &mut Vault<T, YT>) {
     assert!(vault.version < MODULE_VERSION, ENotUpgrade);
     vault.version = MODULE_VERSION;
@@ -542,6 +570,7 @@ public fun withdraw<T, YT>(
     assert_version(vault);
     assert!(vault.withdraw_ticket_issued == false, EWithdrawTicketIssued);
     assert!(balance::value(&balance) > 0, EZeroAmount);
+    assert!(withdrawals_disabled(vault) == false, EWithdrawalsDisabled);
     vault.withdraw_ticket_issued = true;
 
     let mut ticket = create_withdraw_ticket(vault);
