@@ -14,6 +14,7 @@ use std::type_name::{Self, TypeName};
 use sui::bag::{Self, Bag};
 use sui::balance::{Self, Balance};
 use sui::clock::Clock;
+use sui::dynamic_field as df;
 use sui::event;
 use sui::sui::SUI;
 use sui::vec_map::{Self, VecMap};
@@ -75,7 +76,7 @@ use fun kai_leverage::flowx::position_tick_range as flowx_clmm::position::Positi
 
 /* ================= constants ================= */
 
-const MODULE_VERSION: u16 = 1;
+const MODULE_VERSION: u16 = 2;
 
 /* ================= errors ================= */
 
@@ -605,6 +606,115 @@ public fun set_position_creation_fee_sui(
 ): ActionRequest {
     config.position_creation_fee_sui = value;
     access::new_request(AModifyConfig {}, ctx)
+}
+
+/* ================= config extensions ================= */
+
+public struct LiquidationDisabledKey() has copy, drop, store;
+public struct ReductionDisabledKey() has copy, drop, store;
+public struct AddLiquidityDisabledKey() has copy, drop, store;
+public struct OwnerCollectFeeDisabledKey() has copy, drop, store;
+public struct OwnerCollectRewardDisabledKey() has copy, drop, store;
+public struct DeletePositionDisabledKey() has copy, drop, store;
+
+fun set_config_extension<Key: copy + drop + store, Val: copy + drop + store>(
+    config: &mut PositionConfig,
+    key: Key,
+    new_value: Val,
+    ctx: &mut TxContext,
+): ActionRequest {
+    if (df::exists_(&config.id, key)) {
+        let val = df::borrow_mut<Key, Val>(&mut config.id, key);
+        *val = new_value;
+    } else {
+        df::add(&mut config.id, key, new_value);
+    };
+
+    access::new_request(AModifyConfig {}, ctx)
+}
+
+fun get_config_extension_or_default<Key: copy + drop + store, Val: copy + drop + store>(
+    config: &PositionConfig,
+    key: Key,
+    default_value: Val,
+): Val {
+    if (df::exists_(&config.id, key)) {
+        *df::borrow<Key, Val>(&config.id, key)
+    } else {
+        default_value
+    }
+}
+
+public fun set_liquidation_disabled(
+    config: &mut PositionConfig,
+    disabled: bool,
+    ctx: &mut TxContext,
+): ActionRequest {
+    set_config_extension(config, LiquidationDisabledKey(), disabled, ctx)
+}
+
+public fun liquidation_disabled(config: &PositionConfig): bool {
+    get_config_extension_or_default(config, LiquidationDisabledKey(), false)
+}
+
+public fun set_reduction_disabled(
+    config: &mut PositionConfig,
+    disabled: bool,
+    ctx: &mut TxContext,
+): ActionRequest {
+    set_config_extension(config, ReductionDisabledKey(), disabled, ctx)
+}
+
+public fun reduction_disabled(config: &PositionConfig): bool {
+    get_config_extension_or_default(config, ReductionDisabledKey(), false)
+}
+
+public fun set_add_liquidity_disabled(
+    config: &mut PositionConfig,
+    disabled: bool,
+    ctx: &mut TxContext,
+): ActionRequest {
+    set_config_extension(config, AddLiquidityDisabledKey(), disabled, ctx)
+}
+
+public fun add_liquidity_disabled(config: &PositionConfig): bool {
+    get_config_extension_or_default(config, AddLiquidityDisabledKey(), false)
+}
+
+public fun set_owner_collect_fee_disabled(
+    config: &mut PositionConfig,
+    disabled: bool,
+    ctx: &mut TxContext,
+): ActionRequest {
+    set_config_extension(config, OwnerCollectFeeDisabledKey(), disabled, ctx)
+}
+
+public fun owner_collect_fee_disabled(config: &PositionConfig): bool {
+    get_config_extension_or_default(config, OwnerCollectFeeDisabledKey(), false)
+}
+
+public fun set_owner_collect_reward_disabled(
+    config: &mut PositionConfig,
+    disabled: bool,
+    ctx: &mut TxContext,
+): ActionRequest {
+    set_config_extension(config, OwnerCollectRewardDisabledKey(), disabled, ctx)
+}
+
+public fun owner_collect_reward_disabled(config: &PositionConfig): bool {
+    get_config_extension_or_default(config, OwnerCollectRewardDisabledKey(), false)
+}
+
+public fun set_delete_position_disabled(
+    config: &mut PositionConfig,
+    disabled: bool,
+    ctx: &mut TxContext,
+): ActionRequest {
+    set_config_extension(config, DeletePositionDisabledKey(), disabled, ctx)
+}
+
+public fun delete_position_disabled(config: &PositionConfig): bool {
+    get_config_extension_or_default(config, DeletePositionDisabledKey(), false)
 }
 
 /* ================= DeleverageTicket ================= */
@@ -1731,6 +1841,9 @@ public(package) macro fun create_deleverage_ticket_for_liquidation<$X, $Y, $Pool
 ): DeleverageTicket {
     check_versions($position, $config);
 
+    let config = $config;
+    assert!(!config.liquidation_disabled()); // ELiquidationDisabled
+
     let u128_max = (((1u256 << 128) - 1) as u128);
     create_deleverage_ticket_inner!(
         $position,
@@ -1862,6 +1975,7 @@ public(package) macro fun deleverage_for_liquidation<$X, $Y, $SX, $SY, $Pool, $L
     let supply_pool_y = $supply_pool_y;
 
     assert!(position.config_id() == object::id(config)); // EInvalidConfig
+    assert!(!config.liquidation_disabled()); // ELiquidationDisabled
 
     let mut debt_info = debt_info::empty(object::id(config.lend_facil_cap()));
     debt_info.add_from_supply_pool(supply_pool_x, $clock);
@@ -1905,6 +2019,7 @@ public(package) macro fun liquidate_col_x<$X, $Y, $SY, $LP>(
     check_versions(position, config);
     assert!(position.config_id() == object::id(config)); // EInvalidConfig
     assert!(position.ticket_active() == false); // ETicketActive
+    assert!(!config.liquidation_disabled()); // ELiquidationDisabled
     let price_info = validate_price_info(config, $price_info);
     let debt_info = validate_debt_info(config, $debt_info);
 
@@ -1975,6 +2090,7 @@ public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
     check_versions(position, config);
     assert!(position.config_id() == object::id(config)); // EInvalidConfig
     assert!(position.ticket_active() == false); // ETicketActive
+    assert!(!config.liquidation_disabled()); // ELiquidationDisabled
     let price_info = validate_price_info(config, $price_info);
     let debt_info = validate_debt_info(config, $debt_info);
 
@@ -2054,6 +2170,7 @@ public(package) macro fun reduce<$X, $Y, $SX, $SY, $Pool, $LP>(
     assert!(config.pool_object_id() == object::id(pool_object)); // EInvalidPool
     assert!(position.ticket_active() == false); // ETicketActive
     assert!(cap.position_id() == object::id(position)); // EInvalidPositionCap
+    assert!(!config.reduction_disabled()); // EReductionDisabled
     let price_info = validate_price_info(config, $price_info);
 
     let oracle_price_x128 = price_info.div_price_numeric_x128(
@@ -2250,6 +2367,7 @@ public(package) macro fun add_liquidity_with_receipt_inner<$X, $Y, $Pool, $LP, $
     check_versions(position, config);
     assert!(position.config_id() == object::id(config)); // EInvalidConfig
     assert!(config.pool_object_id() == object::id(pool_object)); // EInvalidPool
+    assert!(!config.add_liquidity_disabled()); // EAddLiquidityDisabled
 
     let price_info = validate_price_info(config, $price_info);
     let debt_info = validate_debt_info(config, $debt_info);
@@ -2412,6 +2530,7 @@ public(package) macro fun owner_collect_fee<$X, $Y, $Pool, $LP>(
     check_versions(position, config);
     assert!(position.config_id() == object::id(config)); // EInvalidConfig
     assert!(cap.position_id() == object::id(position)); // EInvalidPositionCap
+    assert!(!config.owner_collect_fee_disabled()); // EOwnerCollectFeeDisabled
 
     let (mut x, mut y) = $collect_fee($pool_object, position.lp_position_mut());
     let collected_x_amt = x.value();
@@ -2451,6 +2570,7 @@ public(package) macro fun owner_collect_reward<$X, $Y, $T, $Pool, $LP>(
     check_versions(position, config);
     assert!(position.config_id() == object::id(config)); // EInvalidConfig
     assert!(cap.position_id() == object::id(position)); // EInvalidPositionCap
+    assert!(!config.owner_collect_reward_disabled()); // EOwnerCollectRewardDisabled
 
     let mut reward = $collect_reward($pool_object, position.lp_position_mut());
     let collected_reward_amt = reward.value();
@@ -2508,6 +2628,7 @@ public(package) macro fun delete_position<$X, $Y, $LP: store>(
     assert!(position.config_id() == object::id(config)); // EInvalidConfig
     assert!(cap.position_id() == object::id(&position)); // EInvalidPositionCap
     assert!(position.ticket_active() == false); // ETicketActive
+    assert!(!config.delete_position_disabled()); // EDeletePositionDisabled
 
     // delete position
     let (
