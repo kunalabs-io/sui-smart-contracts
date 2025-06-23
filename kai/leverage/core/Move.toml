@@ -3,23 +3,22 @@ name = "KaiLeverage"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
 edition = "2024.beta"
-published-at = "0x3243f917288858e2c4fcfd2a937dda02b29384cc13d3063a720969c331920e45"
+published-at = "0x014ecd52a8a8e5c9283250c5fae31dfcd755dda2febe077ef578c6091fd7f420"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.41.2", override = true }
 MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.41.2", override = true }
 AccessManagement = { local = "../../../access-management" }
-CetusClmm = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", subdir = "sui/cetus_clmm", rev = "mainnet-v1.26.0", override = true }
-TurbosCLMM = { git = "https://github.com/turbos-finance/turbos-sui-move-interface.git", subdir = "clmm", rev = "8887603" }
-FlowxClmm = { local = "../../../_vendor/FlowxClmm" }
+CetusClmm = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", subdir = "sui/cetus_clmm", rev = "c822f41", override = true }
 Pyth = { local = "../../../_vendor/Pyth" }
 WHUSDCE = { local = "../../../_vendor/whUSDCe" }
 WHUSDTE = { local = "../../../_vendor/whUSDTe" }
 usdc = { local = "../../../_vendor/USDC/usdc" }
-BluefinSpot = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", subdir = "", rev = "5dfcb03" }
+BluefinSpot = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", subdir = "", rev = "f825f19" }
 SuiUsdt = { local = "../../../_vendor/SuiUsdt" }
 USDY = { local = "../../../_vendor/USDY" }
 DEEP = { local = "../../../_vendor/DEEP" }
 
 [addresses]
+cetus_clmm = "0x1eabed72c53feb3805120a081dc15963c204dc8d091542592abaf7a35689b2fb"
 kai_leverage = "0x51e0ccce48f0763f98f1cb4856847c2e1531adacada99cdd7626ab999db57523"
