@@ -1,0 +1,10 @@
+[package]
+name = "CetusClmm"
+version = "1.2.0"
+
+[dependencies]
+MoveSTL = { git = "https://github.com/CetusProtocol/move-stl.git", subdir = "sui", rev = "mainnet-v1.48.2", override = true }
+IntegerMate = { git = "https://github.com/CetusProtocol/integer-mate.git", subdir = "sui", rev = "sui-v1.2.0", override = true }
+
+[addresses]
+cetusclmm = "0x1eabed72c53feb3805120a081dc15963c204dc8d091542592abaf7a35689b2fb"

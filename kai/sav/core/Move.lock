@@ -27,22 +27,35 @@ dependencies = [
 
 [[move.package]]
 id = "BluefinSpot"
-source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "5dfcb03", subdir = "" }
+source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "dddb0dd", subdir = "" }
 
 dependencies = [
-  { id = "CetusClmm", name = "CetusClmm" },
+  { id = "IntegerLibrary", name = "IntegerLibrary" },
   { id = "IntegerMate", name = "IntegerMate" },
   { id = "Sui", name = "Sui" },
 ]
 
 [[move.package]]
-id = "CetusClmm"
-source = { git = "https://github.com/CetusProtocol/cetus-clmm-interface.git", rev = "mainnet-v1.26.0", subdir = "sui/cetus_clmm" }
+id = "Bridge"
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "af5297b292c3", subdir = "crates/sui-framework/packages/bridge" }
 
 dependencies = [
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
+]
+
+[[move.package]]
+id = "CetusClmm"
+source = { local = "../../../_vendor/CetusClmm" }
+
+dependencies = [
+  { id = "Bridge", name = "Bridge" },
   { id = "IntegerMate", name = "IntegerMate" },
   { id = "MoveSTL", name = "MoveSTL" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -55,17 +68,16 @@ dependencies = [
 ]
 
 [[move.package]]
-id = "FlowxClmm"
-source = { local = "../../../_vendor/FlowxClmm" }
+id = "IntegerLibrary"
+source = { git = "https://github.com/fireflyprotocol/integer-library.git", rev = "v1.0.1", subdir = "" }
 
 dependencies = [
-  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
 ]
 
 [[move.package]]
 id = "IntegerMate"
-source = { git = "https://github.com/CetusProtocol/integer-mate.git", rev = "mainnet-v1.23.1", subdir = "sui" }
+source = { git = "https://github.com/CetusProtocol/integer-mate", rev = "c502cff", subdir = "sui" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
@@ -80,12 +92,11 @@ dependencies = [
   { id = "BluefinSpot", name = "BluefinSpot" },
   { id = "CetusClmm", name = "CetusClmm" },
   { id = "DEEP", name = "DEEP" },
-  { id = "FlowxClmm", name = "FlowxClmm" },
+  { id = "IntegerMate", name = "IntegerMate" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
   { id = "SuiUsdt", name = "SuiUsdt" },
-  { id = "TurbosCLMM", name = "TurbosCLMM" },
   { id = "USDY", name = "USDY" },
   { id = "WHUSDCE", name = "WHUSDCE" },
   { id = "WHUSDTE", name = "WHUSDTE" },
@@ -102,10 +113,13 @@ dependencies = [
 
 [[move.package]]
 id = "MoveSTL"
-source = { git = "https://github.com/CetusProtocol/move-stl.git", rev = "mainnet-v1.23.1", subdir = "sui" }
+source = { git = "https://github.com/CetusProtocol/move-stl.git", rev = "mainnet-v1.48.2", subdir = "sui" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -198,20 +212,35 @@ dependencies = [
 ]
 
 [[move.package]]
+id = "SuiSystem"
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "af5297b292c3", subdir = "crates/sui-framework/packages/sui-system" }
+
+dependencies = [
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+]
+
+[[move.package]]
 id = "SuiUsdt"
 source = { local = "../../../_vendor/SuiUsdt" }
 
-[[move.package]]
-id = "TurbosCLMM"
-source = { git = "https://github.com/turbos-finance/turbos-sui-move-interface.git", rev = "8887603", subdir = "clmm" }
-
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
 id = "USDY"
 source = { local = "../../../_vendor/USDY" }
+
+dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
+]
 
 [[move.package]]
 id = "WHUSDCE"
@@ -277,7 +306,7 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.48.2"
+compiler-version = "1.50.1"
 edition = "2024.beta"
 flavor = "sui"
 
