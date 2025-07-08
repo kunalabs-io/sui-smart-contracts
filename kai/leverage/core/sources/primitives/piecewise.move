@@ -11,6 +11,8 @@ use kai_leverage::util;
 const ENoSections: u64 = 0;
 /// x is out of range
 const EOutOfRange: u64 = 1;
+/// Sections must be sorted by end and not overlap
+const ESectionsNotSorted: u64 = 2;
 
 /* ================= types ================= */
 
@@ -36,6 +38,12 @@ public fun section(end: u64, end_val: u64): Section {
 
 public fun create(start: u64, start_val: u64, sections: vector<Section>): Piecewise {
     assert!(sections.length() > 0, ENoSections);
+
+    let mut prev_end = start;
+    sections.do_ref!(|s| {
+        assert!(s.end > prev_end, ESectionsNotSorted);
+        prev_end = s.end;
+    });
 
     Piecewise {
         start: start,
