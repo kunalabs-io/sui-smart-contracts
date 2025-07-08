@@ -121,6 +121,8 @@ const EInvalidPositionVersion: u64 = 17;
 const ENotUpgrade: u64 = 18;
 /// The deleverage margin must be higher than the liquidation margin.
 const EInvalidMarginValue: u64 = 19;
+// The `SupplyPool` share type does not match the position debt share type.
+// const ESupplyPoolMismatch: u64 = 20;
 
 /* ================= access ================= */
 
@@ -2038,6 +2040,8 @@ public(package) macro fun liquidate_col_x<$X, $Y, $SY, $LP>(
     };
     let mut r = repayment.split(repayment_amt_y);
 
+    assert!(type_name::get<$SY>() == position.debt_bag().get_share_type_for_asset<$Y>()); // ESupplyPoolMismatch
+
     let mut debt_shares = position.debt_bag_mut().take_all();
     let (_, y_repaid) = supply_pool.repay_max_possible(&mut debt_shares, &mut r, $clock);
 
@@ -2108,6 +2112,8 @@ public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
         return balance::zero()
     };
     let mut r = repayment.split(repayment_amt_x);
+
+    assert!(type_name::get<$SX>() == position.debt_bag().get_share_type_for_asset<$X>()); // ESupplyPoolMismatch
 
     let mut debt_shares = position.debt_bag_mut().take_all();
     let (_, x_repaid) = supply_pool.repay_max_possible(&mut debt_shares, &mut r, $clock);
