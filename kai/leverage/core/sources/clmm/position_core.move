@@ -2738,6 +2738,7 @@ public(package) macro fun rebalance_collect_fee<$X, $Y, $Pool, $LP>(
 
     assert!(position.config_id() == object::id(config)); // EInvalidConfig
     assert!(receipt.position_id() == object::id(position)); // EPositionMismatch
+    assert!(object::id($pool_object) == config.pool_object_id()); // EInvalidPool
 
     let (mut x, mut y) = $collect_fee($pool_object, position.lp_position_mut());
     receipt.increase_collected_amm_fee_x(x.value());
