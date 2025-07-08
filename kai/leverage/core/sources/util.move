@@ -41,11 +41,11 @@ public fun saturating_muldiv_round_up_u128(a: u128, b: u128, c: u128): u128 {
 
 /// Calculate a / b, but round up the result.
 public fun divide_and_round_up_u128(a: u128, b: u128): u128 {
-    (a + b - 1) / b
+    std::macros::num_divide_and_round_up!(a, b)
 }
 
 public fun divide_and_round_up_u256(a: u256, b: u256): u256 {
-    (a + b - 1) / b
+    std::macros::num_divide_and_round_up!(a, b)
 }
 
 /// Returns the absolute difference between two numbers (i.e. |a - b|; distance between a and b)
