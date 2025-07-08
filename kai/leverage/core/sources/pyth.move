@@ -42,7 +42,7 @@ public fun create(clock: &Clock): PythPriceInfo {
     PythPriceInfo {
         pio_map: vec_map::empty(),
         current_ts_sec: clock.timestamp_ms() / 1000,
-        max_age_secs: 0,
+        max_age_secs: 60,
     }
 }
 
