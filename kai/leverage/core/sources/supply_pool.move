@@ -151,7 +151,9 @@ public fun create_pool<T, ST: drop>(
 ): ActionRequest {
     let registry = equity_treasury.borrow_registry();
     assert!(
-        registry.supply_x64() == 0 && registry.underlying_value_x64() == 0,
+        registry.supply_x64() == 0
+        && registry.underlying_value_x64() == 0
+        && equity_treasury.borrow_treasury_cap().total_supply() == 0,
         EShareTreasuryNotEmpty,
     );
 
