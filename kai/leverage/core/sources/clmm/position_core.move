@@ -123,6 +123,10 @@ const ENotUpgrade: u64 = 18;
 const EInvalidMarginValue: u64 = 19;
 // The `SupplyPool` share type does not match the position debt share type.
 // const ESupplyPoolMismatch: u64 = 20;
+// The position must be fully deleveraged.
+// const EPositionNotFullyDeleveraged: u64 = 21;
+// The position margin is not below the bad debt threshold.
+// const EPositionNotBelowBadDebtThreshold: u64 = 22;
 
 /* ================= access ================= */
 
@@ -132,6 +136,7 @@ public struct AMigrate has drop {}
 public struct ADeleverage has drop {}
 public struct ARebalance has drop {}
 public struct ACollectProtocolFees has drop {}
+public struct ARepayBadDebt has drop {}
 
 public(package) fun a_deleverage(): ADeleverage {
     ADeleverage {}
@@ -139,6 +144,10 @@ public(package) fun a_deleverage(): ADeleverage {
 
 public(package) fun a_rebalance(): ARebalance {
     ARebalance {}
+}
+
+public(package) fun a_repay_bad_debt(): ARepayBadDebt {
+    ARepayBadDebt {}
 }
 
 /* ================= CreatePositionTicket ================= */
@@ -1314,6 +1323,22 @@ public struct DeletedPositionCollectedFeesInfo has copy, drop {
     amounts: VecMap<TypeName, u64>,
 }
 
+/* ================= BadDebtRepaid ================= */
+
+public struct BadDebtRepaid<phantom ST> has copy, drop {
+    position_id: ID,
+    shares_repaid: u128,
+    balance_repaid: u64,
+}
+
+public(package) fun emit_bad_debt_repaid<T>(
+    position_id: ID,
+    shares_repaid: u128,
+    balance_repaid: u64,
+) {
+    event::emit(BadDebtRepaid<T> { position_id, shares_repaid, balance_repaid });
+}
+
 /* ================= upgrade ================= */
 
 public(package) fun check_config_version(config: &PositionConfig) {
@@ -2148,6 +2173,82 @@ public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
     };
 
     reward
+}
+
+/// If a position falls below the critical margin threshold `(1 + liq_bonus)`, liquidations
+/// will not restore the margin level due to the liquidation math and guaranteed liquidation bonus.
+/// In this scenario, the position is considered to be in a "bad debt" state, allowing an entity
+/// with the `ARepayBadDebt` permission to repay the debt and help restore the position's solvency.
+///
+/// ### Type Parameters
+/// - `$X`: The type of the first asset in the position.
+/// - `$Y`: The type of the second asset in the position.
+/// - `$T`: The asset type being repaid (must match the supply pool and balance).
+/// - `$ST`: The share type for the debt being repaid.
+/// - `$LP`: The type of the LP position.
+///
+/// ### Arguments
+/// - `$position`: Mutable reference to the `Position` to repay bad debt for.
+/// - `$config`: Reference to the position's `PositionConfig`.
+/// - `$price_info`: Reference to the `PriceInfo` object containing info for relevant prices.
+/// - `$debt_info`: Reference to the `DebtInfo` object containing info for the position's debt.
+/// - `$supply_pool`: Mutable reference to the `SupplyPool` for the debt being repaid.
+/// - `$repayment`: Mutable reference to the `Balance` for the debt being repaid.
+/// - `$clock`: Reference to the current `Clock`.
+/// - `$ctx`: Mutable reference to the `TxContext`.
+///
+/// ### Returns
+/// - `ActionRequest`: An action request representing the bad debt repayment operation.
+///
+/// ### Aborts
+/// - If the position is not fully deleveraged.
+/// - If the position is not below the bad debt margin threshold.
+/// - If the config and position mismatch.
+/// - If the hot-potato ticket is active.
+///
+/// ### Emits
+/// - Emits a `BadDebtRepaid` event if any shares or balance are repaid.
+public(package) macro fun repay_bad_debt<$X, $Y, $T, $ST, $LP>(
+    $position: &mut Position<$X, $Y, $LP>,
+    $config: &PositionConfig,
+    $price_info: &PythPriceInfo,
+    $debt_info: &DebtInfo,
+    $supply_pool: &mut SupplyPool<$T, $ST>,
+    $repayment: &mut Balance<$T>,
+    $clock: &Clock,
+    $ctx: &mut TxContext,
+): ActionRequest {
+    let position = $position;
+    let config = $config;
+    let supply_pool = $supply_pool;
+
+    check_versions(position, config);
+    assert!(position.config_id() == object::id(config)); // EInvalidConfig
+    assert!(position.ticket_active() == false); // ETicketActive
+
+    let price_info = validate_price_info(config, $price_info);
+    let debt_info = validate_debt_info(config, $debt_info);
+    let model = model_from_position!(position, &debt_info);
+
+    assert!(model.is_fully_deleveraged()); // EPositionNotFullyDeleveraged
+
+    let p_x128 = price_info.div_price_numeric_x128(type_name::get<$X>(), type_name::get<$Y>());
+    let crit_margin_bps = 10000 + config.liq_bonus_bps();
+    assert!(model.margin_below_threshold(p_x128, crit_margin_bps)); // EPositionNotBelowBadDebtThreshold
+
+    let mut debt_shares = position.debt_bag_mut().take_all();
+    let (shares_repaid, balance_repaid) = supply_pool.repay_max_possible(
+        &mut debt_shares,
+        $repayment,
+        $clock,
+    );
+    position.debt_bag_mut().add<$T, $ST>(debt_shares);
+
+    if (shares_repaid > 0 || balance_repaid > 0) {
+        emit_bad_debt_repaid<$ST>(object::id(position), shares_repaid, balance_repaid);
+    };
+
+    access::new_request(a_repay_bad_debt(), $ctx)
 }
 
 /* ================= user operations ================= */
