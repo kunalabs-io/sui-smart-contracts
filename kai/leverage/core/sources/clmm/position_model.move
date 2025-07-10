@@ -4,6 +4,7 @@
 module kai_leverage::position_model_clmm;
 
 use kai_leverage::util;
+use std::u256;
 use std::u64;
 
 /// Maximum value for `u128`, `(1 << 128) - 1`.
@@ -78,7 +79,11 @@ public fun dy(self: &PositionModel): u64 {
 }
 
 /// Calculate the amount of X in the LP position for a given price and liquidity.
-/// Aborts if there's not enough liquidity in the position.
+///
+/// NOTE: This function may not always return a fully precise Q64.64 result.
+/// E.g. for very large prices, it can underestimate the amount of X.
+/// The maximum absolute error is 1 (2^64), and the maximum relative error is 1/2^64.
+/// Any inaccuracy in the result will always underestimate the amount of X (rounds down).
 public fun x_by_liquidity_x64(self: &PositionModel, sqrt_p_x64: u128, delta_l: u128): u128 {
     assert!(delta_l <= self.l, EInsufficientLiquidity);
     if (sqrt_p_x64 >= self.sqrt_pb_x64) {
@@ -89,16 +94,13 @@ public fun x_by_liquidity_x64(self: &PositionModel, sqrt_p_x64: u128, delta_l: u
     };
 
     // L * (sqrt(pb) - sqrt(p)) / (sqrt(p) * sqrt(pb))
-    let num = ((self.sqrt_pb_x64 - sqrt_p_x64) as u256) << 128;
+    let num = (delta_l as u256) * ((self.sqrt_pb_x64 - sqrt_p_x64) as u256);
     let denom = (sqrt_p_x64 as u256) * (self.sqrt_pb_x64 as u256);
 
-    let x_x64 = (delta_l as u256) * (num / denom);
-    // In some extreme cases the calculation can overflow. The AMM itself can never
-    // reach such a state, but in cases where we're doing some kind of a simulation it's possible in
-    // principle.
-    // We handle this by limiting the result to `U128_MAX` (which is the max amount of token in
-    // existence).
-    (util::min_u256(x_x64, (U128_MAX as u256)) as u128)
+    // 2^256 / denom
+    let div256_denom = (u256::max_value!() - denom) / denom + 1;
+
+    ((num * div256_denom) >> 128) as u128
 }
 
 /// Calculate the amount of Y in the LP position for a given price and liquidity.
@@ -644,8 +646,7 @@ fun test_margin() {
         dx: 394073560,
         dy: 979580690,
     };
-    assert!(margin_x64(&position, p_x128) == 20463759128363113475, 0);
-    // assert!(margin_x64(&position, p_x128, true) == 20496382321088983824, 0);
+    assert!(margin_x64(&position, p_x128) == 20463759128363113476, 0);
 
     // debt 0
     let position = PositionModel {
