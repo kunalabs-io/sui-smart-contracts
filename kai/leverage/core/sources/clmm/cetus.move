@@ -293,6 +293,50 @@ public fun liquidate_col_y<X, Y, SX>(
     core::liquidate_col_y!(position, config, price_info, debt_info, repayment, supply_pool, clock)
 }
 
+public fun repay_bad_debt_x<X, Y, SX>(
+    position: &mut Position<X, Y, CetusPosition>,
+    config: &PositionConfig,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+    supply_pool: &mut SupplyPool<X, SX>,
+    repayment: &mut Balance<X>,
+    clock: &Clock,
+    ctx: &mut TxContext,
+): ActionRequest {
+    core::repay_bad_debt!(
+        position,
+        config,
+        price_info,
+        debt_info,
+        supply_pool,
+        repayment,
+        clock,
+        ctx,
+    )
+}
+
+public fun repay_bad_debt_y<X, Y, SY>(
+    position: &mut Position<X, Y, CetusPosition>,
+    config: &PositionConfig,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+    supply_pool: &mut SupplyPool<Y, SY>,
+    repayment: &mut Balance<Y>,
+    clock: &Clock,
+    ctx: &mut TxContext,
+): ActionRequest {
+    core::repay_bad_debt!(
+        position,
+        config,
+        price_info,
+        debt_info,
+        supply_pool,
+        repayment,
+        clock,
+        ctx,
+    )
+}
+
 public fun reduce<X, Y, SX, SY>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
