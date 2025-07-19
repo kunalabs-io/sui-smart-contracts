@@ -17,6 +17,9 @@ use whusdte::coin::COIN as WHUSDTE;
 use suiusdt::usdt::USDT as SUIUSDT;
 use usdy::usdy::USDY;
 use deep::deep::DEEP;
+use wal::wal::WAL;
+use lbtc::lbtc::LBTC;
+use wbtc::btc::BTC as WBTC;
 
 const EUnsupportedPriceFeed: u64 = 0;
 const EStalePrice: u64 = 1;
@@ -96,6 +99,12 @@ public fun decimals(`type`: TypeName): u8 {
         6
     } else if (`type` == type_name::get<DEEP>()) {
         6
+    } else if (`type` == type_name::get<WAL>()) {
+        9
+    } else if (`type` == type_name::get<LBTC>()) {
+        8
+    } else if (`type` == type_name::get<WBTC>()) {
+        8
     } else {
         abort (EUnsupportedPriceFeed)
     }
