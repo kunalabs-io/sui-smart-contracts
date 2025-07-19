@@ -1,0 +1,10 @@
+[package]
+name = "WAL"
+published-at = "0x356a26eb9e012a68958082340d4c4116e7f55615cf27affcff209cf0ae544f59"
+
+[dependencies]
+Sui = { git = "https://github.com/mystenlabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.41.2", override = true }
+MoveStdlib = { git = "https://github.com/mystenlabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.41.2", override = true }
+
+[addresses]
+wal = "0x356a26eb9e012a68958082340d4c4116e7f55615cf27affcff209cf0ae544f59"
