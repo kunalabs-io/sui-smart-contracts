@@ -48,7 +48,11 @@ public fun create(clock: &Clock): PythPriceInfo {
 public fun add(self: &mut PythPriceInfo, info: &PriceInfoObject) {
     let price_info = price_info::get_price_info_from_price_info_object(info);
     let price = price_info.get_price_feed().get_price();
-    self.pio_map.insert(object::id(info), price_info);
+
+    let key = object::id(info);
+    if (!self.pio_map.contains(&key)) {
+        self.pio_map.insert(key, price_info);
+    };
 
     let age = self.current_ts_sec - price.get_timestamp();
     self.max_age_secs = u64::max(self.max_age_secs, age);
