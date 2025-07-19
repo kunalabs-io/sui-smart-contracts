@@ -1,0 +1,17 @@
+[package]
+name = "KaiLeverageSupplyPoolInitLbtc"
+edition = "2024.beta"
+license = "Apache 2.0"
+authors = ["Krešimir Klas (kklas@kunalabs.io)"]
+published-at = "0x390b72b290b407c1835c33442cbbdd68c24aeb84397ffdb953994456d020e2fd"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.51.5", override = true }
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.51.5", override = true }
+KaiLeverage = { local = "../../core" }
+KaiLeverageSupplyPoolInit = { local = "../core" }
+AccessManagement = { local = "../../../../access-management" }
+LBTC = { local = "../../../../_vendor/LBTC" }
+
+[addresses]
+klsp_lbtc = "0x390b72b290b407c1835c33442cbbdd68c24aeb84397ffdb953994456d020e2fd"

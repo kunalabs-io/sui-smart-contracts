@@ -1,0 +1,17 @@
+[package]
+name = "KaiLeverageSupplyPoolInitWal"
+edition = "2024.beta"
+license = "Apache 2.0"
+authors = ["Krešimir Klas (kklas@kunalabs.io)"]
+published-at = "0x059b208a81be1ed6f1d596d971abf358401304dfbacce30c8ffc637ba5b68f13"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.51.5", override = true }
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.51.5", override = true }
+KaiLeverage = { local = "../../core" }
+KaiLeverageSupplyPoolInit = { local = "../core" }
+AccessManagement = { local = "../../../../access-management" }
+WAL = { local = "../../../../_vendor/WAL" }
+
+[addresses]
+klsp_wal = "0x059b208a81be1ed6f1d596d971abf358401304dfbacce30c8ffc637ba5b68f13"
