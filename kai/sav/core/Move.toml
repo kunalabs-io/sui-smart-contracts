@@ -1,7 +1,7 @@
 [package]
 name = "KaiSingleAssetVault"
 edition = "2024.beta"
-published-at = "0x43ae6d8242db6b9606e2032b73f6b5d7531fc0a745a8592c23492a1483a0751a"
+published-at = "0x98f1dd1699e817f965ffd7aa737ab40c4704ec9c204fe3967155cc4a0016ab39"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.51.5", override = true }
