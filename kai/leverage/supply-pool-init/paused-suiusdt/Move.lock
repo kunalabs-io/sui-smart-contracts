@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "CC8BAC175FEF38182A0DA69D71D26759ED485ECB831B90ACD35DD94EB97F4457"
+manifest_digest = "2FCDDD773740E4B4B69CE0EDC331117B6C93E455F5CADA943C2EDA8D2A29BE3D"
 deps_digest = "52B406A7A21811BEF51751CF88DA0E76DAEFFEAC888D4F4060B1A72BBE7D8D35"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
@@ -34,7 +34,7 @@ dependencies = [
 
 [[move.package]]
 id = "Bridge"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "af5297b292c3", subdir = "crates/sui-framework/packages/bridge" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "2c930c25f8d3", subdir = "crates/sui-framework/packages/bridge" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -47,12 +47,9 @@ id = "CetusClmm"
 source = { local = "../../../../_vendor/CetusClmm" }
 
 dependencies = [
-  { id = "Bridge", name = "Bridge" },
   { id = "IntegerMate", name = "IntegerMate" },
   { id = "MoveSTL", name = "MoveSTL" },
-  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
-  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -90,14 +87,17 @@ dependencies = [
   { id = "CetusClmm", name = "CetusClmm" },
   { id = "DEEP", name = "DEEP" },
   { id = "IntegerMate", name = "IntegerMate" },
+  { id = "LBTC", name = "LBTC" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
   { id = "SuiUsdt", name = "SuiUsdt" },
   { id = "USDY", name = "USDY" },
+  { id = "WAL", name = "WAL" },
   { id = "WHUSDCE", name = "WHUSDCE" },
   { id = "WHUSDTE", name = "WHUSDTE" },
   { id = "usdc", name = "usdc" },
+  { id = "wBTC", name = "wBTC" },
 ]
 
 [[move.package]]
@@ -112,19 +112,25 @@ dependencies = [
 ]
 
 [[move.package]]
-id = "MoveSTL"
-source = { git = "https://github.com/CetusProtocol/move-stl.git", rev = "mainnet-v1.48.2", subdir = "sui" }
+id = "LBTC"
+source = { local = "../../../../_vendor/LBTC" }
 
 dependencies = [
-  { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
-  { id = "SuiSystem", name = "SuiSystem" },
+]
+
+[[move.package]]
+id = "MoveSTL"
+source = { local = "../../../../_vendor/MoveSTL" }
+
+dependencies = [
+  { id = "Sui", name = "Sui" },
 ]
 
 [[move.package]]
 id = "MoveStdlib"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.41.2", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.51.5", subdir = "crates/sui-framework/packages/move-stdlib" }
 
 [[move.package]]
 id = "Pyth"
@@ -138,7 +144,7 @@ dependencies = [
 
 [[move.package]]
 id = "Sui"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.41.2", subdir = "crates/sui-framework/packages/sui-framework" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.51.5", subdir = "crates/sui-framework/packages/sui-framework" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -146,7 +152,7 @@ dependencies = [
 
 [[move.package]]
 id = "SuiSystem"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "af5297b292c3", subdir = "crates/sui-framework/packages/sui-system" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "2c930c25f8d3", subdir = "crates/sui-framework/packages/sui-system" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -176,12 +182,20 @@ dependencies = [
 ]
 
 [[move.package]]
+id = "WAL"
+source = { local = "../../../../_vendor/WAL" }
+
+dependencies = [
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+]
+
+[[move.package]]
 id = "WHUSDCE"
 source = { local = "../../../../_vendor/whUSDCe" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
-  { id = "Wormhole1", name = "Wormhole1" },
 ]
 
 [[move.package]]
@@ -199,16 +213,6 @@ source = { local = "../../../../_vendor/Wormhole" }
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
-]
-
-[[move.package]]
-id = "Wormhole1"
-source = { local = "../../../../_vendor/Wormhole1" }
-
-dependencies = [
-  { id = "MoveStdlib", name = "MoveStdlib" },
-  { id = "Sui", name = "Sui" },
-  { id = "Wormhole", name = "Wormhole" },
 ]
 
 [[move.package]]
@@ -238,8 +242,17 @@ dependencies = [
   { id = "sui_extensions", name = "sui_extensions" },
 ]
 
+[[move.package]]
+id = "wBTC"
+source = { local = "../../../../_vendor/wBTC" }
+
+dependencies = [
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+]
+
 [move.toolchain-version]
-compiler-version = "1.50.1"
+compiler-version = "1.51.5"
 edition = "2024.beta"
 flavor = "sui"
 

@@ -4,7 +4,7 @@ edition = "2024.beta"
 published-at = "0xdd7108db1a209d23d8a25dda78bdca4547b755094305971ed4064dfe5cdfa026"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.41.2", override = true }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.51.5", override = true }
 
 [addresses]
 kai_yusdy = "0xdd7108db1a209d23d8a25dda78bdca4547b755094305971ed4064dfe5cdfa026"
