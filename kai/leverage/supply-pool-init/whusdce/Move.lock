@@ -195,6 +195,7 @@ source = { local = "../../../../_vendor/whUSDCe" }
 
 dependencies = [
   { id = "Sui", name = "Sui" },
+  { id = "Wormhole1", name = "Wormhole1" },
 ]
 
 [[move.package]]
@@ -212,6 +213,16 @@ source = { local = "../../../../_vendor/Wormhole" }
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+]
+
+[[move.package]]
+id = "Wormhole1"
+source = { local = "../../../../_vendor/Wormhole1" }
+
+dependencies = [
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+  { id = "Wormhole", name = "Wormhole" },
 ]
 
 [[move.package]]
