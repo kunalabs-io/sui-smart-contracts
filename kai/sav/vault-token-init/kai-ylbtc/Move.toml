@@ -1,0 +1,11 @@
+[package]
+name = "KaiYLBTC"
+version = "0.0.1"
+edition = "2024.beta"
+published-at = "0x3e83d9c798902dbcde72b9ede9fa2997ea43b302f83e4894aa793e6791e95c9f"
+ 
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.51.5" }
+ 
+[addresses]
+kai_ylbtc = "0x3e83d9c798902dbcde72b9ede9fa2997ea43b302f83e4894aa793e6791e95c9f"
