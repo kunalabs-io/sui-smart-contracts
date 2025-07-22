@@ -189,6 +189,38 @@ public fun get_share_type_for_asset<T>(self: &DebtBag): TypeName {
     info.share_type
 }
 
+/// Returns true if either:
+/// - Neither the asset type `T` nor the share type `ST` exist in the `DebtBag`, or
+/// - Both exist and the share type corresponds to the asset type.
+/// Returns false if only one exists, or if both exist but the share type
+/// does not correspond to the asset type.
+///
+/// # Type Parameters
+/// - `T`: The asset type to check.
+/// - `ST`: The share type to check.
+///
+/// # Arguments
+/// - `self`: Reference to the `DebtBag`.
+///
+/// # Returns
+/// - `bool`: True if the types are both absent or both present and matched; false otherwise.
+public fun share_type_matches_asset_if_any_exists<T, ST>(self: &DebtBag): bool {
+    let asset_type = type_name::get<T>();
+    let share_type = type_name::get<ST>();
+
+    let mut i = 0;
+    let n = self.infos.length();
+    while (i < n) {
+        let info = &self.infos[i];
+        if (info.asset_type == asset_type || info.share_type == share_type) {
+            return info.asset_type == asset_type && info.share_type == share_type
+        };
+        i = i + 1;
+    };
+
+    return true
+}
+
 public fun is_empty(self: &DebtBag): bool {
     // infos is empty iff. bag is empty, but let's be explicit
     self.infos.is_empty() && self.bag.is_empty()
