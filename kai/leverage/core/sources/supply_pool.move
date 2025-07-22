@@ -30,6 +30,7 @@ public use fun fdb_take_all as FacilDebtBag.take_all;
 public use fun fdb_get_share_amount_by_asset_type as FacilDebtBag.get_share_amount_by_asset_type;
 public use fun fdb_get_share_amount_by_share_type as FacilDebtBag.get_share_amount_by_share_type;
 public use fun fdb_get_share_type_for_asset as FacilDebtBag.get_share_type_for_asset;
+public use fun fdb_share_type_matches_asset_if_any_exists as FacilDebtBag.share_type_matches_asset_if_any_exists;
 public use fun fdb_is_empty as FacilDebtBag.is_empty;
 public use fun fdb_destroy_empty as FacilDebtBag.destroy_empty;
 
@@ -611,6 +612,10 @@ public(package) fun fdb_get_share_amount_by_asset_type<T>(self: &FacilDebtBag): 
 
 public(package) fun fdb_get_share_amount_by_share_type<ST>(self: &FacilDebtBag): u128 {
     self.inner.get_share_amount_by_share_type<ST>()
+}
+
+public(package) fun fdb_share_type_matches_asset_if_any_exists<T, ST>(self: &FacilDebtBag): bool {
+    self.inner.share_type_matches_asset_if_any_exists<T, ST>()
 }
 
 public(package) fun fdb_get_share_type_for_asset<T>(self: &FacilDebtBag): TypeName {
