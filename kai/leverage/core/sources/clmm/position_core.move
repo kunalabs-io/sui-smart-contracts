@@ -121,8 +121,8 @@ const EInvalidPositionVersion: u64 = 17;
 const ENotUpgrade: u64 = 18;
 /// The deleverage margin must be higher than the liquidation margin.
 const EInvalidMarginValue: u64 = 19;
-// The `SupplyPool` share type does not match the position debt share type.
-// const ESupplyPoolMismatch: u64 = 20;
+/// The `SupplyPool` share type does not match the position debt share type.
+const ESupplyPoolMismatch: u64 = 20;
 // The position must be fully deleveraged.
 // const EPositionNotFullyDeleveraged: u64 = 21;
 // The position margin is not below the bad debt threshold.
@@ -1896,6 +1896,10 @@ public fun deleverage_ticket_repay_x<X, Y, SX, LP: store>(
     if (!ticket.can_repay_x) {
         return
     };
+    assert!(
+        position.debt_bag().get_share_type_for_asset<X>() == type_name::get<SX>(),
+        ESupplyPoolMismatch,
+    );
 
     let mut shares = position.debt_bag.take_all();
     let (_, x_repaid) = supply_pool.repay_max_possible(&mut shares, &mut position.col_x, clock);
@@ -1917,6 +1921,10 @@ public fun deleverage_ticket_repay_y<X, Y, SY, LP: store>(
     if (!ticket.can_repay_y) {
         return
     };
+    assert!(
+        position.debt_bag().get_share_type_for_asset<Y>() == type_name::get<SY>(),
+        ESupplyPoolMismatch,
+    );
 
     let mut shares = position.debt_bag.take_all();
     let (_, y_repaid) = supply_pool.repay_max_possible(&mut shares, &mut position.col_y, clock);
@@ -1964,6 +1972,8 @@ public(package) macro fun deleverage<$X, $Y, $SX, $SY, $Pool, $LP>(
 
     check_versions(position, config);
     assert!(position.config_id() == object::id(config)); // EInvalidConfig
+    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$X, $SX>()); // ESupplyPoolMismatch
+    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$Y, $SY>()); // ESupplyPoolMismatch
 
     let mut debt_info = debt_info::empty(object::id(config.lend_facil_cap()));
     debt_info.add_from_supply_pool(supply_pool_x, $clock);
@@ -2003,6 +2013,8 @@ public(package) macro fun deleverage_for_liquidation<$X, $Y, $SX, $SY, $Pool, $L
 
     assert!(position.config_id() == object::id(config)); // EInvalidConfig
     assert!(!config.liquidation_disabled()); // ELiquidationDisabled
+    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$X, $SX>()); // ESupplyPoolMismatch
+    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$Y, $SY>()); // ESupplyPoolMismatch
 
     let mut debt_info = debt_info::empty(object::id(config.lend_facil_cap()));
     debt_info.add_from_supply_pool(supply_pool_x, $clock);
@@ -2225,6 +2237,7 @@ public(package) macro fun repay_bad_debt<$X, $Y, $T, $ST, $LP>(
     check_versions(position, config);
     assert!(position.config_id() == object::id(config)); // EInvalidConfig
     assert!(position.ticket_active() == false); // ETicketActive
+    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$T, $ST>()); // ESupplyPoolMismatch
 
     let price_info = validate_price_info(config, $price_info);
     let debt_info = validate_debt_info(config, $debt_info);
@@ -2237,6 +2250,10 @@ public(package) macro fun repay_bad_debt<$X, $Y, $T, $ST, $LP>(
     assert!(model.margin_below_threshold(p_x128, crit_margin_bps)); // EPositionNotBelowBadDebtThreshold
 
     let mut debt_shares = position.debt_bag_mut().take_all();
+    if (debt_shares.value_x64() == 0) {
+        debt_shares.destroy_zero();
+        return access::new_request(a_repay_bad_debt(), $ctx)
+    };
     let (shares_repaid, balance_repaid) = supply_pool.repay_max_possible(
         &mut debt_shares,
         $repayment,
@@ -2278,6 +2295,9 @@ public(package) macro fun reduce<$X, $Y, $SX, $SY, $Pool, $LP>(
     assert!(position.ticket_active() == false); // ETicketActive
     assert!(cap.position_id() == object::id(position)); // EInvalidPositionCap
     assert!(!config.reduction_disabled()); // EReductionDisabled
+    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$X, $SX>()); // ESupplyPoolMismatch
+    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$Y, $SY>()); // ESupplyPoolMismatch
+
     let price_info = validate_price_info(config, $price_info);
 
     let oracle_price_x128 = price_info.div_price_numeric_x128(
@@ -2587,8 +2607,13 @@ public fun repay_debt_x<X, Y, SX, LP: store>(
 ) {
     check_position_version(position);
     assert!(cap.position_id == object::id(position), EInvalidPositionCap);
+    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<X, SX>(), ESupplyPoolMismatch);
 
     let mut debt_shares = position.debt_bag.take_all();
+    if (debt_shares.value_x64() == 0) {
+        debt_shares.destroy_zero();
+        return
+    };
     let (_, x_repaid) = supply_pool.repay_max_possible(&mut debt_shares, balance, clock);
     position.debt_bag.add<X, SX>(debt_shares);
 
@@ -2610,7 +2635,13 @@ public fun repay_debt_y<X, Y, SY, LP: store>(
 ) {
     check_position_version(position);
     assert!(cap.position_id == object::id(position), EInvalidPositionCap);
+    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<Y, SY>(), ESupplyPoolMismatch);
+
     let mut debt_shares = position.debt_bag.take_all();
+    if (debt_shares.value_x64() == 0) {
+        debt_shares.destroy_zero();
+        return
+    };
     let (_, y_repaid) = supply_pool.repay_max_possible(&mut debt_shares, balance, clock);
     position.debt_bag.add<Y, SY>(debt_shares);
 
@@ -2945,8 +2976,13 @@ public fun rebalance_repay_debt_x<X, Y, SX, LP: store>(
     clock: &Clock,
 ) {
     assert!(receipt.position_id == object::id(position), EPositionMismatch);
+    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<X, SX>(), ESupplyPoolMismatch);
 
     let mut debt_shares = position.debt_bag.take_all();
+    if (debt_shares.value_x64() == 0) {
+        debt_shares.destroy_zero();
+        return
+    };
     let (_, x_repaid) = supply_pool::repay_max_possible(
         supply_pool,
         &mut debt_shares,
@@ -2966,8 +3002,13 @@ public fun rebalance_repay_debt_y<X, Y, SY, LP: store>(
     clock: &Clock,
 ) {
     assert!(receipt.position_id == object::id(position), EPositionMismatch);
+    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<Y, SY>(), ESupplyPoolMismatch);
 
     let mut debt_shares = position.debt_bag.take_all();
+    if (debt_shares.value_x64() == 0) {
+        debt_shares.destroy_zero();
+        return
+    };
     let (_, y_repaid) = supply_pool.repay_max_possible(&mut debt_shares, balance, clock);
     position.debt_bag.add<Y, SY>(debt_shares);
 
