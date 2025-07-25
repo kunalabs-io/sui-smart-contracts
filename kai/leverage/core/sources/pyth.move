@@ -20,6 +20,7 @@ use deep::deep::DEEP;
 use wal::wal::WAL;
 use lbtc::lbtc::LBTC;
 use wbtc::btc::BTC as WBTC;
+use xbtc::xbtc::XBTC;
 
 const EUnsupportedPriceFeed: u64 = 0;
 const EStalePrice: u64 = 1;
@@ -108,6 +109,8 @@ public fun decimals(`type`: TypeName): u8 {
     } else if (`type` == type_name::get<LBTC>()) {
         8
     } else if (`type` == type_name::get<WBTC>()) {
+        8
+    } else if (`type` == type_name::get<XBTC>()) {
         8
     } else {
         abort (EUnsupportedPriceFeed)
