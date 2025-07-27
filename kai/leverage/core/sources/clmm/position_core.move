@@ -76,7 +76,7 @@ use fun kai_leverage::flowx::position_tick_range as flowx_clmm::position::Positi
 
 /* ================= constants ================= */
 
-const MODULE_VERSION: u16 = 2;
+const MODULE_VERSION: u16 = 3;
 
 /* ================= errors ================= */
 

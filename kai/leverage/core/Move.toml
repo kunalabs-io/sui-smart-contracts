@@ -3,7 +3,7 @@ name = "KaiLeverage"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
 edition = "2024.beta"
-published-at = "0x48a52929e1b289e9ff351f5ba7de5db0b16dc2c4c6fa1528de94b841ba6b924b"
+published-at = "0xd98a76e61b2499856e1958291b2c170a02e6c43d555d18f2f2f7d2741736481b"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.51.5", override = true }
