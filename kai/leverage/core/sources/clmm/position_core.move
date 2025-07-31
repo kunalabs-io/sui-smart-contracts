@@ -37,20 +37,6 @@ use fun ali_delta_l as AddLiquidityInfo.delta_l;
 use fun ali_delta_x as AddLiquidityInfo.delta_x;
 use fun ali_delta_y as AddLiquidityInfo.delta_y;
 
-// turbos
-/*
-use fun turbos_clmm::pool::get_pool_sqrt_price as turbos_clmm::pool::Pool.current_sqrt_price_x64;
-use fun turbos_clmm::pool::get_pool_current_index as turbos_clmm::pool::Pool.current_tick_index;
-use fun turbos_clmm::math_tick::sqrt_price_from_tick_index as
-    turbos_clmm::i32::I32.as_sqrt_price_x64;
-use fun kai_leverage::turbos::calc_deposit_amounts_by_liquidity as
-    turbos_clmm::pool::Pool.calc_deposit_amounts_by_liquidity;
-use fun kai_leverage::turbos::wrapped_tick_range as
-    kai_leverage::turbos::TurbosWrappedPosition.tick_range;
-use fun kai_leverage::turbos::wrapped_liquidity as
-    kai_leverage::turbos::TurbosWrappedPosition.liquidity;
-*/
-
 // cetus
 use fun cetus_clmm::pool::current_sqrt_price as cetus_clmm::pool::Pool.current_sqrt_price_x64;
 use fun cetus_clmm::tick_math::get_sqrt_price_at_tick as integer_mate::i32::I32.as_sqrt_price_x64;
@@ -64,15 +50,14 @@ use fun kai_leverage::bluefin_spot::calc_deposit_amounts_by_liquidity as
 use fun kai_leverage::bluefin_spot::position_tick_range as
     bluefin_spot::position::Position.tick_range;
 
-// flowx
-/*
-use fun flowx_clmm::pool::sqrt_price_current as flowx_clmm::pool::Pool.current_sqrt_price_x64;
-use fun flowx_clmm::pool::tick_index_current as flowx_clmm::pool::Pool.current_tick_index;
-use fun flowx_clmm::tick_math::get_sqrt_price_at_tick as flowx_clmm::i32::I32.as_sqrt_price_x64;
-use fun kai_leverage::flowx::calc_deposit_amounts_by_liquidity as
-    flowx_clmm::pool::Pool.calc_deposit_amounts_by_liquidity;
-use fun kai_leverage::flowx::position_tick_range as flowx_clmm::position::Position.tick_range;
-*/
+// momentum
+use fun mmt_v3::pool::sqrt_price as mmt_v3::pool::Pool.current_sqrt_price_x64;
+use fun mmt_v3::pool::tick_index_current as mmt_v3::pool::Pool.current_tick_index;
+use fun mmt_v3::tick_math::get_sqrt_price_at_tick as mmt_v3::i32::I32.as_sqrt_price_x64;
+use fun kai_leverage::momentum::calc_deposit_amounts_by_liquidity as
+    mmt_v3::pool::Pool.calc_deposit_amounts_by_liquidity;
+use fun kai_leverage::momentum::position_tick_range as
+    mmt_v3::position::Position.tick_range;
 
 /* ================= constants ================= */
 
@@ -2760,7 +2745,6 @@ public(package) macro fun delete_position<$X, $Y, $LP: store>(
     let position = $position;
     let config = $config;
     let cap = $cap;
-    let ctx = $ctx;
 
     check_versions(&position, config);
     assert!(position.config_id() == object::id(config)); // EInvalidConfig
@@ -2800,7 +2784,7 @@ public(package) macro fun delete_position<$X, $Y, $LP: store>(
         share_deleted_position_collected_fees(
             position_id,
             collected_fees,
-            ctx,
+            $ctx,
         );
     };
 
