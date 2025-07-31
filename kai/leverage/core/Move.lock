@@ -2,8 +2,8 @@
 
 [move]
 version = 3
-manifest_digest = "8A49D8734D3C1921C2A34388C85D619759CB09BFB813AFC25389FB38BE23FF8E"
-deps_digest = "728267E8256D0E29B69A46E3C10EDFC9D0C5CC809D31E9018A81E44F5ED42912"
+manifest_digest = "71D482B88657452C19096C11A613AA87DF6D6D9DB66600668BECD88013749F7A"
+deps_digest = "5644D8F82FD4EE1CAA4A3A54F9B0AA05F59B03EA0BDB596C4AD151FF0689910B"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
   { id = "BluefinSpot", name = "BluefinSpot" },
@@ -19,6 +19,7 @@ dependencies = [
   { id = "WAL", name = "WAL" },
   { id = "WHUSDCE", name = "WHUSDCE" },
   { id = "WHUSDTE", name = "WHUSDTE" },
+  { id = "mmt_v3", name = "mmt_v3" },
   { id = "usdc", name = "usdc" },
   { id = "wBTC", name = "wBTC" },
   { id = "xBTC", name = "xBTC" },
@@ -45,7 +46,7 @@ dependencies = [
 
 [[move.package]]
 id = "Bridge"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "209f0da8e316", subdir = "crates/sui-framework/packages/bridge" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "79918a3f1357", subdir = "crates/sui-framework/packages/bridge" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -129,7 +130,7 @@ dependencies = [
 
 [[move.package]]
 id = "SuiSystem"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "209f0da8e316", subdir = "crates/sui-framework/packages/sui-system" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "79918a3f1357", subdir = "crates/sui-framework/packages/sui-system" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -204,6 +205,14 @@ dependencies = [
 ]
 
 [[move.package]]
+id = "mmt_v3"
+source = { git = "https://github.com/mmt-finance/mmt-contract-interface.git", rev = "b86de2f", subdir = "mmt_v3" }
+
+dependencies = [
+  { id = "Sui", name = "Sui" },
+]
+
+[[move.package]]
 id = "stablecoin"
 source = { local = "../../../_vendor/USDC/stablecoin" }
 
@@ -251,7 +260,7 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.52.2"
+compiler-version = "1.52.3"
 edition = "2024.beta"
 flavor = "sui"
 
