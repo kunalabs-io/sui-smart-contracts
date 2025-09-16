@@ -55,27 +55,4 @@ module 0x876A4B7BCE8AEAEF60464C11F4026903E9AFACAB79B9B142686158AA86560B50::xbtc 
         old_denylister: address,
         new_denylister: address,
     }
-
-    // NOTE: Functions are 'native' for simplicity. They may or may not be native in actuality.
- #[native_interface]
-    native public entry fun mint(a0: &mut coin::TreasuryCap<xbtc::XBTC>, a1: &xbtc::XBTCReceiver, a2: u64, a3: address, a4: &mut tx_context::TxContext);
- #[native_interface]
-    native public entry fun burn(a0: &mut coin::TreasuryCap<xbtc::XBTC>, a1: coin::Coin<xbtc::XBTC>, a2: &mut tx_context::TxContext);
- #[native_interface]
-    native public entry fun set_receiver(a0: &mut coin::DenyCapV2<xbtc::XBTC>, a1: &mut xbtc::XBTCReceiver, a2: address, a3: &mut tx_context::TxContext);
- #[native_interface]
-    native public entry fun set_pause(a0: &mut deny_list::DenyList, a1: &mut coin::DenyCapV2<xbtc::XBTC>, a2: bool, a3: &mut tx_context::TxContext);
- #[native_interface]
-    native public entry fun add_to_deny_list(a0: &mut deny_list::DenyList, a1: &mut coin::DenyCapV2<xbtc::XBTC>, a2: address, a3: &mut tx_context::TxContext);
- #[native_interface]
-    native public entry fun remove_from_deny_list(a0: &mut deny_list::DenyList, a1: &mut coin::DenyCapV2<xbtc::XBTC>, a2: address, a3: &mut tx_context::TxContext);
- #[native_interface]
-    native public entry fun batch_add_to_deny_list(a0: &mut deny_list::DenyList, a1: &mut coin::DenyCapV2<xbtc::XBTC>, a2: vector<address>, a3: &mut tx_context::TxContext);
- #[native_interface]
-    native public entry fun batch_remove_from_deny_list(a0: &mut deny_list::DenyList, a1: &mut coin::DenyCapV2<xbtc::XBTC>, a2: vector<address>, a3: &mut tx_context::TxContext);
- #[native_interface]
-    native public entry fun transfer_minter_role(a0: coin::TreasuryCap<xbtc::XBTC>, a1: address, a2: &mut tx_context::TxContext);
- #[native_interface]
-    native public entry fun transfer_denylister_role(a0: coin::DenyCapV2<xbtc::XBTC>, a1: address, a2: &mut tx_context::TxContext);
-
 }
