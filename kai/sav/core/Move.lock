@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "050B83B3A541F1A0F288A4FB9536D1EE375F8D7F1963D2E39576D955E092598A"
+manifest_digest = "52B791075BFD33F71EE9301645C306E2EA84616DA5BCFBAC008C655F255B9E3C"
 deps_digest = "8227D341C0550A37580C10FA45FE148A465225149C69D179737E0FE454AD6AEC"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
@@ -37,7 +37,7 @@ dependencies = [
 
 [[move.package]]
 id = "Bridge"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "209f0da8e316", subdir = "crates/sui-framework/packages/bridge" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "2cde80b5766b0bc2073908e10f6e3c81c93fd691", subdir = "crates/sui-framework/packages/bridge" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -131,7 +131,7 @@ dependencies = [
 
 [[move.package]]
 id = "MoveStdlib"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.51.5", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.55.0", subdir = "crates/sui-framework/packages/move-stdlib" }
 
 [[move.package]]
 id = "Pyth"
@@ -212,7 +212,7 @@ dependencies = [
 
 [[move.package]]
 id = "Sui"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.51.5", subdir = "crates/sui-framework/packages/sui-framework" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.55.0", subdir = "crates/sui-framework/packages/sui-framework" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -220,7 +220,7 @@ dependencies = [
 
 [[move.package]]
 id = "SuiSystem"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "209f0da8e316", subdir = "crates/sui-framework/packages/sui-system" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "2cde80b5766b0bc2073908e10f6e3c81c93fd691", subdir = "crates/sui-framework/packages/sui-system" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -342,7 +342,7 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.52.2"
+compiler-version = "1.55.0"
 edition = "2024.beta"
 flavor = "sui"
 

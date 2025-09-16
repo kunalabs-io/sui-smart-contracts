@@ -6,8 +6,8 @@ edition = "2024.beta"
 published-at = "0xd98a76e61b2499856e1958291b2c170a02e6c43d555d18f2f2f7d2741736481b"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.51.5", override = true }
-MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.51.5", override = true }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.55.0", override = true }
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.55.0", override = true }
 AccessManagement = { local = "../../../access-management" }
 CetusClmm = { local = "../../../_vendor/CetusClmm" }
 IntegerMate = { git = "https://github.com/CetusProtocol/integer-mate", subdir = "sui", rev = "c502cff", override = true }

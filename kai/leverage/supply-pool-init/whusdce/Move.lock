@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "793E3653AC182E1B31F01FD0EEA3783B93832A50E9094CD14CD3FA100A4ADF76"
+manifest_digest = "44B2D4F2D4B43EC3FBD05F5CFFF237DA0A4624AC51727861C6FD1506B480A2A2"
 deps_digest = "397E6A9F7A624706DBDFEE056CE88391A15876868FD18A88504DA74EB458D697"
 dependencies = [
   { id = "KaiLeverage", name = "KaiLeverage" },
@@ -33,7 +33,7 @@ dependencies = [
 
 [[move.package]]
 id = "Bridge"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "209f0da8e316", subdir = "crates/sui-framework/packages/bridge" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "2cde80b5766b0bc2073908e10f6e3c81c93fd691", subdir = "crates/sui-framework/packages/bridge" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -130,7 +130,7 @@ dependencies = [
 
 [[move.package]]
 id = "MoveStdlib"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.51.5", subdir = "crates/sui-framework/packages/move-stdlib" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.55.0", subdir = "crates/sui-framework/packages/move-stdlib" }
 
 [[move.package]]
 id = "Pyth"
@@ -144,7 +144,7 @@ dependencies = [
 
 [[move.package]]
 id = "Sui"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.51.5", subdir = "crates/sui-framework/packages/sui-framework" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "mainnet-v1.55.0", subdir = "crates/sui-framework/packages/sui-framework" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -152,7 +152,7 @@ dependencies = [
 
 [[move.package]]
 id = "SuiSystem"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "209f0da8e316", subdir = "crates/sui-framework/packages/sui-system" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "2cde80b5766b0bc2073908e10f6e3c81c93fd691", subdir = "crates/sui-framework/packages/sui-system" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -274,7 +274,7 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.52.2"
+compiler-version = "1.55.0"
 edition = "2024.beta"
 flavor = "sui"
 
