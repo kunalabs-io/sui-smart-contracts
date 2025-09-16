@@ -137,6 +137,17 @@ module pyth::price_info {
         }
     }
 
+    #[test_only]
+    public fun new_price_info_object_for_testing(
+        price_info: PriceInfo,
+        ctx: &mut TxContext
+    ): PriceInfoObject {
+        PriceInfoObject {
+            id: object::new(ctx),
+            price_info
+        }
+    }
+
     #[test]
     public fun test_get_price_info_object_id_from_price_identifier(){
         use sui::object::{Self};
@@ -208,5 +219,13 @@ module pyth::price_info {
             price_info.arrival_time,
             price_info.price_feed
         );
+    }
+
+    #[test_only]
+    public fun update_price_info_object_for_testing(
+        price_info_object: &mut PriceInfoObject,
+        price_info: PriceInfo
+    ) {
+        price_info_object.price_info = price_info;
     }
 }
