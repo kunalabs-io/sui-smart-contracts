@@ -157,8 +157,8 @@ fun deleverage_with_ticket_standard_flow_is_correct() {
         price_info.add(&usdc_pio);
         let price_info = config.validate_price_info(&price_info);
         let p_x128 = price_info.div_price_numeric_x128(
-            type_name::get<SUI>(),
-            type_name::get<USDC>(),
+            type_name::with_defining_ids<SUI>(),
+            type_name::with_defining_ids<USDC>(),
         );
 
         assert!(model.margin_below_threshold(p_x128, config.deleverage_margin_bps()));
@@ -206,8 +206,8 @@ fun deleverage_with_ticket_standard_flow_is_correct() {
 
         let validated_price_info = config.validate_price_info(&price_info);
         let exp_oracle_price_x128 = validated_price_info.div_price_numeric_x128(
-            type_name::get<SUI>(),
-            type_name::get<USDC>(),
+            type_name::with_defining_ids<SUI>(),
+            type_name::with_defining_ids<USDC>(),
         );
         let exp_delta_l = model.calc_max_deleverage_delta_l(
             exp_oracle_price_x128,
@@ -419,8 +419,8 @@ fun deleverage_helper_standard_flow_is_correct() {
         price_info.add(&usdc_pio);
         let price_info = config.validate_price_info(&price_info);
         let p_x128 = price_info.div_price_numeric_x128(
-            type_name::get<SUI>(),
-            type_name::get<USDC>(),
+            type_name::with_defining_ids<SUI>(),
+            type_name::with_defining_ids<USDC>(),
         );
 
         assert!(model.margin_below_threshold(p_x128, config.deleverage_margin_bps()));
@@ -457,8 +457,8 @@ fun deleverage_helper_standard_flow_is_correct() {
 
         let validated_price_info = config.validate_price_info(&price_info);
         let exp_oracle_price_x128 = validated_price_info.div_price_numeric_x128(
-            type_name::get<SUI>(),
-            type_name::get<USDC>(),
+            type_name::with_defining_ids<SUI>(),
+            type_name::with_defining_ids<USDC>(),
         );
         let exp_delta_l = model.calc_max_deleverage_delta_l(
             exp_oracle_price_x128,

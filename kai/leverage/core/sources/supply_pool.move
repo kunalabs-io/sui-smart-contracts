@@ -35,7 +35,7 @@ public use fun fdb_share_type_matches_asset_if_any_exists as
     FacilDebtBag.share_type_matches_asset_if_any_exists;
 public use fun fdb_is_empty as FacilDebtBag.is_empty;
 public use fun fdb_destroy_empty as FacilDebtBag.destroy_empty;
-public use fun fdb_size as FacilDebtBag.size;
+public use fun fdb_length as FacilDebtBag.length;
 
 /* ================= constants ================= */
 
@@ -315,7 +315,7 @@ public fun update_interest<T, ST>(pool: &mut SupplyPool<T, ST>, clock: &Clock) {
 
     let mut total_liabilities_x64 = 0;
     let mut i = 0;
-    let n = pool.debt_info.size();
+    let n = pool.debt_info.length();
     while (i < n) {
         let (_, info) = pool.debt_info.get_entry_by_idx_mut(i);
 
@@ -640,6 +640,6 @@ public(package) fun fdb_destroy_empty(self: FacilDebtBag) {
     inner.destroy_empty();
 }
 
-public(package) fun fdb_size(self: &FacilDebtBag): u64 {
-    self.inner.size()
+public(package) fun fdb_length(self: &FacilDebtBag): u64 {
+    self.inner.length()
 }

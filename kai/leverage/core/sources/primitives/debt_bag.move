@@ -80,8 +80,8 @@ fun key(info: &Info): Key {
 }
 
 public fun add<T, ST>(self: &mut DebtBag, shares: DebtShareBalance<ST>) {
-    let asset_type = type_name::get<T>();
-    let share_type = type_name::get<ST>();
+    let asset_type = type_name::with_defining_ids<T>();
+    let share_type = type_name::with_defining_ids<ST>();
     if (shares.value_x64() == 0) {
         shares.destroy_zero();
         return
@@ -121,7 +121,7 @@ public fun take_amt<ST>(self: &mut DebtBag, amount: u128): DebtShareBalance<ST> 
     if (amount == 0) {
         return debt::zero()
     };
-    let type_st = type_name::get<ST>();
+    let type_st = type_name::with_defining_ids<ST>();
 
     let idx = get_share_idx(self, &type_st);
     let info = &mut self.infos[idx];
@@ -141,7 +141,7 @@ public fun take_amt<ST>(self: &mut DebtBag, amount: u128): DebtShareBalance<ST> 
 }
 
 public fun take_all<ST>(self: &mut DebtBag): DebtShareBalance<ST> {
-    let type_st = type_name::get<ST>();
+    let type_st = type_name::with_defining_ids<ST>();
 
     let idx_opt = get_share_idx_opt(self, &type_st);
     if (idx_opt.is_none()) {
@@ -157,7 +157,7 @@ public fun take_all<ST>(self: &mut DebtBag): DebtShareBalance<ST> {
 }
 
 public fun get_share_amount_by_asset_type<T>(self: &DebtBag): u128 {
-    let asset_type = type_name::get<T>();
+    let asset_type = type_name::with_defining_ids<T>();
     let idx_opt = get_asset_idx_opt(self, &asset_type);
     if (idx_opt.is_none()) {
         return 0
@@ -169,7 +169,7 @@ public fun get_share_amount_by_asset_type<T>(self: &DebtBag): u128 {
 }
 
 public fun get_share_amount_by_share_type<ST>(debt_bag: &DebtBag): u128 {
-    let share_type = type_name::get<ST>();
+    let share_type = type_name::with_defining_ids<ST>();
     let idx_opt = get_share_idx_opt(debt_bag, &share_type);
     if (idx_opt.is_none()) {
         return 0
@@ -181,7 +181,7 @@ public fun get_share_amount_by_share_type<ST>(debt_bag: &DebtBag): u128 {
 }
 
 public fun get_share_type_for_asset<T>(self: &DebtBag): TypeName {
-    let asset_type = type_name::get<T>();
+    let asset_type = type_name::with_defining_ids<T>();
     let idx_opt = get_asset_idx_opt(self, &asset_type);
     assert!(idx_opt.is_some(), ETypeDoesNotExist);
     let idx = idx_opt.destroy_some();
@@ -205,8 +205,8 @@ public fun get_share_type_for_asset<T>(self: &DebtBag): TypeName {
 /// # Returns
 /// - `bool`: True if the types are both absent or both present and matched; false otherwise.
 public fun share_type_matches_asset_if_any_exists<T, ST>(self: &DebtBag): bool {
-    let asset_type = type_name::get<T>();
-    let share_type = type_name::get<ST>();
+    let asset_type = type_name::with_defining_ids<T>();
+    let share_type = type_name::with_defining_ids<ST>();
 
     let mut i = 0;
     let n = self.infos.length();
@@ -233,6 +233,11 @@ public fun destroy_empty(self: DebtBag) {
     bag.destroy_empty();
 }
 
+#[deprecated(note = b"Renamed to `length` for consistency.")]
 public fun size(self: &DebtBag): u64 {
+    self.infos.length()
+}
+
+public fun length(self: &DebtBag): u64 {
     self.infos.length()
 }

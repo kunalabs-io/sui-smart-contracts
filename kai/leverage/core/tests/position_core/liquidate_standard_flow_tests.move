@@ -145,7 +145,7 @@ fun liquidate_col_x_standard_flow_is_correct() {
         assert!(position.col_y().value() == 0);
         assert!(position.debt_bag().get_share_amount_by_asset_type<SUI>() == 2073649862 << 64);
         assert!(position.debt_bag().get_share_amount_by_asset_type<USDC>() == 61782766 << 64);
-        assert!(position.debt_bag().fdb_size() == 2);
+        assert!(position.debt_bag().length() == 2);
 
         // calculate delta_y to move the price the right amount
         let delta_x = mock_dex_math::get_delta_a(
@@ -186,8 +186,8 @@ fun liquidate_col_x_standard_flow_is_correct() {
         price_info.add(&usdc_pio);
         let price_info = config.validate_price_info(&price_info);
         let p_x128 = price_info.div_price_numeric_x128(
-            type_name::get<SUI>(),
-            type_name::get<USDC>(),
+            type_name::with_defining_ids<SUI>(),
+            type_name::with_defining_ids<USDC>(),
         );
 
         assert!(model.margin_below_threshold(p_x128, config.liq_margin_bps()));
@@ -232,8 +232,8 @@ fun liquidate_col_x_standard_flow_is_correct() {
 
         let validated_price_info = config.validate_price_info(&price_info);
         let exp_oracle_price_x128 = validated_price_info.div_price_numeric_x128(
-            type_name::get<SUI>(),
-            type_name::get<USDC>(),
+            type_name::with_defining_ids<SUI>(),
+            type_name::with_defining_ids<USDC>(),
         );
         let exp_delta_l = model.calc_max_deleverage_delta_l(
             exp_oracle_price_x128,
@@ -326,8 +326,8 @@ fun liquidate_col_x_standard_flow_is_correct() {
         );
         let validated_price_info = config.validate_price_info(&price_info);
         let oracle_price_x128 = validated_price_info.div_price_numeric_x128(
-            type_name::get<SUI>(),
-            type_name::get<USDC>(),
+            type_name::with_defining_ids<SUI>(),
+            type_name::with_defining_ids<USDC>(),
         );
         assert!(model.margin_below_threshold(oracle_price_x128, config.liq_margin_bps()));
 
@@ -376,13 +376,13 @@ fun liquidate_col_x_standard_flow_is_correct() {
         // check position after liquidation
         assert!(position.col_x().value() == 0);
         assert!(position.col_y().value() == exp_cy - reward_amt_y);
-        assert!(position.debt_bag().size() == 1);
+        assert!(position.debt_bag().length() == 1);
         assert!(
             position.debt_bag().get_share_amount_by_asset_type<USDC>() == (initial_dy - repayment_amt_y) as u128 << 64,
         );
-        assert!(position.collected_fees().amounts().size() == 1);
+        assert!(position.collected_fees().amounts().length() == 1);
         assert!(
-            position.collected_fees().amounts()[&type_name::get<SUI>()] == 1_000000000 + exp_fee_amt_x,
+            position.collected_fees().amounts()[&type_name::with_defining_ids<SUI>()] == 1_000000000 + exp_fee_amt_x,
         );
 
         test_scenario::return_shared(config);
@@ -521,7 +521,7 @@ fun liquidate_col_y_standard_flow_is_correct() {
         assert!(position.col_y().value() == 0);
         assert!(position.debt_bag().get_share_amount_by_asset_type<SUI>() == 14418266918 << 64);
         assert!(position.debt_bag().get_share_amount_by_asset_type<USDC>() == 7959953 << 64);
-        assert!(position.debt_bag().fdb_size() == 2);
+        assert!(position.debt_bag().length() == 2);
 
         // calculate delta_y to move the price the right amount
         let delta_y = mock_dex_math::get_delta_b(
@@ -562,8 +562,8 @@ fun liquidate_col_y_standard_flow_is_correct() {
         price_info.add(&usdc_pio);
         let price_info = config.validate_price_info(&price_info);
         let p_x128 = price_info.div_price_numeric_x128(
-            type_name::get<SUI>(),
-            type_name::get<USDC>(),
+            type_name::with_defining_ids<SUI>(),
+            type_name::with_defining_ids<USDC>(),
         );
 
         assert!(model.margin_below_threshold(p_x128, config.liq_margin_bps()));
@@ -633,8 +633,8 @@ fun liquidate_col_y_standard_flow_is_correct() {
         );
         let validated_price_info = config.validate_price_info(&price_info);
         let oracle_price_x128 = validated_price_info.div_price_numeric_x128(
-            type_name::get<SUI>(),
-            type_name::get<USDC>(),
+            type_name::with_defining_ids<SUI>(),
+            type_name::with_defining_ids<USDC>(),
         );
         assert!(model.margin_below_threshold(oracle_price_x128, config.liq_margin_bps()));
 
@@ -692,10 +692,10 @@ fun liquidate_col_y_standard_flow_is_correct() {
         // check position after liquidation
         assert!(position.col_x().value() == 0);
         assert!(position.col_y().value() == exp_cy - reward_amt_y);
-        assert!(position.debt_bag().size() == 0);
-        assert!(position.collected_fees().amounts().size() == 2);
-        assert!(position.collected_fees().amounts()[&type_name::get<SUI>()] == 1_000000000);
-        assert!(position.collected_fees().amounts()[&type_name::get<USDC>()] == exp_fee_amt_y);
+        assert!(position.debt_bag().length() == 0);
+        assert!(position.collected_fees().amounts().length() == 2);
+        assert!(position.collected_fees().amounts()[&type_name::with_defining_ids<SUI>()] == 1_000000000);
+        assert!(position.collected_fees().amounts()[&type_name::with_defining_ids<USDC>()] == exp_fee_amt_y);
 
         test_scenario::return_shared(config);
         test_scenario::return_shared(position);

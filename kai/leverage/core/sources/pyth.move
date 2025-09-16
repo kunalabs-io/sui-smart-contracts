@@ -68,7 +68,7 @@ public fun validate(
 
     let mut map = vec_map::empty();
     let mut i = 0;
-    let n = pio_allowlist.size();
+    let n = pio_allowlist.length();
     while (i < n) {
         let (coin_type, id) = pio_allowlist.get_entry_by_idx(i);
         let price_info = info.pio_map[id];
@@ -90,27 +90,27 @@ public fun max_age_secs(self: &ValidatedPythPriceInfo): u64 {
 }
 
 public fun decimals(`type`: TypeName): u8 {
-    if (`type` == type_name::get<SUI>()) {
+    if (`type` == type_name::with_defining_ids<SUI>()) {
         9
-    } else if (`type` == type_name::get<WHUSDCE>()) {
+    } else if (`type` == type_name::with_defining_ids<WHUSDCE>()) {
         6
-    } else if (`type` == type_name::get<WHUSDTE>()) {
+    } else if (`type` == type_name::with_defining_ids<WHUSDTE>()) {
         6
-    } else if (`type` == type_name::get<USDC>()) {
+    } else if (`type` == type_name::with_defining_ids<USDC>()) {
         6
-    } else if (`type` == type_name::get<SUIUSDT>()) {
+    } else if (`type` == type_name::with_defining_ids<SUIUSDT>()) {
         6
-    } else if (`type` == type_name::get<USDY>()) {
+    } else if (`type` == type_name::with_defining_ids<USDY>()) {
         6
-    } else if (`type` == type_name::get<DEEP>()) {
+    } else if (`type` == type_name::with_defining_ids<DEEP>()) {
         6
-    } else if (`type` == type_name::get<WAL>()) {
+    } else if (`type` == type_name::with_defining_ids<WAL>()) {
         9
-    } else if (`type` == type_name::get<LBTC>()) {
+    } else if (`type` == type_name::with_defining_ids<LBTC>()) {
         8
-    } else if (`type` == type_name::get<WBTC>()) {
+    } else if (`type` == type_name::with_defining_ids<WBTC>()) {
         8
-    } else if (`type` == type_name::get<XBTC>()) {
+    } else if (`type` == type_name::with_defining_ids<XBTC>()) {
         8
     } else {
         abort (EUnsupportedPriceFeed)

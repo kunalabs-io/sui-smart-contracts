@@ -20,8 +20,8 @@ use usdc::usdc::USDC;
 
 // Converts a price (multiplied by 100 in human format) to sqrt_price_x64 format.
 public fun price_mul_100_human_to_sqrt_x64<X, Y>(price: u64): u128 {
-    let decimals_x = pyth::decimals(type_name::get<X>());
-    let decimals_y = pyth::decimals(type_name::get<Y>());
+    let decimals_x = pyth::decimals(type_name::with_defining_ids<X>());
+    let decimals_y = pyth::decimals(type_name::with_defining_ids<Y>());
 
     let price_x64 = if (decimals_x > decimals_y) {
         ((price as u128) << 64) / 10_u128.pow(decimals_x - decimals_y) / 100
@@ -33,8 +33,8 @@ public fun price_mul_100_human_to_sqrt_x64<X, Y>(price: u64): u128 {
 }
 
 public fun sqrt_price_x64_to_price_human_mul_n<X, Y>(sqrt_price_x64: u128, n: u8): u64 {
-    let decimals_x = pyth::decimals(type_name::get<X>());
-    let decimals_y = pyth::decimals(type_name::get<Y>());
+    let decimals_x = pyth::decimals(type_name::with_defining_ids<X>());
+    let decimals_y = pyth::decimals(type_name::with_defining_ids<Y>());
 
     let price_x128 = (sqrt_price_x64 as u256) * (sqrt_price_x64 as u256);
     let price = (if (decimals_x > decimals_y) {
@@ -186,13 +186,13 @@ public fun initialize_config_for_testing(
         let request = config.set_pyth_config_max_age_secs(60, scenario.ctx());
         request.admin_approve_request(package_admin);
         let request = config.pyth_config_allow_pio(
-            type_name::get<SUI>(),
+            type_name::with_defining_ids<SUI>(),
             object::id(&sui_pio),
             scenario.ctx(),
         );
         request.admin_approve_request(package_admin);
         let request = config.pyth_config_allow_pio(
-            type_name::get<USDC>(),
+            type_name::with_defining_ids<USDC>(),
             object::id(&usdc_pio),
             scenario.ctx(),
         );

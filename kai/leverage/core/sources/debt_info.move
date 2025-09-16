@@ -41,7 +41,7 @@ public fun add<ST>(self: &mut DebtInfo, registry: &DebtRegistry<ST>) {
         supply_x64: registry.supply_x64(),
         liability_value_x64: registry.liability_value_x64(),
     };
-    self.map.insert(type_name::get<ST>(), entry);
+    self.map.insert(type_name::with_defining_ids<ST>(), entry);
 }
 
 public fun add_from_supply_pool<T, ST>(

@@ -27,7 +27,7 @@ public fun amounts(self: &BalanceBag): &VecMap<TypeName, u64> {
 }
 
 public fun add<T>(self: &mut BalanceBag, balance: Balance<T>) {
-    let `type` = type_name::get<T>();
+    let `type` = type_name::with_defining_ids<T>();
     if (balance.value() == 0) {
         balance::destroy_zero(balance);
         return
@@ -47,7 +47,7 @@ public fun add<T>(self: &mut BalanceBag, balance: Balance<T>) {
 }
 
 public fun take_all<T>(self: &mut BalanceBag): Balance<T> {
-    let `type` = type_name::get<T>();
+    let `type` = type_name::with_defining_ids<T>();
     if (!self.amounts.contains(&`type`)) {
         return balance::zero()
     };
@@ -62,7 +62,7 @@ public fun take_amount<T>(self: &mut BalanceBag, amount: u64): Balance<T> {
     if (amount == 0) {
         return balance::zero()
     };
-    let `type` = type_name::get<T>();
+    let `type` = type_name::with_defining_ids<T>();
 
     let inner_amount = vec_map::get_mut(&mut self.amounts, &`type`);
     if (*inner_amount == amount) {

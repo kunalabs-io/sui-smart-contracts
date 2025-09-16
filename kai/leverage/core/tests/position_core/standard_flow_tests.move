@@ -114,7 +114,7 @@ fun standard_flow_is_correct() {
         // check ticket fields after borrow
         assert!(ticket.borrowed_x().value() == 56352403581);
         assert!(ticket.borrowed_y().value() == 465614178);
-        assert!(ticket.debt_bag().fdb_size() == 2);
+        assert!(ticket.debt_bag().length() == 2);
         assert!(
             ticket.debt_bag().fdb_get_share_amount_by_asset_type<SUI>() == 56352403581 * (1u128 << 64),
         );
@@ -155,9 +155,9 @@ fun standard_flow_is_correct() {
         assert!(position.lp_position().tick_b() == tick_b);
         assert!(position.col_x().value() == 0);
         assert!(position.col_y().value() == 0);
-        assert!(position.debt_bag().fdb_size() == 2);
-        assert!(position.collected_fees().amounts().size() == 1);
-        assert!(position.collected_fees().amounts()[&type_name::get<SUI>()] == 1_000000000);
+        assert!(position.debt_bag().length() == 2);
+        assert!(position.collected_fees().amounts().length() == 1);
+        assert!(position.collected_fees().amounts()[&type_name::with_defining_ids<SUI>()] == 1_000000000);
 
         let mut debt_info = debt_info::empty(object::id(config.lend_facil_cap()));
         debt_info.add_from_supply_pool(
@@ -212,8 +212,8 @@ fun standard_flow_is_correct() {
         assert!(receipt.position_id() == object::id(&position));
         assert!(receipt.collected_amm_fee_x() == 0);
         assert!(receipt.collected_amm_fee_y() == 0);
-        assert!(receipt.collected_amm_rewards().size() == 0);
-        assert!(receipt.fees_taken().size() == 0);
+        assert!(receipt.collected_amm_rewards().length() == 0);
+        assert!(receipt.fees_taken().length() == 0);
         assert!(receipt.taken_cx() == 0);
         assert!(receipt.taken_cy() == 0);
         assert!(receipt.delta_l() == 0);
@@ -223,7 +223,7 @@ fun standard_flow_is_correct() {
         assert!(receipt.y_repaid() == 0);
         assert!(receipt.added_cx() == 0);
         assert!(receipt.added_cy() == 0);
-        assert!(receipt.stashed_amm_rewards().size() == 0);
+        assert!(receipt.stashed_amm_rewards().length() == 0);
 
         let (fee_balance_x, fee_balance_y) = mock_dex_integration::rebalance_collect_fee(
             &mut position,
@@ -245,11 +245,11 @@ fun standard_flow_is_correct() {
         assert!(reward_balance_x.value() == 0_200000000 - exp_reward_sui);
         assert!(receipt.collected_amm_fee_x() == 0_150000000);
         assert!(receipt.collected_amm_fee_y() == 1_100000);
-        assert!(receipt.collected_amm_rewards()[&type_name::get<SUI>()] == 0_200000000);
+        assert!(receipt.collected_amm_rewards()[&type_name::with_defining_ids<SUI>()] == 0_200000000);
         assert!(
-            receipt.fees_taken()[&type_name::get<SUI>()] == exp_rebalance_fee_x + exp_reward_sui,
+            receipt.fees_taken()[&type_name::with_defining_ids<SUI>()] == exp_rebalance_fee_x + exp_reward_sui,
         );
-        assert!(receipt.fees_taken()[&type_name::get<USDC>()] == exp_rebalance_fee_y);
+        assert!(receipt.fees_taken()[&type_name::with_defining_ids<USDC>()] == exp_rebalance_fee_y);
         destroy(fee_balance_x);
         destroy(fee_balance_y);
         destroy(reward_balance_x);
@@ -315,9 +315,9 @@ fun standard_flow_is_correct() {
         repay_debt_y_balance.destroy_zero();
         assert!(receipt.x_repaid() == 50000);
         assert!(receipt.y_repaid() == 60000);
-        assert!(receipt.stashed_amm_rewards().size() == 1);
-        assert!(receipt.stashed_amm_rewards()[&type_name::get<SUI>()] == 70000);
-        assert!(position.debt_bag().fdb_size() == 2);
+        assert!(receipt.stashed_amm_rewards().length() == 1);
+        assert!(receipt.stashed_amm_rewards()[&type_name::with_defining_ids<SUI>()] == 70000);
+        assert!(position.debt_bag().length() == 2);
         assert!(
             position.debt_bag().fdb_get_share_amount_by_asset_type<SUI>() == (56352403581 - 50000) * (1u128 << 64),
         );
@@ -329,11 +329,11 @@ fun standard_flow_is_correct() {
         assert!(receipt.position_id() == object::id(&position));
         assert!(receipt.collected_amm_fee_x() == 0_150000000);
         assert!(receipt.collected_amm_fee_y() == 1_100000);
-        assert!(receipt.collected_amm_rewards()[&type_name::get<SUI>()] == 0_200000000);
+        assert!(receipt.collected_amm_rewards()[&type_name::with_defining_ids<SUI>()] == 0_200000000);
         assert!(
-            receipt.fees_taken()[&type_name::get<SUI>()] == exp_rebalance_fee_x + exp_reward_sui,
+            receipt.fees_taken()[&type_name::with_defining_ids<SUI>()] == exp_rebalance_fee_x + exp_reward_sui,
         );
-        assert!(receipt.fees_taken()[&type_name::get<USDC>()] == exp_rebalance_fee_y);
+        assert!(receipt.fees_taken()[&type_name::with_defining_ids<USDC>()] == exp_rebalance_fee_y);
         assert!(receipt.taken_cx() == 0);
         assert!(receipt.taken_cy() == 0);
         assert!(receipt.delta_l() == delta_l);
@@ -343,8 +343,8 @@ fun standard_flow_is_correct() {
         assert!(receipt.y_repaid() == 60000);
         assert!(receipt.added_cx() == 0);
         assert!(receipt.added_cy() == 0);
-        assert!(receipt.stashed_amm_rewards().size() == 1);
-        assert!(receipt.stashed_amm_rewards()[&type_name::get<SUI>()] == 70000);
+        assert!(receipt.stashed_amm_rewards().length() == 1);
+        assert!(receipt.stashed_amm_rewards()[&type_name::with_defining_ids<SUI>()] == 70000);
 
         core::consume_rebalance_receipt(
             &mut position,
@@ -376,7 +376,7 @@ fun standard_flow_is_correct() {
 
         assert!(sui_balance.value() == 1_000000000 + 1500000 + 2000000);
         assert!(usdc_balance.value() == 11000);
-        assert!(position.collected_fees().amounts().size() == 0);
+        assert!(position.collected_fees().amounts().length() == 0);
 
         destroy(sui_balance);
         destroy(usdc_balance);
@@ -407,7 +407,7 @@ fun standard_flow_is_correct() {
         );
         repay_debt_x_balance.destroy_zero();
         repay_debt_y_balance.destroy_zero();
-        assert!(position.debt_bag().fdb_size() == 2);
+        assert!(position.debt_bag().length() == 2);
         assert!(
             position.debt_bag().fdb_get_share_amount_by_asset_type<SUI>() == (56352403581 - 50000 - 10000) * (1u128 << 64),
         );

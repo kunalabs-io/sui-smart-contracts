@@ -627,7 +627,7 @@ public fun config_add_empty_pyth_config(
         max_age_secs: 0,
         pio_allowlist: vec_map::empty(),
     };
-    config.allowed_oracles.add(type_name::get<PythConfig>(), pyth_config);
+    config.allowed_oracles.add(type_name::with_defining_ids<PythConfig>(), pyth_config);
 
     access::new_request(AModifyConfig {}, ctx)
 }
@@ -637,7 +637,7 @@ public fun set_pyth_config_max_age_secs(
     max_age_secs: u64,
     ctx: &mut TxContext,
 ): ActionRequest {
-    let pyth_config: &mut PythConfig = &mut config.allowed_oracles[type_name::get<PythConfig>()];
+    let pyth_config: &mut PythConfig = &mut config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
     pyth_config.max_age_secs = max_age_secs;
     access::new_request(AModifyConfig {}, ctx)
 }
@@ -648,7 +648,7 @@ public fun pyth_config_allow_pio(
     pio_id: ID,
     ctx: &mut TxContext,
 ): ActionRequest {
-    let pyth_config: &mut PythConfig = &mut config.allowed_oracles[type_name::get<PythConfig>()];
+    let pyth_config: &mut PythConfig = &mut config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
     pyth_config.pio_allowlist.insert(coin_type, pio_id);
     access::new_request(AModifyConfig {}, ctx)
 }
@@ -658,7 +658,7 @@ public fun pyth_config_disallow_pio(
     coin_type: TypeName,
     ctx: &mut TxContext,
 ): ActionRequest {
-    let pyth_config: &mut PythConfig = &mut config.allowed_oracles[type_name::get<PythConfig>()];
+    let pyth_config: &mut PythConfig = &mut config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
     pyth_config.pio_allowlist.remove(&coin_type);
     access::new_request(AModifyConfig {}, ctx)
 }
@@ -1686,7 +1686,7 @@ public(package) fun validate_price_info(
     config: &PositionConfig,
     price_info: &PythPriceInfo,
 ): ValidatedPythPriceInfo {
-    let pyth_config: &PythConfig = &config.allowed_oracles[type_name::get<PythConfig>()];
+    let pyth_config: &PythConfig = &config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
     price_info.validate(pyth_config.max_age_secs, &pyth_config.pio_allowlist)
 }
 
@@ -1853,8 +1853,8 @@ public(package) macro fun create_position_ticket<$X, $Y, $I32>(
     assert!(current_tick.lt(tick_b), e_invalid_tick_range!());
 
     let p0_oracle_x128 = price_info.div_price_numeric_x128(
-        type_name::get<$X>(),
-        type_name::get<$Y>(),
+        type_name::with_defining_ids<$X>(),
+        type_name::with_defining_ids<$Y>(),
     );
     let p0_x128 = (sqrt_p0_x64 as u256) * (sqrt_p0_x64 as u256);
 
@@ -2076,7 +2076,7 @@ public(package) macro fun create_deleverage_ticket_inner<$X, $Y, $Pool, $LP>(
     let debt_info = validate_debt_info(config, $debt_info);
 
     let model = model_from_position!(position, &debt_info);
-    let p_x128 = price_info.div_price_numeric_x128(type_name::get<$X>(), type_name::get<$Y>());
+    let p_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
 
     let mut info = {
         let position_id = object::id(position);
@@ -2214,7 +2214,7 @@ public fun deleverage_ticket_repay_x<X, Y, SX, LP: store>(
         return
     };
     assert!(
-        position.debt_bag().get_share_type_for_asset<X>() == type_name::get<SX>(),
+        position.debt_bag().get_share_type_for_asset<X>() == type_name::with_defining_ids<SX>(),
         e_supply_pool_mismatch!(),
     );
 
@@ -2239,7 +2239,7 @@ public fun deleverage_ticket_repay_y<X, Y, SY, LP: store>(
         return
     };
     assert!(
-        position.debt_bag().get_share_type_for_asset<Y>() == type_name::get<SY>(),
+        position.debt_bag().get_share_type_for_asset<Y>() == type_name::with_defining_ids<SY>(),
         e_supply_pool_mismatch!(),
     );
 
@@ -2392,7 +2392,7 @@ public(package) macro fun liquidate_col_x<$X, $Y, $SY, $LP>(
     let debt_info = validate_debt_info(config, $debt_info);
 
     let model = model_from_position!(position, &debt_info);
-    let p_x128 = price_info.div_price_numeric_x128(type_name::get<$X>(), type_name::get<$Y>());
+    let p_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
 
     let (repayment_amt_y, reward_amt_x) = model.calc_liquidate_col_x(
         p_x128,
@@ -2407,7 +2407,7 @@ public(package) macro fun liquidate_col_x<$X, $Y, $SY, $LP>(
     let mut r = repayment.split(repayment_amt_y);
 
     assert!(
-        type_name::get<$SY>() == position.debt_bag().get_share_type_for_asset<$Y>(),
+        type_name::with_defining_ids<$SY>() == position.debt_bag().get_share_type_for_asset<$Y>(),
         e_supply_pool_mismatch!(),
     );
 
@@ -2468,7 +2468,7 @@ public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
     let debt_info = validate_debt_info(config, $debt_info);
 
     let model = model_from_position!(position, &debt_info);
-    let p_x128 = price_info.div_price_numeric_x128(type_name::get<$X>(), type_name::get<$Y>());
+    let p_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
 
     let (repayment_amt_x, reward_amt_y) = model.calc_liquidate_col_y(
         p_x128,
@@ -2483,7 +2483,7 @@ public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
     let mut r = repayment.split(repayment_amt_x);
 
     assert!(
-        type_name::get<$SX>() == position.debt_bag().get_share_type_for_asset<$X>(),
+        type_name::with_defining_ids<$SX>() == position.debt_bag().get_share_type_for_asset<$X>(),
         e_supply_pool_mismatch!(),
     );
 
@@ -2583,7 +2583,7 @@ public(package) macro fun repay_bad_debt<$X, $Y, $T, $ST, $LP>(
 
     assert!(model.is_fully_deleveraged(), e_position_not_fully_deleveraged!());
 
-    let p_x128 = price_info.div_price_numeric_x128(type_name::get<$X>(), type_name::get<$Y>());
+    let p_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
     let crit_margin_bps = 10000 + config.liq_bonus_bps();
     assert!(
         model.margin_below_threshold(p_x128, crit_margin_bps),
@@ -2648,8 +2648,8 @@ public(package) macro fun reduce<$X, $Y, $SX, $SY, $Pool, $LP>(
     let price_info = validate_price_info(config, $price_info);
 
     let oracle_price_x128 = price_info.div_price_numeric_x128(
-        type_name::get<$X>(),
-        type_name::get<$Y>(),
+        type_name::with_defining_ids<$X>(),
+        type_name::with_defining_ids<$Y>(),
     );
     let sqrt_pool_price_x64 = pool_object.current_sqrt_price_x64();
     let pool_price_x128 = (sqrt_pool_price_x64 as u256) * (sqrt_pool_price_x64 as u256);
@@ -2869,7 +2869,7 @@ public(package) macro fun add_liquidity_with_receipt_inner<$X, $Y, $Pool, $LP, $
     );
 
     let model = model_from_position!(position, &debt_info);
-    let price_x128 = price_info.div_price_numeric_x128(type_name::get<$X>(), type_name::get<$Y>());
+    let price_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
     assert!(
         !model.margin_below_threshold(price_x128, config.deleverage_margin_bps()),
         e_position_below_threshold!(),
@@ -3209,7 +3209,7 @@ public fun create_rebalance_receipt<X, Y, LP: store>(
 }
 
 public(package) fun add_amount_to_map<T>(map: &mut VecMap<TypeName, u64>, amount: u64) {
-    let `type` = type_name::get<T>();
+    let `type` = type_name::with_defining_ids<T>();
     if (vec_map::contains(map, &`type`)) {
         let total = &mut map[&`type`];
         *total = *total + amount;
@@ -3517,7 +3517,7 @@ public(package) macro fun calc_liquidate_col_x<$X, $Y, $LP>(
     let debt_info = validate_debt_info(config, $debt_info);
 
     let model = model_from_position!(position, &debt_info);
-    let p_x128 = price_info.div_price_numeric_x128(type_name::get<$X>(), type_name::get<$Y>());
+    let p_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
 
     model.calc_liquidate_col_x(
         p_x128,
@@ -3544,7 +3544,7 @@ public(package) macro fun calc_liquidate_col_y<$X, $Y, $LP>(
     let debt_info = validate_debt_info(config, $debt_info);
 
     let model = model_from_position!(position, &debt_info);
-    let p_x128 = price_info.div_price_numeric_x128(type_name::get<$X>(), type_name::get<$Y>());
+    let p_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
 
     model.calc_liquidate_col_y(
         p_x128,
