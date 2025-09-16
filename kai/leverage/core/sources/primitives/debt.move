@@ -4,6 +4,7 @@
 module kai_leverage::debt;
 
 use kai_leverage::util;
+use std::u128;
 use sui::balance::{Self, Balance};
 use sui::coin::{Self, TreasuryCap, CoinMetadata};
 use sui::url::Url;
@@ -202,26 +203,22 @@ public fun calc_repay_lossy<T>(registry: &DebtRegistry<T>, share_value_x64: u128
 }
 
 /// Lossy. Repay the share debt. Reduces the total liability and supply.
-/// Returns the value repaid (the amount the liability was reduced by).
-/// The repaid amount is rounded up and the fractional difference is reduced from the total
-/// liability,
-/// effectively reducing the debt of other shares against the total liability by that fraction.
+/// Returns the value repaid (i.e., the amount by which the liability was reduced).
+///
+/// The repaid amount is rounded up, and any fractional difference is subtracted from the total
+/// liability. This effectively reduces the debt of other shares by that fraction.
 public fun repay_lossy<T>(registry: &mut DebtRegistry<T>, share: DebtShareBalance<T>): u64 {
     let value_x64 = repay_x64(registry, share);
     // this cast will abort if `value_x64` is larger than `(Q64 - 1) * Q64` but this is a very
     // rare edge case and the shares can be redeemed in smaller chunks to avoid this.
     let value = (util::divide_and_round_up_u128(value_x64, Q64) as u64);
 
-    // Note: this can fail in situations where all or almost all remaining shares are being redeemed
-    // due to the fact that the value is calculated by rounding up which may mean the fractional
-    // part
-    // is larger that the total remaining liability. Use `repay_x64` to handle this edge case if
-    // needed.
     let fraction = if (value_x64 % Q64 == 0) {
         0
     } else {
         Q64 - (value_x64 % Q64)
     };
+    let fraction = u128::min(registry.liability_value_x64, fraction);
     registry.liability_value_x64 = registry.liability_value_x64 - fraction;
 
     value

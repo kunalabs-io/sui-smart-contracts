@@ -10,6 +10,7 @@ use kai_leverage::equity::{Self, EquityTreasury, EquityShareBalance};
 use kai_leverage::piecewise::Piecewise;
 use kai_leverage::util;
 use std::type_name::TypeName;
+use std::u128;
 use sui::balance::{Self, Balance};
 use sui::clock::Clock;
 use sui::event;
@@ -500,7 +501,8 @@ public(package) fun repay<T, ST>(
     let amount = info.debt_registry.repay_lossy(shares);
     assert!(balance.value() == amount, EInvalidRepayAmount);
 
-    pool.total_liabilities_x64 = pool.total_liabilities_x64 - ((amount as u128) << 64);
+    let amount_x64 = u128::min(pool.total_liabilities_x64, (amount as u128) << 64);
+    pool.total_liabilities_x64 = pool.total_liabilities_x64 - amount_x64;
 
     pool.available_balance.join(balance);
 }
