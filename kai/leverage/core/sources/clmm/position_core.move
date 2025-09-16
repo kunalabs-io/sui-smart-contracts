@@ -19,23 +19,81 @@ use sui::event;
 use sui::sui::SUI;
 use sui::vec_map::{Self, VecMap};
 
-// self
+// Position
 use fun position_share_object as Position.share_object;
+
+// PositionCap
 public use fun pc_position_id as PositionCap.position_id;
-use fun rr_position_id as RebalanceReceipt.position_id;
 
-use fun cpt_config_id as CreatePositionTicket.config_id;
-use fun cpt_debt_bag as CreatePositionTicket.debt_bag;
+// RebalanceReceipt
+public use fun rr_position_id as RebalanceReceipt.position_id;
+public use fun rr_collected_amm_fee_x as RebalanceReceipt.collected_amm_fee_x;
+public use fun rr_collected_amm_fee_y as RebalanceReceipt.collected_amm_fee_y;
+public use fun rr_collected_amm_rewards as RebalanceReceipt.collected_amm_rewards;
+public use fun rr_fees_taken as RebalanceReceipt.fees_taken;
+public use fun rr_taken_cx as RebalanceReceipt.taken_cx;
+public use fun rr_taken_cy as RebalanceReceipt.taken_cy;
+public use fun rr_delta_l as RebalanceReceipt.delta_l;
+public use fun rr_delta_x as RebalanceReceipt.delta_x;
+public use fun rr_delta_y as RebalanceReceipt.delta_y;
+public use fun rr_x_repaid as RebalanceReceipt.x_repaid;
+public use fun rr_y_repaid as RebalanceReceipt.y_repaid;
+public use fun rr_added_cx as RebalanceReceipt.added_cx;
+public use fun rr_added_cy as RebalanceReceipt.added_cy;
+public use fun rr_stashed_amm_rewards as RebalanceReceipt.stashed_amm_rewards;
+
+// CreatePositionTicket
+public use fun cpt_config_id as CreatePositionTicket.config_id;
+public use fun cpt_debt_bag as CreatePositionTicket.debt_bag;
 use fun cpt_debt_bag_mut as CreatePositionTicket.debt_bag_mut;
+public use fun cpt_tick_a as CreatePositionTicket.tick_a;
+public use fun cpt_tick_b as CreatePositionTicket.tick_b;
 
+// Position
 public use fun position_config_id as Position.config_id;
 public use fun position_debt_bag as Position.debt_bag;
 use fun position_debt_bag_mut as Position.debt_bag_mut;
 
+// AddLiquidityInfo
 use fun ali_emit as AddLiquidityInfo.emit;
 use fun ali_delta_l as AddLiquidityInfo.delta_l;
 use fun ali_delta_x as AddLiquidityInfo.delta_x;
 use fun ali_delta_y as AddLiquidityInfo.delta_y;
+
+// DeleverageTicket
+public use fun dt_position_id as DeleverageTicket.position_id;
+public use fun dt_can_repay_x as DeleverageTicket.can_repay_x;
+public use fun dt_can_repay_y as DeleverageTicket.can_repay_y;
+public use fun dt_info as DeleverageTicket.info;
+
+// DeleverageInfo
+public use fun di_position_id as DeleverageInfo.position_id;
+public use fun di_model as DeleverageInfo.model;
+public use fun di_oracle_price_x128 as DeleverageInfo.oracle_price_x128;
+public use fun di_sqrt_pool_price_x64 as DeleverageInfo.sqrt_pool_price_x64;
+public use fun di_delta_l as DeleverageInfo.delta_l;
+public use fun di_delta_x as DeleverageInfo.delta_x;
+public use fun di_delta_y as DeleverageInfo.delta_y;
+public use fun di_x_repaid as DeleverageInfo.x_repaid;
+public use fun di_y_repaid as DeleverageInfo.y_repaid;
+
+// ReductionRepaymentTicket
+public use fun rrt_sx as ReductionRepaymentTicket.sx;
+public use fun rrt_sy as ReductionRepaymentTicket.sy;
+public use fun rrt_info as ReductionRepaymentTicket.info;
+
+// ReductionInfo
+public use fun ri_position_id as ReductionInfo.position_id;
+public use fun ri_model as ReductionInfo.model;
+public use fun ri_oracle_price_x128 as ReductionInfo.oracle_price_x128;
+public use fun ri_sqrt_pool_price_x64 as ReductionInfo.sqrt_pool_price_x64;
+public use fun ri_delta_l as ReductionInfo.delta_l;
+public use fun ri_delta_x as ReductionInfo.delta_x;
+public use fun ri_delta_y as ReductionInfo.delta_y;
+public use fun ri_withdrawn_x as ReductionInfo.withdrawn_x;
+public use fun ri_withdrawn_y as ReductionInfo.withdrawn_y;
+public use fun ri_x_repaid as ReductionInfo.x_repaid;
+public use fun ri_y_repaid as ReductionInfo.y_repaid;
 
 // turbos
 /*
@@ -349,10 +407,24 @@ public(package) fun position_debt_bag_mut<X, Y, LP>(
     &mut position.debt_bag
 }
 
+public(package) fun collected_fees<X, Y, LP>(position: &Position<X, Y, LP>): &BalanceBag {
+    &position.collected_fees
+}
+
 public(package) fun collected_fees_mut<X, Y, LP>(
     position: &mut Position<X, Y, LP>,
 ): &mut BalanceBag {
     &mut position.collected_fees
+}
+
+public(package) fun owner_reward_stash<X, Y, LP>(position: &Position<X, Y, LP>): &BalanceBag {
+    &position.owner_reward_stash
+}
+
+public(package) fun owner_reward_stash_mut<X, Y, LP>(
+    position: &mut Position<X, Y, LP>,
+): &mut BalanceBag {
+    &mut position.owner_reward_stash
 }
 
 /* ================= PositionCap ================= */
@@ -380,7 +452,7 @@ public fun pc_position_id(cap: &PositionCap): ID {
 
 /* ================= PositionConfig ================= */
 
-public struct PythConfig has store, copy, drop {
+public struct PythConfig has copy, drop, store {
     max_age_secs: u64,
     pio_allowlist: VecMap<TypeName, ID>,
 }
@@ -810,6 +882,22 @@ public(package) fun deleverage_ticket_constructor(
     DeleverageTicket { position_id, can_repay_x, can_repay_y, info }
 }
 
+public(package) fun dt_position_id(self: &DeleverageTicket): ID {
+    self.position_id
+}
+
+public(package) fun dt_can_repay_x(self: &DeleverageTicket): bool {
+    self.can_repay_x
+}
+
+public(package) fun dt_can_repay_y(self: &DeleverageTicket): bool {
+    self.can_repay_y
+}
+
+public(package) fun dt_info(self: &DeleverageTicket): &DeleverageInfo {
+    &self.info
+}
+
 /* ================= ReductionRepaymentTicket ================= */
 
 public struct ReductionRepaymentTicket<phantom SX, phantom SY> {
@@ -824,6 +912,18 @@ public(package) fun reduction_repayment_ticket_constructor<SX, SY>(
     info: ReductionInfo,
 ): ReductionRepaymentTicket<SX, SY> {
     ReductionRepaymentTicket { sx, sy, info }
+}
+
+public(package) fun rrt_sx<SX, SY>(self: &ReductionRepaymentTicket<SX, SY>): &FacilDebtShare<SX> {
+    &self.sx
+}
+
+public(package) fun rrt_sy<SX, SY>(self: &ReductionRepaymentTicket<SX, SY>): &FacilDebtShare<SY> {
+    &self.sy
+}
+
+public(package) fun rrt_info<SX, SY>(self: &ReductionRepaymentTicket<SX, SY>): &ReductionInfo {
+    &self.info
 }
 
 /* ================= RebalanceReceipt ================= */
@@ -889,6 +989,62 @@ public(package) fun increase_delta_x(self: &mut RebalanceReceipt, delta: u64) {
 
 public(package) fun increase_delta_y(self: &mut RebalanceReceipt, delta: u64) {
     self.delta_y = self.delta_y + delta;
+}
+
+public(package) fun rr_collected_amm_fee_x(self: &RebalanceReceipt): u64 {
+    self.collected_amm_fee_x
+}
+
+public(package) fun rr_collected_amm_fee_y(self: &RebalanceReceipt): u64 {
+    self.collected_amm_fee_y
+}
+
+public(package) fun rr_collected_amm_rewards(self: &RebalanceReceipt): &VecMap<TypeName, u64> {
+    &self.collected_amm_rewards
+}
+
+public(package) fun rr_fees_taken(self: &RebalanceReceipt): &VecMap<TypeName, u64> {
+    &self.fees_taken
+}
+
+public(package) fun rr_taken_cx(self: &RebalanceReceipt): u64 {
+    self.taken_cx
+}
+
+public(package) fun rr_taken_cy(self: &RebalanceReceipt): u64 {
+    self.taken_cy
+}
+
+public(package) fun rr_delta_l(self: &RebalanceReceipt): u128 {
+    self.delta_l
+}
+
+public(package) fun rr_delta_x(self: &RebalanceReceipt): u64 {
+    self.delta_x
+}
+
+public(package) fun rr_delta_y(self: &RebalanceReceipt): u64 {
+    self.delta_y
+}
+
+public(package) fun rr_x_repaid(self: &RebalanceReceipt): u64 {
+    self.x_repaid
+}
+
+public(package) fun rr_y_repaid(self: &RebalanceReceipt): u64 {
+    self.y_repaid
+}
+
+public(package) fun rr_added_cx(self: &RebalanceReceipt): u64 {
+    self.added_cx
+}
+
+public(package) fun rr_added_cy(self: &RebalanceReceipt): u64 {
+    self.added_cy
+}
+
+public(package) fun rr_stashed_amm_rewards(self: &RebalanceReceipt): &VecMap<TypeName, u64> {
+    &self.stashed_amm_rewards
 }
 
 /* ================= CreatePositionTicket ================= */
@@ -1007,6 +1163,14 @@ public(package) fun cpt_debt_bag_mut<X, Y, I32>(
     ticket: &mut CreatePositionTicket<X, Y, I32>,
 ): &mut FacilDebtBag {
     &mut ticket.debt_bag
+}
+
+public(package) fun cpt_tick_a<X, Y, I32>(ticket: &CreatePositionTicket<X, Y, I32>): &I32 {
+    &ticket.tick_a
+}
+
+public(package) fun cpt_tick_b<X, Y, I32>(ticket: &CreatePositionTicket<X, Y, I32>): &I32 {
+    &ticket.tick_b
 }
 
 /* ================= DeletedPositionCollectedFees ================= */
@@ -1131,6 +1295,42 @@ public(package) fun set_delta_y(info: &mut DeleverageInfo, delta_y: u64) {
     info.delta_y = delta_y;
 }
 
+public(package) fun di_position_id(self: &DeleverageInfo): ID {
+    self.position_id
+}
+
+public(package) fun di_model(self: &DeleverageInfo): PositionModel {
+    self.model
+}
+
+public(package) fun di_oracle_price_x128(self: &DeleverageInfo): u256 {
+    self.oracle_price_x128
+}
+
+public(package) fun di_sqrt_pool_price_x64(self: &DeleverageInfo): u128 {
+    self.sqrt_pool_price_x64
+}
+
+public(package) fun di_delta_l(self: &DeleverageInfo): u128 {
+    self.delta_l
+}
+
+public(package) fun di_delta_x(self: &DeleverageInfo): u64 {
+    self.delta_x
+}
+
+public(package) fun di_delta_y(self: &DeleverageInfo): u64 {
+    self.delta_y
+}
+
+public(package) fun di_x_repaid(self: &DeleverageInfo): u64 {
+    self.x_repaid
+}
+
+public(package) fun di_y_repaid(self: &DeleverageInfo): u64 {
+    self.y_repaid
+}
+
 /* ================= LiquidationInfo ================= */
 
 public struct LiquidationInfo has copy, drop {
@@ -1225,6 +1425,50 @@ public(package) fun reduction_info_constructor(
         x_repaid,
         y_repaid,
     }
+}
+
+public(package) fun ri_position_id(self: &ReductionInfo): ID {
+    self.position_id
+}
+
+public(package) fun ri_model(self: &ReductionInfo): PositionModel {
+    self.model
+}
+
+public(package) fun ri_oracle_price_x128(self: &ReductionInfo): u256 {
+    self.oracle_price_x128
+}
+
+public(package) fun ri_sqrt_pool_price_x64(self: &ReductionInfo): u128 {
+    self.sqrt_pool_price_x64
+}
+
+public(package) fun ri_delta_l(self: &ReductionInfo): u128 {
+    self.delta_l
+}
+
+public(package) fun ri_delta_x(self: &ReductionInfo): u64 {
+    self.delta_x
+}
+
+public(package) fun ri_delta_y(self: &ReductionInfo): u64 {
+    self.delta_y
+}
+
+public(package) fun ri_withdrawn_x(self: &ReductionInfo): u64 {
+    self.withdrawn_x
+}
+
+public(package) fun ri_withdrawn_y(self: &ReductionInfo): u64 {
+    self.withdrawn_y
+}
+
+public(package) fun ri_x_repaid(self: &ReductionInfo): u64 {
+    self.x_repaid
+}
+
+public(package) fun ri_y_repaid(self: &ReductionInfo): u64 {
+    self.y_repaid
 }
 
 /* ================= AddCollateralInfo ================= */

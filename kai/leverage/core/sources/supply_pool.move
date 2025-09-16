@@ -31,9 +31,11 @@ public use fun fdb_take_all as FacilDebtBag.take_all;
 public use fun fdb_get_share_amount_by_asset_type as FacilDebtBag.get_share_amount_by_asset_type;
 public use fun fdb_get_share_amount_by_share_type as FacilDebtBag.get_share_amount_by_share_type;
 public use fun fdb_get_share_type_for_asset as FacilDebtBag.get_share_type_for_asset;
-public use fun fdb_share_type_matches_asset_if_any_exists as FacilDebtBag.share_type_matches_asset_if_any_exists;
+public use fun fdb_share_type_matches_asset_if_any_exists as
+    FacilDebtBag.share_type_matches_asset_if_any_exists;
 public use fun fdb_is_empty as FacilDebtBag.is_empty;
 public use fun fdb_destroy_empty as FacilDebtBag.destroy_empty;
+public use fun fdb_size as FacilDebtBag.size;
 
 /* ================= constants ================= */
 
@@ -173,6 +175,10 @@ public fun create_pool<T, ST: drop>(
     transfer::share_object(pool);
 
     access::new_request(ACreatePool {}, ctx)
+}
+
+public fun total_liabilities_x64<T, ST>(pool: &SupplyPool<T, ST>): u128 {
+    pool.total_liabilities_x64
 }
 
 public fun create_lend_facil_cap(ctx: &mut TxContext): LendFacilCap {
@@ -632,4 +638,8 @@ public(package) fun fdb_destroy_empty(self: FacilDebtBag) {
     let FacilDebtBag { id, facil_id: _, inner } = self;
     id.delete();
     inner.destroy_empty();
+}
+
+public(package) fun fdb_size(self: &FacilDebtBag): u64 {
+    self.inner.size()
 }

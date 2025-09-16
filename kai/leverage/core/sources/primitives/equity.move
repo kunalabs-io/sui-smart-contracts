@@ -360,3 +360,16 @@ public fun destroy_empty_registry<T>(registry: EquityRegistry<T>) {
     assert!(supply_x64 == 0, ENonZero);
     assert!(underlying_value_x64 == 0, ENonZero);
 }
+
+#[test_only]
+public fun create_treasury_for_testing<T: drop>(ctx: &mut TxContext): EquityTreasury<T> {
+    let registry = EquityRegistry<T> {
+        supply_x64: 0,
+        underlying_value_x64: 0,
+    };
+    let cap = coin::create_treasury_cap_for_testing(ctx);
+
+    let treasury = EquityTreasury { registry, cap };
+
+    treasury
+}

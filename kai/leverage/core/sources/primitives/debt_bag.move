@@ -25,7 +25,7 @@ public struct DebtBag has key, store {
     bag: Bag,
 }
 
-public struct Key has copy, store, drop {
+public struct Key has copy, drop, store {
     t: TypeName,
     st: TypeName,
 }
@@ -231,4 +231,8 @@ public fun destroy_empty(self: DebtBag) {
     id.delete();
     infos.destroy_empty();
     bag.destroy_empty();
+}
+
+public fun size(self: &DebtBag): u64 {
+    self.infos.length()
 }
