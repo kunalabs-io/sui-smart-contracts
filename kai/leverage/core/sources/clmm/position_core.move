@@ -81,37 +81,67 @@ const MODULE_VERSION: u16 = 3;
 /* ================= errors ================= */
 
 // Invalid position - the current price is not within the chosen range.
-// const EInvalidTickRange: u64 = 0;
+public(package) macro fun e_invalid_tick_range(): u64 {
+    0
+}
 // Invalid position - the margin is too low at the liquidation threshold.
-// const ELiqMarginTooLow: u64 = 1;
+public(package) macro fun e_liq_margin_too_low(): u64 {
+    1
+}
 // Invalid position - the initial margin is below allowed.
-// const EInitialMarginTooLow: u64 = 2;
+public(package) macro fun e_initial_margin_too_low(): u64 {
+    2
+}
 // Creating new positions is not allowed.
-// const ENewPositionsNotAllowed: u64 = 3;
+public(package) macro fun e_new_positions_not_allowed(): u64 {
+    3
+}
 /// Invalid config passed in for the position.
-const EInvalidConfig: u64 = 4;
+public(package) macro fun e_invalid_config(): u64 {
+    4
+}
 // Invalid pool object passed in.
-// const EInvalidPool: u64 = 5;
+public(package) macro fun e_invalid_pool(): u64 {
+    5
+}
 // Borrowed amount is not equal to the amount needed for the position.
-// const EInvalidBorrow: u64 = 6;
+public(package) macro fun e_invalid_borrow(): u64 {
+    6
+}
 /// Invalid `PositionCap` object.
-const EInvalidPositionCap: u64 = 7;
+public(package) macro fun e_invalid_position_cap(): u64 {
+    7
+}
 /// Another ticket is already active for this position. One operation at a time please!
-const ETicketActive: u64 = 8;
+public(package) macro fun e_ticket_active(): u64 {
+    8
+}
 /// The ticket / receipt does not match the position.
-const EPositionMismatch: u64 = 9;
+public(package) macro fun e_position_mismatch(): u64 {
+    9
+}
 /// The ticket is not fully exhausted, so it cannot be destroyed.
 const ETicketNotExhausted: u64 = 10;
 // Operation not permitted because the position is below a safe margin level.
-// const EPositionBelowThreshold: u64 = 11;
+public(package) macro fun e_position_below_threshold(): u64 {
+    11
+}
 // AMM price slippage exceeded the allowed tolerance.
-// const ESlippageExceeded: u64 = 12;
+public(package) macro fun e_slippage_exceeded(): u64 {
+    12
+}
 // The position size limit has been exceeded.
-// const EPositionSizeLimitExceeded: u64 = 13;
+public(package) macro fun e_position_size_limit_exceeded(): u64 {
+    13
+}
 // The global vault size limit has been exceeded.
-// const EVaultGlobalSizeLimitExceeded: u64 = 14;
+public(package) macro fun e_vault_global_size_limit_exceeded(): u64 {
+    14
+}
 // The creation fee amount does not match the required fee amount.
-// const EInvalidCreationFeeAmount: u64 = 15;
+public(package) macro fun e_invalid_creation_fee_amount(): u64 {
+    15
+}
 /// The `PositionConfig` version does not match the module version.
 const EInvalidConfigVersion: u64 = 16;
 /// The `Position` version does not match the module version.
@@ -122,11 +152,45 @@ const ENotUpgrade: u64 = 18;
 /// The deleverage margin must be higher than the liquidation margin.
 const EInvalidMarginValue: u64 = 19;
 /// The `SupplyPool` share type does not match the position debt share type.
-const ESupplyPoolMismatch: u64 = 20;
-// The position must be fully deleveraged.
-// const EPositionNotFullyDeleveraged: u64 = 21;
-// The position margin is not below the bad debt threshold.
-// const EPositionNotBelowBadDebtThreshold: u64 = 22;
+public(package) macro fun e_supply_pool_mismatch(): u64 {
+    20
+}
+/// The position must have zero outstanding debt before this operation can proceed.
+public(package) macro fun e_position_not_fully_deleveraged(): u64 {
+    21
+}
+/// The position's margin is not sufficiently low to qualify as bad debt.
+public(package) macro fun e_position_not_below_bad_debt_threshold(): u64 {
+    22
+}
+/// Liquidation actions are currently disabled for this position.
+public(package) macro fun e_liquidation_disabled(): u64 {
+    23
+}
+/// Reduction operations are currently disabled for this position.
+public(package) macro fun e_reduction_disabled(): u64 {
+    24
+}
+/// Adding liquidity is currently disabled for this position.
+public(package) macro fun e_add_liquidity_disabled(): u64 {
+    25
+}
+/// Owner fee collection is currently disabled for this position.
+public(package) macro fun e_owner_collect_fee_disabled(): u64 {
+    26
+}
+/// Owner reward collection is currently disabled for this position.
+public(package) macro fun e_owner_collect_reward_disabled(): u64 {
+    27
+}
+/// Deleting this position is currently disabled.
+public(package) macro fun e_delete_position_disabled(): u64 {
+    28
+}
+/// Invalid balance value passed in for liquidity deposit.
+public(package) macro fun e_invalid_balance_value(): u64 {
+    29
+}
 
 /* ================= access ================= */
 
@@ -1500,7 +1564,7 @@ public(package) macro fun slippage_tolerance_assertion(
         true
     };
 
-    assert!(p0_x64 >= p0_x64_min && p0_x64 <= p0_x64_max) // ESlippageExceeded;
+    assert!(p0_x64 >= p0_x64_min && p0_x64 <= p0_x64_max, e_slippage_exceeded!());
 }
 
 /* ================= position creation ================= */
@@ -1526,20 +1590,23 @@ public(package) macro fun create_position_ticket<$X, $Y, $I32>(
     let principal_y = $principal_y;
 
     check_config_version(config);
-    assert!(config.allow_new_positions()); // ENewPositionsNotAllowed
-    assert!(object::id(pool_object) == config.pool_object_id()); // EInvalidPool
+    assert!(config.allow_new_positions(), e_new_positions_not_allowed!());
+    assert!(object::id(pool_object) == config.pool_object_id(), e_invalid_pool!());
     let price_info = validate_price_info(config, $price_info);
 
-    assert!($delta_l <= config.max_position_l()); // EPositionSizeLimitExceeded
-    assert!(config.current_global_l() + $delta_l <= config.max_global_l()); // EVaultGlobalSizeLimitExceeded
+    assert!($delta_l <= config.max_position_l(), e_position_size_limit_exceeded!());
+    assert!(
+        config.current_global_l() + $delta_l <= config.max_global_l(),
+        e_vault_global_size_limit_exceeded!(),
+    );
     config.increase_current_global_l($delta_l);
 
     let current_tick = pool_object.current_tick_index();
     let sqrt_p0_x64 = pool_object.current_sqrt_price_x64();
 
     // assert that the current price is within the range of the LP position
-    assert!(tick_a.lte(current_tick)); // EInvalidTickRange;
-    assert!(current_tick.lt(tick_b)); // EInvalidTickRange;
+    assert!(tick_a.lte(current_tick), e_invalid_tick_range!());
+    assert!(current_tick.lt(tick_b), e_invalid_tick_range!());
 
     let p0_oracle_x128 = price_info.div_price_numeric_x128(
         type_name::get<$X>(),
@@ -1569,8 +1636,11 @@ public(package) macro fun create_position_ticket<$X, $Y, $I32>(
             dy,
         )
     };
-    assert!(liq_margin_is_valid(config, &model, p0_min_x128, p0_max_x128)); // ELiqMarginTooLow
-    assert!(init_margin_is_valid(config, &model, p0_min_x128, p0_max_x128)); // EInitialMarginTooLow
+    assert!(liq_margin_is_valid(config, &model, p0_min_x128, p0_max_x128), e_liq_margin_too_low!());
+    assert!(
+        init_margin_is_valid(config, &model, p0_min_x128, p0_max_x128),
+        e_initial_margin_too_low!(),
+    );
 
     // create ticket
     let config_id = object::id(config);
@@ -1603,7 +1673,7 @@ public(package) macro fun borrow_for_position_x<$X, $Y, $SX, $I32>(
     let config = $config;
     let supply_pool = $supply_pool;
 
-    assert!(ticket.config_id() == object::id(config)); // EInvalidConfig
+    assert!(ticket.config_id() == object::id(config), e_invalid_config!());
     if (ticket.dx() == ticket.borrowed_x().value()) {
         return
     };
@@ -1624,7 +1694,7 @@ public(package) macro fun borrow_for_position_y<$X, $Y, $SY, $I32>(
     let config = $config;
     let supply_pool = $supply_pool;
 
-    assert!(ticket.config_id() == object::id(config)); // EInvalidConfig
+    assert!(ticket.config_id() == object::id(config), e_invalid_config!());
     if (ticket.dy() == ticket.borrowed_y().value()) {
         return
     };
@@ -1648,13 +1718,16 @@ public(package) macro fun create_position<$X, $Y, $I32, $Pool, $LP>(
     let pool_object = $pool_object;
     let creation_fee = $creation_fee;
 
-    assert!(ticket.config_id() == object::id(config)); // EInvalidConfig
-    assert!(object::id(pool_object) == config.pool_object_id()); // EInvalidPool
+    assert!(ticket.config_id() == object::id(config), e_invalid_config!());
+    assert!(object::id(pool_object) == config.pool_object_id(), e_invalid_pool!());
 
-    assert!(creation_fee.value() == config.position_creation_fee_sui()); // EInvalidCreationFeeAmount
+    assert!(
+        creation_fee.value() == config.position_creation_fee_sui(),
+        e_invalid_creation_fee_amount!(),
+    );
 
-    assert!(ticket.borrowed_x().value() == ticket.dx()); // EInvalidBorrow
-    assert!(ticket.borrowed_y().value() == ticket.dy()); // EInvalidBorrow
+    assert!(ticket.borrowed_x().value() == ticket.dx(), e_invalid_borrow!());
+    assert!(ticket.borrowed_y().value() == ticket.dy(), e_invalid_borrow!());
 
     let (
         config_id,
@@ -1750,9 +1823,9 @@ public(package) macro fun create_deleverage_ticket_inner<$X, $Y, $Pool, $LP>(
     let config = $config;
     let pool_object = $pool_object;
 
-    assert!(position.config_id() == object::id(config)); //  EInvalidConfig;
-    assert!(config.pool_object_id() == object::id(pool_object)); // EInvalidPool;
-    assert!(position.ticket_active() == false); //, ETicketActive;
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(config.pool_object_id() == object::id(pool_object), e_invalid_pool!());
+    assert!(position.ticket_active() == false, e_ticket_active!());
     position.set_ticket_active(true);
 
     let price_info = validate_price_info(config, $price_info);
@@ -1869,7 +1942,7 @@ public(package) macro fun create_deleverage_ticket_for_liquidation<$X, $Y, $Pool
     check_versions($position, $config);
 
     let config = $config;
-    assert!(!config.liquidation_disabled()); // ELiquidationDisabled
+    assert!(!config.liquidation_disabled(), e_liquidation_disabled!());
 
     let u128_max = (((1u256 << 128) - 1) as u128);
     create_deleverage_ticket_inner!(
@@ -1891,14 +1964,14 @@ public fun deleverage_ticket_repay_x<X, Y, SX, LP: store>(
     supply_pool: &mut SupplyPool<X, SX>,
     clock: &Clock,
 ) {
-    assert!(ticket.position_id == object::id(position), EPositionMismatch);
-    assert!(position.config_id == config.id.to_inner(), EInvalidConfig);
+    assert!(ticket.position_id == object::id(position), e_position_mismatch!());
+    assert!(position.config_id == config.id.to_inner(), e_invalid_config!());
     if (!ticket.can_repay_x) {
         return
     };
     assert!(
         position.debt_bag().get_share_type_for_asset<X>() == type_name::get<SX>(),
-        ESupplyPoolMismatch,
+        e_supply_pool_mismatch!(),
     );
 
     let mut shares = position.debt_bag.take_all();
@@ -1916,14 +1989,14 @@ public fun deleverage_ticket_repay_y<X, Y, SY, LP: store>(
     supply_pool: &mut SupplyPool<Y, SY>,
     clock: &Clock,
 ) {
-    assert!(ticket.position_id == object::id(position), EPositionMismatch);
-    assert!(position.config_id == config.id.to_inner(), EInvalidConfig);
+    assert!(ticket.position_id == object::id(position), e_position_mismatch!());
+    assert!(position.config_id == config.id.to_inner(), e_invalid_config!());
     if (!ticket.can_repay_y) {
         return
     };
     assert!(
         position.debt_bag().get_share_type_for_asset<Y>() == type_name::get<SY>(),
-        ESupplyPoolMismatch,
+        e_supply_pool_mismatch!(),
     );
 
     let mut shares = position.debt_bag.take_all();
@@ -1938,7 +2011,7 @@ public fun destroy_deleverage_ticket<X, Y, LP: store>(
     position: &mut Position<X, Y, LP>,
     ticket: DeleverageTicket,
 ) {
-    assert!(ticket.position_id == object::id(position), EPositionMismatch);
+    assert!(ticket.position_id == object::id(position), e_position_mismatch!());
     assert!(ticket.can_repay_x == false, ETicketNotExhausted);
     assert!(ticket.can_repay_y == false, ETicketNotExhausted);
     let DeleverageTicket { position_id: _, can_repay_x: _, can_repay_y: _, info } = ticket;
@@ -1971,9 +2044,15 @@ public(package) macro fun deleverage<$X, $Y, $SX, $SY, $Pool, $LP>(
     let supply_pool_y = $supply_pool_y;
 
     check_versions(position, config);
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$X, $SX>()); // ESupplyPoolMismatch
-    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$Y, $SY>()); // ESupplyPoolMismatch
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(
+        position.debt_bag().share_type_matches_asset_if_any_exists<$X, $SX>(),
+        e_supply_pool_mismatch!(),
+    );
+    assert!(
+        position.debt_bag().share_type_matches_asset_if_any_exists<$Y, $SY>(),
+        e_supply_pool_mismatch!(),
+    );
 
     let mut debt_info = debt_info::empty(object::id(config.lend_facil_cap()));
     debt_info.add_from_supply_pool(supply_pool_x, $clock);
@@ -2011,10 +2090,16 @@ public(package) macro fun deleverage_for_liquidation<$X, $Y, $SX, $SY, $Pool, $L
     let supply_pool_x = $supply_pool_x;
     let supply_pool_y = $supply_pool_y;
 
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(!config.liquidation_disabled()); // ELiquidationDisabled
-    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$X, $SX>()); // ESupplyPoolMismatch
-    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$Y, $SY>()); // ESupplyPoolMismatch
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(!config.liquidation_disabled(), e_liquidation_disabled!());
+    assert!(
+        position.debt_bag().share_type_matches_asset_if_any_exists<$X, $SX>(),
+        e_supply_pool_mismatch!(),
+    );
+    assert!(
+        position.debt_bag().share_type_matches_asset_if_any_exists<$Y, $SY>(),
+        e_supply_pool_mismatch!(),
+    );
 
     let mut debt_info = debt_info::empty(object::id(config.lend_facil_cap()));
     debt_info.add_from_supply_pool(supply_pool_x, $clock);
@@ -2056,9 +2141,9 @@ public(package) macro fun liquidate_col_x<$X, $Y, $SY, $LP>(
     let supply_pool = $supply_pool;
 
     check_versions(position, config);
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(position.ticket_active() == false); // ETicketActive
-    assert!(!config.liquidation_disabled()); // ELiquidationDisabled
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(position.ticket_active() == false, e_ticket_active!());
+    assert!(!config.liquidation_disabled(), e_liquidation_disabled!());
     let price_info = validate_price_info(config, $price_info);
     let debt_info = validate_debt_info(config, $debt_info);
 
@@ -2077,7 +2162,10 @@ public(package) macro fun liquidate_col_x<$X, $Y, $SY, $LP>(
     };
     let mut r = repayment.split(repayment_amt_y);
 
-    assert!(type_name::get<$SY>() == position.debt_bag().get_share_type_for_asset<$Y>()); // ESupplyPoolMismatch
+    assert!(
+        type_name::get<$SY>() == position.debt_bag().get_share_type_for_asset<$Y>(),
+        e_supply_pool_mismatch!(),
+    );
 
     let mut debt_shares = position.debt_bag_mut().take_all();
     let (_, y_repaid) = supply_pool.repay_max_possible(&mut debt_shares, &mut r, $clock);
@@ -2129,9 +2217,9 @@ public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
     let supply_pool = $supply_pool;
 
     check_versions(position, config);
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(position.ticket_active() == false); // ETicketActive
-    assert!(!config.liquidation_disabled()); // ELiquidationDisabled
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(position.ticket_active() == false, e_ticket_active!());
+    assert!(!config.liquidation_disabled(), e_liquidation_disabled!());
     let price_info = validate_price_info(config, $price_info);
     let debt_info = validate_debt_info(config, $debt_info);
 
@@ -2150,7 +2238,10 @@ public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
     };
     let mut r = repayment.split(repayment_amt_x);
 
-    assert!(type_name::get<$SX>() == position.debt_bag().get_share_type_for_asset<$X>()); // ESupplyPoolMismatch
+    assert!(
+        type_name::get<$SX>() == position.debt_bag().get_share_type_for_asset<$X>(),
+        e_supply_pool_mismatch!(),
+    );
 
     let mut debt_shares = position.debt_bag_mut().take_all();
     let (_, x_repaid) = supply_pool.repay_max_possible(&mut debt_shares, &mut r, $clock);
@@ -2235,19 +2326,25 @@ public(package) macro fun repay_bad_debt<$X, $Y, $T, $ST, $LP>(
     let supply_pool = $supply_pool;
 
     check_versions(position, config);
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(position.ticket_active() == false); // ETicketActive
-    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$T, $ST>()); // ESupplyPoolMismatch
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(position.ticket_active() == false, e_ticket_active!());
+    assert!(
+        position.debt_bag().share_type_matches_asset_if_any_exists<$T, $ST>(),
+        e_supply_pool_mismatch!(),
+    );
 
     let price_info = validate_price_info(config, $price_info);
     let debt_info = validate_debt_info(config, $debt_info);
     let model = model_from_position!(position, &debt_info);
 
-    assert!(model.is_fully_deleveraged()); // EPositionNotFullyDeleveraged
+    assert!(model.is_fully_deleveraged(), e_position_not_fully_deleveraged!());
 
     let p_x128 = price_info.div_price_numeric_x128(type_name::get<$X>(), type_name::get<$Y>());
     let crit_margin_bps = 10000 + config.liq_bonus_bps();
-    assert!(model.margin_below_threshold(p_x128, crit_margin_bps)); // EPositionNotBelowBadDebtThreshold
+    assert!(
+        model.margin_below_threshold(p_x128, crit_margin_bps),
+        e_position_not_below_bad_debt_threshold!(),
+    );
 
     let mut debt_shares = position.debt_bag_mut().take_all();
     if (debt_shares.value_x64() == 0) {
@@ -2290,13 +2387,19 @@ public(package) macro fun reduce<$X, $Y, $SX, $SY, $Pool, $LP>(
     let supply_pool_y = $supply_pool_y;
 
     check_versions(position, config);
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(config.pool_object_id() == object::id(pool_object)); // EInvalidPool
-    assert!(position.ticket_active() == false); // ETicketActive
-    assert!(cap.position_id() == object::id(position)); // EInvalidPositionCap
-    assert!(!config.reduction_disabled()); // EReductionDisabled
-    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$X, $SX>()); // ESupplyPoolMismatch
-    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<$Y, $SY>()); // ESupplyPoolMismatch
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(config.pool_object_id() == object::id(pool_object), e_invalid_pool!());
+    assert!(position.ticket_active() == false, e_ticket_active!());
+    assert!(cap.position_id() == object::id(position), e_invalid_position_cap!());
+    assert!(!config.reduction_disabled(), e_reduction_disabled!());
+    assert!(
+        position.debt_bag().share_type_matches_asset_if_any_exists<$X, $SX>(),
+        e_supply_pool_mismatch!(),
+    );
+    assert!(
+        position.debt_bag().share_type_matches_asset_if_any_exists<$Y, $SY>(),
+        e_supply_pool_mismatch!(),
+    );
 
     let price_info = validate_price_info(config, $price_info);
 
@@ -2312,8 +2415,14 @@ public(package) macro fun reduce<$X, $Y, $SX, $SY, $Pool, $LP>(
     debt_info.add_from_supply_pool(supply_pool_y, $clock);
     let model = model_from_position!(position, &validate_debt_info(config, &debt_info));
 
-    assert!(!model.margin_below_threshold(oracle_price_x128, config.liq_margin_bps())); // EPositionBelowThreshold
-    assert!(!model.margin_below_threshold(pool_price_x128, config.liq_margin_bps())); // EPositionBelowThreshold
+    assert!(
+        !model.margin_below_threshold(oracle_price_x128, config.liq_margin_bps()),
+        e_position_below_threshold!(),
+    );
+    assert!(
+        !model.margin_below_threshold(pool_price_x128, config.liq_margin_bps()),
+        e_position_below_threshold!(),
+    );
 
     let l = position.lp_position().liquidity();
     let delta_l = util::muldiv_u128($factor_x64, l, 1 << 64);
@@ -2440,7 +2549,7 @@ public fun add_collateral_x<X, Y, LP: store>(
     balance: Balance<X>,
 ) {
     check_position_version(position);
-    assert!(cap.position_id == object::id(position), EInvalidPositionCap);
+    assert!(cap.position_id == object::id(position), e_invalid_position_cap!());
 
     let amount_x = balance.value();
     if (amount_x == 0) {
@@ -2462,7 +2571,7 @@ public fun add_collateral_y<X, Y, LP: store>(
     balance: Balance<Y>,
 ) {
     check_position_version(position);
-    assert!(cap.position_id == object::id(position), EInvalidPositionCap);
+    assert!(cap.position_id == object::id(position), e_invalid_position_cap!());
 
     let amount_y = balance.value();
     if (amount_y == 0) {
@@ -2492,9 +2601,9 @@ public(package) macro fun add_liquidity_with_receipt_inner<$X, $Y, $Pool, $LP, $
     let pool_object = $pool_object;
 
     check_versions(position, config);
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(config.pool_object_id() == object::id(pool_object)); // EInvalidPool
-    assert!(!config.add_liquidity_disabled()); // EAddLiquidityDisabled
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(config.pool_object_id() == object::id(pool_object), e_invalid_pool!());
+    assert!(!config.add_liquidity_disabled(), e_add_liquidity_disabled!());
 
     let price_info = validate_price_info(config, $price_info);
     let debt_info = validate_debt_info(config, $debt_info);
@@ -2506,12 +2615,21 @@ public(package) macro fun add_liquidity_with_receipt_inner<$X, $Y, $Pool, $LP, $
     );
 
     config.increase_current_global_l(delta_l);
-    assert!(config.current_global_l() <= config.max_global_l()); // EVaultGlobalSizeLimitExceeded
-    assert!(position.lp_position().liquidity() <= config.max_position_l()); // EPositionSizeLimitExceeded
+    assert!(
+        config.current_global_l() <= config.max_global_l(),
+        e_vault_global_size_limit_exceeded!(),
+    );
+    assert!(
+        position.lp_position().liquidity() <= config.max_position_l(),
+        e_position_size_limit_exceeded!(),
+    );
 
     let model = model_from_position!(position, &debt_info);
     let price_x128 = price_info.div_price_numeric_x128(type_name::get<$X>(), type_name::get<$Y>());
-    assert!(!model.margin_below_threshold(price_x128, config.deleverage_margin_bps())); // EPositionBelowThreshold
+    assert!(
+        !model.margin_below_threshold(price_x128, config.deleverage_margin_bps()),
+        e_position_below_threshold!(),
+    );
 
     let info = add_liquidity_info_constructor(
         object::id(position),
@@ -2557,7 +2675,7 @@ public(package) macro fun add_liquidity_with_receipt<$X, $Y, $Pool, $LP, $Receip
 ): $Receipt {
     let position = $position;
     let cap = $cap;
-    assert!(cap.position_id() == object::id(position)); // EInvalidPositionCap
+    assert!(cap.position_id() == object::id(position), e_invalid_position_cap!());
     let (receipt, info) = add_liquidity_with_receipt_inner!(
         position,
         $config,
@@ -2584,7 +2702,7 @@ public(package) macro fun add_liquidity<$X, $Y, $Pool, $LP>(
 ) {
     let position = $position;
     let cap = $cap;
-    assert!(cap.position_id() == object::id(position)); // EInvalidPositionCap
+    assert!(cap.position_id() == object::id(position), e_invalid_position_cap!());
     let info = add_liquidity_inner!(
         position,
         $config,
@@ -2606,8 +2724,11 @@ public fun repay_debt_x<X, Y, SX, LP: store>(
     clock: &Clock,
 ) {
     check_position_version(position);
-    assert!(cap.position_id == object::id(position), EInvalidPositionCap);
-    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<X, SX>(), ESupplyPoolMismatch);
+    assert!(cap.position_id == object::id(position), e_invalid_position_cap!());
+    assert!(
+        position.debt_bag().share_type_matches_asset_if_any_exists<X, SX>(),
+        e_supply_pool_mismatch!(),
+    );
 
     let mut debt_shares = position.debt_bag.take_all();
     if (debt_shares.value_x64() == 0) {
@@ -2634,8 +2755,11 @@ public fun repay_debt_y<X, Y, SY, LP: store>(
     clock: &Clock,
 ) {
     check_position_version(position);
-    assert!(cap.position_id == object::id(position), EInvalidPositionCap);
-    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<Y, SY>(), ESupplyPoolMismatch);
+    assert!(cap.position_id == object::id(position), e_invalid_position_cap!());
+    assert!(
+        position.debt_bag().share_type_matches_asset_if_any_exists<Y, SY>(),
+        e_supply_pool_mismatch!(),
+    );
 
     let mut debt_shares = position.debt_bag.take_all();
     if (debt_shares.value_x64() == 0) {
@@ -2666,9 +2790,9 @@ public(package) macro fun owner_collect_fee<$X, $Y, $Pool, $LP>(
     let cap = $cap;
 
     check_versions(position, config);
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(cap.position_id() == object::id(position)); // EInvalidPositionCap
-    assert!(!config.owner_collect_fee_disabled()); // EOwnerCollectFeeDisabled
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(cap.position_id() == object::id(position), e_invalid_position_cap!());
+    assert!(!config.owner_collect_fee_disabled(), e_owner_collect_fee_disabled!());
 
     let (mut x, mut y) = $collect_fee($pool_object, position.lp_position_mut());
     let collected_x_amt = x.value();
@@ -2706,9 +2830,9 @@ public(package) macro fun owner_collect_reward<$X, $Y, $T, $Pool, $LP>(
     let cap = $cap;
 
     check_versions(position, config);
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(cap.position_id() == object::id(position)); // EInvalidPositionCap
-    assert!(!config.owner_collect_reward_disabled()); // EOwnerCollectRewardDisabled
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(cap.position_id() == object::id(position), e_invalid_position_cap!());
+    assert!(!config.owner_collect_reward_disabled(), e_owner_collect_reward_disabled!());
 
     let mut reward = $collect_reward($pool_object, position.lp_position_mut());
     let collected_reward_amt = reward.value();
@@ -2733,7 +2857,7 @@ public fun owner_take_stashed_rewards<X, Y, T, LP: store>(
     amount: Option<u64>,
 ): Balance<T> {
     check_position_version(position);
-    assert!(cap.position_id == object::id(position), EInvalidPositionCap);
+    assert!(cap.position_id == object::id(position), e_invalid_position_cap!());
 
     let rewards = if (amount.is_some()) {
         let amount = amount.destroy_some();
@@ -2763,10 +2887,10 @@ public(package) macro fun delete_position<$X, $Y, $LP: store>(
     let ctx = $ctx;
 
     check_versions(&position, config);
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(cap.position_id() == object::id(&position)); // EInvalidPositionCap
-    assert!(position.ticket_active() == false); // ETicketActive
-    assert!(!config.delete_position_disabled()); // EDeletePositionDisabled
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(cap.position_id() == object::id(&position), e_invalid_position_cap!());
+    assert!(position.ticket_active() == false, e_ticket_active!());
+    assert!(!config.delete_position_disabled(), e_delete_position_disabled!());
 
     // delete position
     let (
@@ -2815,8 +2939,8 @@ public fun create_rebalance_receipt<X, Y, LP: store>(
     ctx: &mut TxContext,
 ): (RebalanceReceipt, ActionRequest) {
     check_versions(position, config);
-    assert!(position.config_id == config.id.to_inner(), EInvalidConfig);
-    assert!(position.ticket_active == false, ETicketActive);
+    assert!(position.config_id == config.id.to_inner(), e_invalid_config!());
+    assert!(position.ticket_active == false, e_ticket_active!());
     position.ticket_active = true;
 
     let receipt = RebalanceReceipt {
@@ -2874,9 +2998,9 @@ public(package) macro fun rebalance_collect_fee<$X, $Y, $Pool, $LP>(
     let config = $config;
     let receipt = $receipt;
 
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(receipt.position_id() == object::id(position)); // EPositionMismatch
-    assert!(object::id($pool_object) == config.pool_object_id()); // EInvalidPool
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(receipt.position_id() == object::id(position), e_position_mismatch!());
+    assert!(object::id($pool_object) == config.pool_object_id(), e_invalid_pool!());
 
     let (mut x, mut y) = $collect_fee($pool_object, position.lp_position_mut());
     receipt.increase_collected_amm_fee_x(x.value());
@@ -2899,8 +3023,8 @@ public(package) macro fun rebalance_collect_reward<$X, $Y, $T, $Pool, $LP>(
     let config = $config;
     let receipt = $receipt;
 
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(receipt.position_id() == object::id(position)); // EPositionMismatch
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(receipt.position_id() == object::id(position), e_position_mismatch!());
 
     let mut reward = $collect_reward($pool_object, position.lp_position_mut());
     add_amount_to_map<$T>(receipt.collected_amm_rewards_mut(), balance::value(&reward));
@@ -2922,7 +3046,7 @@ public(package) macro fun rebalance_add_liquidity_with_receipt<$X, $Y, $Pool, $L
     let receipt = $receipt;
     let position = $position;
 
-    assert!(receipt.position_id() == object::id(position)); // EPositionMismatch
+    assert!(receipt.position_id() == object::id(position), e_position_mismatch!());
 
     let (cetus_receipt, info) = add_liquidity_with_receipt_inner!(
         position,
@@ -2952,7 +3076,7 @@ public(package) macro fun rebalance_add_liquidity<$X, $Y, $Pool, $LP>(
     let receipt = $receipt;
     let position = $position;
 
-    assert!(receipt.position_id() == object::id(position)); // EPositionMismatch
+    assert!(receipt.position_id() == object::id(position), e_position_mismatch!());
 
     let info = add_liquidity_inner!(
         position,
@@ -2975,8 +3099,11 @@ public fun rebalance_repay_debt_x<X, Y, SX, LP: store>(
     supply_pool: &mut SupplyPool<X, SX>,
     clock: &Clock,
 ) {
-    assert!(receipt.position_id == object::id(position), EPositionMismatch);
-    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<X, SX>(), ESupplyPoolMismatch);
+    assert!(receipt.position_id == object::id(position), e_position_mismatch!());
+    assert!(
+        position.debt_bag().share_type_matches_asset_if_any_exists<X, SX>(),
+        e_supply_pool_mismatch!(),
+    );
 
     let mut debt_shares = position.debt_bag.take_all();
     if (debt_shares.value_x64() == 0) {
@@ -3001,8 +3128,11 @@ public fun rebalance_repay_debt_y<X, Y, SY, LP: store>(
     supply_pool: &mut SupplyPool<Y, SY>,
     clock: &Clock,
 ) {
-    assert!(receipt.position_id == object::id(position), EPositionMismatch);
-    assert!(position.debt_bag().share_type_matches_asset_if_any_exists<Y, SY>(), ESupplyPoolMismatch);
+    assert!(receipt.position_id == object::id(position), e_position_mismatch!());
+    assert!(
+        position.debt_bag().share_type_matches_asset_if_any_exists<Y, SY>(),
+        e_supply_pool_mismatch!(),
+    );
 
     let mut debt_shares = position.debt_bag.take_all();
     if (debt_shares.value_x64() == 0) {
@@ -3020,7 +3150,7 @@ public fun rebalance_stash_rewards<X, Y, T, LP: store>(
     receipt: &mut RebalanceReceipt,
     rewards: Balance<T>,
 ) {
-    assert!(receipt.position_id == object::id(position), EPositionMismatch);
+    assert!(receipt.position_id == object::id(position), e_position_mismatch!());
 
     add_amount_to_map<T>(&mut receipt.stashed_amm_rewards, rewards.value());
     position.owner_reward_stash.add(rewards);
@@ -3030,7 +3160,7 @@ public fun consume_rebalance_receipt<X, Y, LP: store>(
     position: &mut Position<X, Y, LP>,
     receipt: RebalanceReceipt,
 ) {
-    assert!(receipt.position_id == object::id(position), EPositionMismatch);
+    assert!(receipt.position_id == object::id(position), e_position_mismatch!());
     position.ticket_active = false;
 
     let RebalanceReceipt {
@@ -3121,8 +3251,8 @@ public(package) macro fun validated_model_for_position<$X, $Y, $LP>(
     let position = $position;
     let config = $config;
 
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(position.ticket_active() == false); // ETicketActive
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(position.ticket_active() == false, e_ticket_active!());
     let debt_info = validate_debt_info(config, $debt_info);
     model_from_position!(position, &debt_info)
 }
@@ -3137,8 +3267,8 @@ public(package) macro fun calc_liquidate_col_x<$X, $Y, $LP>(
     let position = $position;
     let config = $config;
 
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(position.ticket_active() == false); // ETicketActive
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(position.ticket_active() == false, e_ticket_active!());
     let price_info = validate_price_info(config, $price_info);
     let debt_info = validate_debt_info(config, $debt_info);
 
@@ -3164,8 +3294,8 @@ public(package) macro fun calc_liquidate_col_y<$X, $Y, $LP>(
     let position = $position;
     let config = $config;
 
-    assert!(position.config_id() == object::id(config)); // EInvalidConfig
-    assert!(position.ticket_active() == false); // ETicketActive
+    assert!(position.config_id() == object::id(config), e_invalid_config!());
+    assert!(position.ticket_active() == false, e_ticket_active!());
     let price_info = validate_price_info(config, $price_info);
     let debt_info = validate_debt_info(config, $debt_info);
 

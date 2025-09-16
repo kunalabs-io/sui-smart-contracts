@@ -11,13 +11,14 @@ use integer_mate::i32::{Self, I32};
 use kai_leverage::debt_info::DebtInfo;
 use kai_leverage::position_core_clmm::{
     Self as core,
+    e_invalid_balance_value,
     PositionConfig,
     CreatePositionTicket,
     PositionCap,
     Position,
     DeleverageTicket,
     RebalanceReceipt,
-    ReductionRepaymentTicket
+    ReductionRepaymentTicket,
 };
 use kai_leverage::position_model_clmm::PositionModel;
 use kai_leverage::pyth::PythPriceInfo;
@@ -25,11 +26,6 @@ use kai_leverage::supply_pool::SupplyPool;
 use sui::balance::{Self, Balance};
 use sui::clock::Clock;
 use sui::sui::SUI;
-
-/* ================= errors ================= */
-
-/// Invalid balance value passed in for liquidity deposit.
-const EInvalidBalanceValue: u64 = 0;
 
 /* ================= util ================= */
 
@@ -393,8 +389,8 @@ public fun add_liquidity<X, Y>(
         position.lp_position().upper_tick(),
         delta_l,
     );
-    assert!(balance_x.value() == delta_x, EInvalidBalanceValue);
-    assert!(balance_y.value() == delta_y, EInvalidBalanceValue);
+    assert!(balance_x.value() == delta_x, e_invalid_balance_value!());
+    assert!(balance_y.value() == delta_y, e_invalid_balance_value!());
 
     core::add_liquidity!(
         position,
@@ -595,8 +591,8 @@ public fun rebalance_add_liquidity<X, Y>(
         position.lp_position().upper_tick(),
         delta_l,
     );
-    assert!(balance_x.value() == delta_x, EInvalidBalanceValue);
-    assert!(balance_y.value() == delta_y, EInvalidBalanceValue);
+    assert!(balance_x.value() == delta_x, e_invalid_balance_value!());
+    assert!(balance_y.value() == delta_y, e_invalid_balance_value!());
 
     core::rebalance_add_liquidity!(
         position,
