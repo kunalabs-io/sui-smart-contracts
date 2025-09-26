@@ -32,6 +32,7 @@ public fun create_position_ticket<X, Y>(
     principal_y: Balance<Y>,
     delta_l: u128,
     price_info: &PythPriceInfo,
+    clock: &Clock,
     ctx: &mut TxContext,
 ): CreatePositionTicket<X, Y, I32> {
     core::create_position_ticket!(
@@ -43,6 +44,7 @@ public fun create_position_ticket<X, Y>(
         principal_y,
         delta_l,
         price_info,
+        clock,
         ctx,
     )
 }

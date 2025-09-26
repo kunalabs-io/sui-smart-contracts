@@ -101,6 +101,7 @@ fun liquidate_col_x_standard_flow_is_correct() {
             principal_y,
             delta_l,
             &price_info,
+            &clock,
             scenario.ctx(),
         );
         assert!(config.current_global_l() == delta_l);
@@ -477,6 +478,7 @@ fun liquidate_col_y_standard_flow_is_correct() {
             principal_y,
             delta_l,
             &price_info,
+            &clock,
             scenario.ctx(),
         );
         assert!(config.current_global_l() == delta_l);

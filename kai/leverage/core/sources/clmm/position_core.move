@@ -7,9 +7,11 @@ use access_management::access::{Self, ActionRequest};
 use kai_leverage::balance_bag::{Self, BalanceBag};
 use kai_leverage::debt_info::{Self, DebtInfo, ValidatedDebtInfo};
 use kai_leverage::position_model_clmm::{Self, PositionModel};
-use kai_leverage::pyth::{PythPriceInfo, ValidatedPythPriceInfo};
+use kai_leverage::pyth::{Self, PythPriceInfo, ValidatedPythPriceInfo};
 use kai_leverage::supply_pool::{Self, SupplyPool, LendFacilCap, FacilDebtBag, FacilDebtShare};
 use kai_leverage::util;
+use pyth::i64 as pyth_i64;
+use rate_limiter::net_sliding_sum_limiter::NetSlidingSumLimiter;
 use std::type_name::{Self, TypeName};
 use sui::bag::{Self, Bag};
 use sui::balance::{Self, Balance};
@@ -248,6 +250,10 @@ public(package) macro fun e_delete_position_disabled(): u64 {
 /// Invalid balance value passed in for liquidity deposit.
 public(package) macro fun e_invalid_balance_value(): u64 {
     29
+}
+/// Function deprecated.
+public(package) macro fun e_function_deprecated(): u64 {
+    30
 }
 
 /* ================= access ================= */
@@ -637,7 +643,8 @@ public fun set_pyth_config_max_age_secs(
     max_age_secs: u64,
     ctx: &mut TxContext,
 ): ActionRequest {
-    let pyth_config: &mut PythConfig = &mut config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
+    let pyth_config: &mut PythConfig =
+        &mut config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
     pyth_config.max_age_secs = max_age_secs;
     access::new_request(AModifyConfig {}, ctx)
 }
@@ -648,7 +655,8 @@ public fun pyth_config_allow_pio(
     pio_id: ID,
     ctx: &mut TxContext,
 ): ActionRequest {
-    let pyth_config: &mut PythConfig = &mut config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
+    let pyth_config: &mut PythConfig =
+        &mut config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
     pyth_config.pio_allowlist.insert(coin_type, pio_id);
     access::new_request(AModifyConfig {}, ctx)
 }
@@ -658,7 +666,8 @@ public fun pyth_config_disallow_pio(
     coin_type: TypeName,
     ctx: &mut TxContext,
 ): ActionRequest {
-    let pyth_config: &mut PythConfig = &mut config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
+    let pyth_config: &mut PythConfig =
+        &mut config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
     pyth_config.pio_allowlist.remove(&coin_type);
     access::new_request(AModifyConfig {}, ctx)
 }
@@ -763,13 +772,16 @@ public struct AddLiquidityDisabledKey() has copy, drop, store;
 public struct OwnerCollectFeeDisabledKey() has copy, drop, store;
 public struct OwnerCollectRewardDisabledKey() has copy, drop, store;
 public struct DeletePositionDisabledKey() has copy, drop, store;
+public struct PositionCreateWithdrawLimiterKey() has copy, drop, store;
 
-fun set_config_extension<Key: copy + drop + store, Val: copy + drop + store>(
+fun upsert_config_extension<Key: copy + drop + store, Val: store + drop>(
     config: &mut PositionConfig,
     key: Key,
     new_value: Val,
     ctx: &mut TxContext,
 ): ActionRequest {
+    check_config_version(config);
+
     if (df::exists_(&config.id, key)) {
         let val = df::borrow_mut<Key, Val>(&mut config.id, key);
         *val = new_value;
@@ -780,11 +792,30 @@ fun set_config_extension<Key: copy + drop + store, Val: copy + drop + store>(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+fun add_config_extension<Key: copy + drop + store, Val: store>(
+    config: &mut PositionConfig,
+    key: Key,
+    new_value: Val,
+    ctx: &mut TxContext,
+): ActionRequest {
+    check_config_version(config);
+
+    df::add(&mut config.id, key, new_value);
+    access::new_request(AModifyConfig {}, ctx)
+}
+
+fun has_config_extension<Key: copy + drop + store>(config: &PositionConfig, key: Key): bool {
+    check_config_version(config);
+    df::exists_(&config.id, key)
+}
+
 fun get_config_extension_or_default<Key: copy + drop + store, Val: copy + drop + store>(
     config: &PositionConfig,
     key: Key,
     default_value: Val,
 ): Val {
+    check_config_version(config);
+
     if (df::exists_(&config.id, key)) {
         *df::borrow<Key, Val>(&config.id, key)
     } else {
@@ -792,12 +823,20 @@ fun get_config_extension_or_default<Key: copy + drop + store, Val: copy + drop +
     }
 }
 
+fun config_extension_mut<Key: copy + drop + store, Val: store>(
+    config: &mut PositionConfig,
+    key: Key,
+): &mut Val {
+    check_config_version(config);
+    df::borrow_mut<Key, Val>(&mut config.id, key)
+}
+
 public fun set_liquidation_disabled(
     config: &mut PositionConfig,
     disabled: bool,
     ctx: &mut TxContext,
 ): ActionRequest {
-    set_config_extension(config, LiquidationDisabledKey(), disabled, ctx)
+    upsert_config_extension(config, LiquidationDisabledKey(), disabled, ctx)
 }
 
 public fun liquidation_disabled(config: &PositionConfig): bool {
@@ -809,7 +848,7 @@ public fun set_reduction_disabled(
     disabled: bool,
     ctx: &mut TxContext,
 ): ActionRequest {
-    set_config_extension(config, ReductionDisabledKey(), disabled, ctx)
+    upsert_config_extension(config, ReductionDisabledKey(), disabled, ctx)
 }
 
 public fun reduction_disabled(config: &PositionConfig): bool {
@@ -821,7 +860,7 @@ public fun set_add_liquidity_disabled(
     disabled: bool,
     ctx: &mut TxContext,
 ): ActionRequest {
-    set_config_extension(config, AddLiquidityDisabledKey(), disabled, ctx)
+    upsert_config_extension(config, AddLiquidityDisabledKey(), disabled, ctx)
 }
 
 public fun add_liquidity_disabled(config: &PositionConfig): bool {
@@ -833,7 +872,7 @@ public fun set_owner_collect_fee_disabled(
     disabled: bool,
     ctx: &mut TxContext,
 ): ActionRequest {
-    set_config_extension(config, OwnerCollectFeeDisabledKey(), disabled, ctx)
+    upsert_config_extension(config, OwnerCollectFeeDisabledKey(), disabled, ctx)
 }
 
 public fun owner_collect_fee_disabled(config: &PositionConfig): bool {
@@ -845,7 +884,7 @@ public fun set_owner_collect_reward_disabled(
     disabled: bool,
     ctx: &mut TxContext,
 ): ActionRequest {
-    set_config_extension(config, OwnerCollectRewardDisabledKey(), disabled, ctx)
+    upsert_config_extension(config, OwnerCollectRewardDisabledKey(), disabled, ctx)
 }
 
 public fun owner_collect_reward_disabled(config: &PositionConfig): bool {
@@ -857,11 +896,44 @@ public fun set_delete_position_disabled(
     disabled: bool,
     ctx: &mut TxContext,
 ): ActionRequest {
-    set_config_extension(config, DeletePositionDisabledKey(), disabled, ctx)
+    upsert_config_extension(config, DeletePositionDisabledKey(), disabled, ctx)
 }
 
 public fun delete_position_disabled(config: &PositionConfig): bool {
     get_config_extension_or_default(config, DeletePositionDisabledKey(), false)
+}
+
+public fun add_position_create_withdraw_limiter<L: store>(
+    config: &mut PositionConfig,
+    rate_limiter: L,
+    ctx: &mut TxContext,
+): ActionRequest {
+    add_config_extension(config, PositionCreateWithdrawLimiterKey(), rate_limiter, ctx)
+}
+
+public(package) fun has_position_create_withdraw_limiter(config: &PositionConfig): bool {
+    has_config_extension(config, PositionCreateWithdrawLimiterKey())
+}
+
+public(package) fun position_create_withdraw_limiter_mut(
+    config: &mut PositionConfig,
+): &mut NetSlidingSumLimiter {
+    config_extension_mut(config, PositionCreateWithdrawLimiterKey())
+}
+
+public fun set_max_create_withdraw_net_inflow_and_outflow_limits(
+    config: &mut PositionConfig,
+    max_net_inflow_limit: Option<u256>,
+    max_net_outflow_limit: Option<u256>,
+    ctx: &mut TxContext,
+): ActionRequest {
+    check_config_version(config);
+
+    let rate_limiter = config.position_create_withdraw_limiter_mut();
+    rate_limiter.set_max_net_inflow_limit(max_net_inflow_limit);
+    rate_limiter.set_max_net_outflow_limit(max_net_outflow_limit);
+
+    access::new_request(AModifyConfig {}, ctx)
 }
 
 /* ================= DeleverageTicket ================= */
@@ -1686,7 +1758,8 @@ public(package) fun validate_price_info(
     config: &PositionConfig,
     price_info: &PythPriceInfo,
 ): ValidatedPythPriceInfo {
-    let pyth_config: &PythConfig = &config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
+    let pyth_config: &PythConfig =
+        &config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
     price_info.validate(pyth_config.max_age_secs, &pyth_config.pio_allowlist)
 }
 
@@ -1811,6 +1884,38 @@ public(package) macro fun slippage_tolerance_assertion(
     assert!(p0_x64 >= p0_x64_min && p0_x64 <= p0_x64_max, e_slippage_exceeded!());
 }
 
+public(package) fun get_amount_ema_usd_value_6_decimals<T>(
+    amount: u64,
+    price_info: &ValidatedPythPriceInfo,
+    round_up: bool,
+): u64 {
+    let t = type_name::with_defining_ids<T>();
+    let price = price_info.get_ema_price(t);
+
+    let p = pyth_i64::get_magnitude_if_positive(&price.get_price()) as u128;
+    let expo = pyth_i64::get_magnitude_if_negative(&price.get_expo()) as u8;
+    let dec = pyth::decimals(t);
+
+    let num = p * (amount as u128);
+    (if (expo + dec > 6) {
+            if (round_up) {
+                std::macros::num_divide_and_round_up!(num, 10_u128.pow(expo + dec - 6))
+            } else {
+                num / 10_u128.pow(expo + dec - 6)
+            }
+        } else {
+            num * 10_u128.pow(6 - (expo + dec))
+        }) as u64
+}
+
+public(package) fun get_balance_ema_usd_value_6_decimals<T>(
+    balance: &Balance<T>,
+    price_info: &ValidatedPythPriceInfo,
+    round_up: bool,
+): u64 {
+    get_amount_ema_usd_value_6_decimals<T>(balance.value(), price_info, round_up)
+}
+
 /* ================= position creation ================= */
 
 public(package) macro fun create_position_ticket<$X, $Y, $I32>(
@@ -1824,6 +1929,7 @@ public(package) macro fun create_position_ticket<$X, $Y, $I32>(
     $principal_y: Balance<$Y>,
     $delta_l: u128,
     $price_info: &PythPriceInfo,
+    $clock: &Clock,
     $ctx: &mut TxContext,
 ): CreatePositionTicket<$X, $Y, $I32> {
     let pool_object = $pool_object;
@@ -1837,6 +1943,13 @@ public(package) macro fun create_position_ticket<$X, $Y, $I32>(
     assert!(config.allow_new_positions(), e_new_positions_not_allowed!());
     assert!(object::id(pool_object) == config.pool_object_id(), e_invalid_pool!());
     let price_info = validate_price_info(config, $price_info);
+
+    if (config.has_position_create_withdraw_limiter()) {
+        let limiter = config.position_create_withdraw_limiter_mut();
+        let x_value = get_balance_ema_usd_value_6_decimals(&principal_x, &price_info, true);
+        let y_value = get_balance_ema_usd_value_6_decimals(&principal_y, &price_info, true);
+        limiter.consume_inflow(x_value + y_value, $clock);
+    };
 
     assert!($delta_l <= config.max_position_l(), e_position_size_limit_exceeded!());
     assert!(
@@ -2076,7 +2189,10 @@ public(package) macro fun create_deleverage_ticket_inner<$X, $Y, $Pool, $LP>(
     let debt_info = validate_debt_info(config, $debt_info);
 
     let model = model_from_position!(position, &debt_info);
-    let p_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
+    let p_x128 = price_info.div_price_numeric_x128(
+        type_name::with_defining_ids<$X>(),
+        type_name::with_defining_ids<$Y>(),
+    );
 
     let mut info = {
         let position_id = object::id(position);
@@ -2392,7 +2508,10 @@ public(package) macro fun liquidate_col_x<$X, $Y, $SY, $LP>(
     let debt_info = validate_debt_info(config, $debt_info);
 
     let model = model_from_position!(position, &debt_info);
-    let p_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
+    let p_x128 = price_info.div_price_numeric_x128(
+        type_name::with_defining_ids<$X>(),
+        type_name::with_defining_ids<$Y>(),
+    );
 
     let (repayment_amt_y, reward_amt_x) = model.calc_liquidate_col_x(
         p_x128,
@@ -2468,7 +2587,10 @@ public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
     let debt_info = validate_debt_info(config, $debt_info);
 
     let model = model_from_position!(position, &debt_info);
-    let p_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
+    let p_x128 = price_info.div_price_numeric_x128(
+        type_name::with_defining_ids<$X>(),
+        type_name::with_defining_ids<$Y>(),
+    );
 
     let (repayment_amt_x, reward_amt_y) = model.calc_liquidate_col_y(
         p_x128,
@@ -2583,7 +2705,10 @@ public(package) macro fun repay_bad_debt<$X, $Y, $T, $ST, $LP>(
 
     assert!(model.is_fully_deleveraged(), e_position_not_fully_deleveraged!());
 
-    let p_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
+    let p_x128 = price_info.div_price_numeric_x128(
+        type_name::with_defining_ids<$X>(),
+        type_name::with_defining_ids<$Y>(),
+    );
     let crit_margin_bps = 10000 + config.liq_bonus_bps();
     assert!(
         model.margin_below_threshold(p_x128, crit_margin_bps),
@@ -2701,6 +2826,28 @@ public(package) macro fun reduce<$X, $Y, $SX, $SY, $Pool, $LP>(
 
     let sx = position.debt_bag_mut().take_amt(delta_shares_x);
     let sy = position.debt_bag_mut().take_amt(delta_shares_y);
+
+    // calculate the inflow and outflow of the position
+    if (config.has_position_create_withdraw_limiter()) {
+        let limiter = config.position_create_withdraw_limiter_mut();
+
+        let dx = supply_pool_x.calc_repay_by_shares(sx.facil_id(), sx.value_x64(), $clock);
+        let dy = supply_pool_y.calc_repay_by_shares(sy.facil_id(), sy.value_x64(), $clock);
+
+        let x_value = get_balance_ema_usd_value_6_decimals(&got_x, &price_info, true);
+        let y_value = get_balance_ema_usd_value_6_decimals(&got_y, &price_info, true);
+        let dx_value = get_amount_ema_usd_value_6_decimals<$X>(dx, &price_info, true);
+        let dy_value = get_amount_ema_usd_value_6_decimals<$Y>(dy, &price_info, true);
+
+        // In some special cases (e.g. bad debt / negative equity) the inflow can be larger than the outflow,
+        // so the reduction will be a net inflow. We don't consume this inflow in order to not count
+        // towards the limiter net.
+        let in = dx_value + dy_value;
+        let out = x_value + y_value;
+        let net_out = if (out > in) { out - in } else { 0 };
+
+        limiter.consume_outflow(net_out, $clock);
+    };
 
     let info = {
         let withdrawn_x = got_x.value();
@@ -2869,7 +3016,10 @@ public(package) macro fun add_liquidity_with_receipt_inner<$X, $Y, $Pool, $LP, $
     );
 
     let model = model_from_position!(position, &debt_info);
-    let price_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
+    let price_x128 = price_info.div_price_numeric_x128(
+        type_name::with_defining_ids<$X>(),
+        type_name::with_defining_ids<$Y>(),
+    );
     assert!(
         !model.margin_below_threshold(price_x128, config.deleverage_margin_bps()),
         e_position_below_threshold!(),
@@ -3517,7 +3667,10 @@ public(package) macro fun calc_liquidate_col_x<$X, $Y, $LP>(
     let debt_info = validate_debt_info(config, $debt_info);
 
     let model = model_from_position!(position, &debt_info);
-    let p_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
+    let p_x128 = price_info.div_price_numeric_x128(
+        type_name::with_defining_ids<$X>(),
+        type_name::with_defining_ids<$Y>(),
+    );
 
     model.calc_liquidate_col_x(
         p_x128,
@@ -3544,7 +3697,10 @@ public(package) macro fun calc_liquidate_col_y<$X, $Y, $LP>(
     let debt_info = validate_debt_info(config, $debt_info);
 
     let model = model_from_position!(position, &debt_info);
-    let p_x128 = price_info.div_price_numeric_x128(type_name::with_defining_ids<$X>(), type_name::with_defining_ids<$Y>());
+    let p_x128 = price_info.div_price_numeric_x128(
+        type_name::with_defining_ids<$X>(),
+        type_name::with_defining_ids<$Y>(),
+    );
 
     model.calc_liquidate_col_y(
         p_x128,

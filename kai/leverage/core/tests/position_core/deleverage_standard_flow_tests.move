@@ -72,6 +72,7 @@ fun deleverage_with_ticket_standard_flow_is_correct() {
             principal_y,
             delta_l,
             &price_info,
+            &clock,
             scenario.ctx(),
         );
         assert!(config.current_global_l() == delta_l);
@@ -334,6 +335,7 @@ fun deleverage_helper_standard_flow_is_correct() {
             principal_y,
             delta_l,
             &price_info,
+            &clock,
             scenario.ctx(),
         );
         assert!(config.current_global_l() == delta_l);

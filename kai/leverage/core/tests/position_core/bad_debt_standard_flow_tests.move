@@ -100,6 +100,7 @@ fun repay_bad_debt_x_standard_flow_is_correct() {
             principal_y,
             delta_l,
             &price_info,
+            &clock,
             scenario.ctx(),
         );
         assert!(config.current_global_l() == delta_l);
@@ -454,6 +455,7 @@ fun repay_bad_debt_y_standard_flow_is_correct() {
             principal_y,
             delta_l,
             &price_info,
+            &clock,
             scenario.ctx(),
         );
         assert!(config.current_global_l() == delta_l);

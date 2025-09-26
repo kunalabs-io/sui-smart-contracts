@@ -12,13 +12,14 @@ use kai_leverage::debt_info::DebtInfo;
 use kai_leverage::position_core_clmm::{
     Self as core,
     e_invalid_balance_value,
+    e_function_deprecated,
     PositionConfig,
     CreatePositionTicket,
     PositionCap,
     Position,
     DeleverageTicket,
     RebalanceReceipt,
-    ReductionRepaymentTicket,
+    ReductionRepaymentTicket
 };
 use kai_leverage::position_model_clmm::PositionModel;
 use kai_leverage::pyth::PythPriceInfo;
@@ -83,6 +84,21 @@ public fun remove_liquidity<X, Y>(
 /* ================= position creation ================= */
 
 public fun create_position_ticket<X, Y>(
+    _: &mut bluefin_pool::Pool<X, Y>,
+    _: &mut PositionConfig,
+    _: I32,
+    _: I32,
+    _: Balance<X>,
+    _: Balance<Y>,
+    _: u128,
+    _: &PythPriceInfo,
+    _: &mut TxContext,
+): CreatePositionTicket<X, Y, I32> {
+    abort e_function_deprecated!()
+}
+
+#[deprecated(note = b"Use `create_position_ticket_v2` instead.")]
+public fun create_position_ticket_v2<X, Y>(
     bluefin_pool: &mut bluefin_pool::Pool<X, Y>,
     config: &mut PositionConfig,
     tick_a: I32,
@@ -91,6 +107,7 @@ public fun create_position_ticket<X, Y>(
     principal_y: Balance<Y>,
     delta_l: u128,
     price_info: &PythPriceInfo,
+    clock: &Clock,
     ctx: &mut TxContext,
 ): CreatePositionTicket<X, Y, I32> {
     core::create_position_ticket!(
@@ -102,6 +119,7 @@ public fun create_position_ticket<X, Y>(
         principal_y,
         delta_l,
         price_info,
+        clock,
         ctx,
     )
 }
