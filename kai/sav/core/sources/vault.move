@@ -276,7 +276,7 @@ public fun total_available_balance<T, YT>(vault: &Vault<T, YT>, clock: &Clock): 
     total = total + tlb::max_withdrawable(&vault.time_locked_profit, clock);
 
     let mut i = 0;
-    let n = vec_map::size(&vault.strategies);
+    let n = vault.strategies.length();
     while (i < n) {
         let (_, strategy_state) = vec_map::get_entry_by_idx(&vault.strategies, i);
         total = total + strategy_state.borrowed;
@@ -347,7 +347,7 @@ public(package) fun add_strategy<T, YT>(
     let access = VaultAccess { id: object::new(ctx) };
     let strategy_id = object::uid_to_inner(&access.id);
 
-    let target_alloc_weight_bps = if (vec_map::size(&vault.strategies) == 0) {
+    let target_alloc_weight_bps = if (vault.strategies.length() == 0) {
         BPS_IN_100_PCT
     } else {
         0
@@ -391,7 +391,7 @@ entry fun set_strategy_target_alloc_weights_bps<T, YT>(
     let mut total_bps = 0;
 
     let mut i = 0;
-    let n = vec_map::size(&vault.strategies);
+    let n = vault.strategies.length();
     assert!(n == vector::length(&ids), EInvalidWeights);
     assert!(n == vector::length(&weights_bps), EInvalidWeights);
     while (i < n) {
@@ -755,7 +755,7 @@ public fun redeem_withdraw_ticket<T, YT>(
     } = ticket;
     let lp_to_burn_amt = balance::value(&lp_to_burn);
 
-    while (vec_map::size(&strategy_infos) > 0) {
+    while (strategy_infos.length() > 0) {
         let (strategy_id, withdraw_info) = vec_map::pop(&mut strategy_infos);
         let StrategyWithdrawInfo {
             to_withdraw,
@@ -863,7 +863,7 @@ public fun calc_rebalance_amounts<T, YT>(vault: &Vault<T, YT>, clock: &Clock): R
         total_available_balance + tlb::max_withdrawable(&vault.time_locked_profit, clock);
 
     let mut i = 0;
-    let n = vec_map::size(&vault.strategies);
+    let n = vault.strategies.length();
     while (i < n) {
         let (strategy_id, strategy_state) = vec_map::get_entry_by_idx(&vault.strategies, i);
         vec_map::insert(
@@ -1208,7 +1208,7 @@ fun assert_ticket_values<T, TY>(
 #[test_only]
 fun assert_ticket_total_withdraw<T, YT>(ticket: &WithdrawTicket<T, YT>, total: u64) {
     let mut i = 0;
-    let n = vec_map::size(&ticket.strategy_infos);
+    let n = ticket.strategy_infos.length();
     let mut total_withdraw = ticket.to_withdraw_from_free_balance;
     while (i < n) {
         let (_, strategy_withdraw_info) = vec_map::get_entry_by_idx(&ticket.strategy_infos, i);
@@ -2668,7 +2668,7 @@ fun test_remove_strategy() {
     vector::push_back(&mut new_weights, 70_00);
     remove_strategy(&admin_cap, &mut vault, ticket, ids_for_weights, new_weights, &clock);
 
-    assert!(vec_map::size(&vault.strategies) == 2, 0);
+    assert!(vault.strategies.length() == 2, 0);
     assert!(vec_map::get(&vault.strategies, &id_a).target_alloc_weight_bps == 30_00, 0);
     assert!(vec_map::get(&vault.strategies, &id_c).target_alloc_weight_bps == 70_00, 0);
     let mut exp_priority_order = vector::empty();
