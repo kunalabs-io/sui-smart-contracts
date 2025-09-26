@@ -100,6 +100,7 @@ dependencies = [
   { id = "WAL", name = "WAL" },
   { id = "WHUSDCE", name = "WHUSDCE" },
   { id = "WHUSDTE", name = "WHUSDTE" },
+  { id = "rate_limiter", name = "rate_limiter" },
   { id = "usdc", name = "usdc" },
   { id = "wBTC", name = "wBTC" },
   { id = "xBTC", name = "xBTC" },
