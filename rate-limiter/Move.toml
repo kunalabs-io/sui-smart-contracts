@@ -1,5 +1,5 @@
 [package]
-name = "RateLimiter"
+name = "rate_limiter"
 edition = "2024"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
