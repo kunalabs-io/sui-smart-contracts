@@ -162,6 +162,7 @@ fun liquidate_col_x_standard_flow_is_correct() {
         pyth_test_util::update_pyth_pio_price_human_mul_n(
             &mut sui_pio,
             sqrt_price_x64_to_price_human_mul_n<SUI, USDC>(pool.current_sqrt_price_x64(), 8),
+            sqrt_price_x64_to_price_human_mul_n<SUI, USDC>(pool.current_sqrt_price_x64(), 8),
             8,
             &clock,
         );
@@ -538,6 +539,7 @@ fun liquidate_col_y_standard_flow_is_correct() {
         // update pyth price info
         pyth_test_util::update_pyth_pio_price_human_mul_n(
             &mut sui_pio,
+            sqrt_price_x64_to_price_human_mul_n<SUI, USDC>(pool.current_sqrt_price_x64(), 8),
             sqrt_price_x64_to_price_human_mul_n<SUI, USDC>(pool.current_sqrt_price_x64(), 8),
             8,
             &clock,

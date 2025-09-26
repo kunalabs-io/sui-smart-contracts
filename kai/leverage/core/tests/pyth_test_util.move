@@ -38,7 +38,12 @@ public fun create_pyth_pio_with_price_human_mul_100(
     create_pyth_pio(i64::new(price_human_mul_100 * 10_u64.pow(6), false), clock, ctx)
 }
 
-public fun update_pyth_pio_price(pio: &mut PriceInfoObject, price: I64, clock: &Clock) {
+public fun update_pyth_pio_price(
+    pio: &mut PriceInfoObject,
+    price: I64,
+    ema_price: I64,
+    clock: &Clock,
+) {
     let timestamp_sec = clock.timestamp_ms() / 1000;
 
     let price_identifier = pio
@@ -51,7 +56,13 @@ public fun update_pyth_pio_price(pio: &mut PriceInfoObject, price: I64, clock: &
         i64::new(8, true), // expo
         timestamp_sec,
     );
-    let price_feed = price_feed::new(price_identifier, price, price);
+    let ema_price = price::new(
+        ema_price,
+        0, // conf
+        i64::new(8, true), // expo
+        timestamp_sec,
+    );
+    let price_feed = price_feed::new(price_identifier, price, ema_price);
     let price_info = price_info::new_price_info(
         timestamp_sec,
         timestamp_sec,
@@ -64,6 +75,7 @@ public fun update_pyth_pio_price(pio: &mut PriceInfoObject, price: I64, clock: &
 public fun update_pyth_pio_price_human_mul_n(
     pio: &mut PriceInfoObject,
     price_human_mul_n: u64,
+    ema_price_human_mul_n: u64,
     n: u8,
     clock: &Clock,
 ) {
@@ -73,7 +85,12 @@ public fun update_pyth_pio_price_human_mul_n(
         price_human_mul_n * 10_u64.pow(8 - n)
     };
 
-    update_pyth_pio_price(pio, i64::new(price, false), clock);
+    update_pyth_pio_price(
+        pio,
+        i64::new(price, false),
+        i64::new(ema_price_human_mul_n, false),
+        clock,
+    );
 }
 
 public fun set_pyth_pio_timestamp(pio: &mut PriceInfoObject, timestamp_sec: u64) {
