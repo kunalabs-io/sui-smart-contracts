@@ -3,10 +3,11 @@ name = "rate_limiter"
 edition = "2024"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
+published-at = "0xe829c047cf805d54bde8ff2390883004d4557193d33bac516f3232105a2f2bb2"
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.55.0", override = true }
 MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.55.0", override = true }
 
 [addresses]
-rate_limiter = "0x0"
+rate_limiter = "0xe829c047cf805d54bde8ff2390883004d4557193d33bac516f3232105a2f2bb2"
