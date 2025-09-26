@@ -18,7 +18,7 @@ use sui::vec_set;
 
 /* ================= constants ================= */
 
-const MODULE_VERSION: u64 = 2;
+const MODULE_VERSION: u64 = 3;
 
 const BPS_IN_100_PCT: u64 = 10000;
 
