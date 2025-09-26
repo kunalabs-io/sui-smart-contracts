@@ -5,6 +5,7 @@ module kai_sav::vault;
 
 use kai_sav::time_locked_balance::{Self as tlb, TimeLockedBalance};
 use kai_sav::util::{muldiv, muldiv_round_up, timestamp_sec};
+use rate_limiter::net_sliding_sum_limiter::NetSlidingSumLimiter;
 use std::u64;
 use sui::balance::{Self, Balance};
 use sui::clock::Clock;
@@ -154,7 +155,7 @@ public(package) fun withdraw_ticket_to_withdraw<T, YT>(
 
 /* ================= RebalanceInfo ================= */
 
-public struct RebalanceInfo has store, copy, drop {
+public struct RebalanceInfo has copy, drop, store {
     /// The target amount the strategy should repay. The strategy shouldn't
     /// repay more than this amount.
     to_repay: u64,
@@ -471,6 +472,44 @@ public fun withdrawals_disabled<T, YT>(vault: &Vault<T, YT>): bool {
     }
 }
 
+public fun set_rate_limiter<T, YT, L: store>(
+    _cap: &AdminCap<YT>,
+    vault: &mut Vault<T, YT>,
+    rate_limiter: L,
+) {
+    assert_version(vault);
+    df::add(&mut vault.id, b"rate_limiter", rate_limiter);
+}
+
+entry fun remove_rate_limiter<T, YT>(
+    _cap: &AdminCap<YT>,
+    vault: &mut Vault<T, YT>
+) {
+    assert_version(vault);
+    df::remove<_, NetSlidingSumLimiter>(&mut vault.id, b"rate_limiter");
+}
+
+fun has_rate_limiter<T, YT>(vault: &Vault<T, YT>): bool {
+    df::exists_(&vault.id, b"rate_limiter")
+}
+
+fun rate_limiter_mut<T, YT>(vault: &mut Vault<T, YT>): &mut NetSlidingSumLimiter {
+    df::borrow_mut(&mut vault.id, b"rate_limiter")
+}
+
+entry fun set_max_inflow_and_outflow_limits<T, YT>(
+    _cap: &AdminCap<YT>,
+    vault: &mut Vault<T, YT>,
+    max_inflow_limit: Option<u256>,
+    max_outflow_limit: Option<u256>,
+) {
+    assert_version(vault);
+
+    let rate_limiter = rate_limiter_mut(vault);
+    rate_limiter.set_max_inflow_limit(max_inflow_limit);
+    rate_limiter.set_max_outflow_limit(max_outflow_limit);
+}
+
 entry fun migrate<T, YT>(_cap: &AdminCap<YT>, vault: &mut Vault<T, YT>) {
     assert!(vault.version < MODULE_VERSION, ENotUpgrade);
     vault.version = MODULE_VERSION;
@@ -488,6 +527,11 @@ public fun deposit<T, YT>(
     if (balance::value(&balance) == 0) {
         balance::destroy_zero(balance);
         return balance::zero()
+    };
+
+    // apply rate limiting to the deposit amount
+    if (vault.has_rate_limiter()) {
+        vault.rate_limiter_mut().consume_inflow(balance.value(), clock);
     };
 
     // edge case -- appropriate any existing balances into performance
@@ -589,6 +633,11 @@ public fun withdraw<T, YT>(
         total_available,
         coin::total_supply(&vault.lp_treasury),
     );
+
+    // apply rate limiting to the withdrawal amount
+    if (vault.has_rate_limiter()) {
+        vault.rate_limiter_mut().consume_outflow(remaining_to_withdraw, clock);
+    };
 
     // first withdraw everything possible from free balance
     ticket.to_withdraw_from_free_balance =

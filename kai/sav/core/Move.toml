@@ -13,6 +13,7 @@ ScallopPool = { local = "../../../_vendor/ScallopPool" }
 KaiYwhUSDTeYSUI = { local = "../vault-token-init/kai-ywhusdte-ysui" }
 AccessManagement = { local = "../../../access-management" }
 KaiLeverage = { local = "../../leverage/core" }
+rate_limiter = { local = "../../../rate-limiter" }
 
 [addresses]
 kai_sav = "0x01c389a85310b47e7630a9361d4e71025bc35e4999d3a645949b1b68b26f2273"
