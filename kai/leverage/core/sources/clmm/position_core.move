@@ -136,7 +136,8 @@ use fun kai_leverage::flowx::position_tick_range as flowx_clmm::position::Positi
 
 /* ================= constants ================= */
 
-const MODULE_VERSION: u16 = 3;
+const CONFIG_VERSION: u16 = 4;
+const POSITION_VERSION: u16 = 3;
 
 /* ================= errors ================= */
 
@@ -333,7 +334,7 @@ public(package) fun position_constructor<X, Y, LP>(
         collected_fees,
         owner_reward_stash,
         ticket_active: false,
-        version: MODULE_VERSION,
+        version: POSITION_VERSION,
     }
 }
 
@@ -519,7 +520,7 @@ public fun create_empty_config(pool_object_id: ID, ctx: &mut TxContext): (ID, Ac
         rebalance_fee_bps: 0,
         liq_fee_bps: 0,
         position_creation_fee_sui: 0,
-        version: MODULE_VERSION,
+        version: CONFIG_VERSION,
     };
     transfer::share_object(config);
 
@@ -1738,11 +1739,11 @@ public(package) fun emit_bad_debt_repaid<T>(
 /* ================= upgrade ================= */
 
 public(package) fun check_config_version(config: &PositionConfig) {
-    assert!(config.version == MODULE_VERSION, EInvalidConfigVersion);
+    assert!(config.version == CONFIG_VERSION, EInvalidConfigVersion);
 }
 
 public(package) fun check_position_version<X, Y, LP>(position: &Position<X, Y, LP>) {
-    assert!(position.version == MODULE_VERSION, EInvalidPositionVersion);
+    assert!(position.version == POSITION_VERSION, EInvalidPositionVersion);
 }
 
 public(package) fun check_versions<X, Y, LP>(
@@ -1754,8 +1755,8 @@ public(package) fun check_versions<X, Y, LP>(
 }
 
 public fun migrate_config(config: &mut PositionConfig, ctx: &mut TxContext): ActionRequest {
-    assert!(config.version < MODULE_VERSION, ENotUpgrade);
-    config.version = MODULE_VERSION;
+    assert!(config.version < CONFIG_VERSION, ENotUpgrade);
+    config.version = CONFIG_VERSION;
     access::new_request(AMigrate {}, ctx)
 }
 
@@ -1763,8 +1764,8 @@ public fun migrate_position<X, Y, LP>(
     position: &mut Position<X, Y, LP>,
     ctx: &mut TxContext,
 ): ActionRequest {
-    assert!(position.version < MODULE_VERSION, ENotUpgrade);
-    position.version = MODULE_VERSION;
+    assert!(position.version < POSITION_VERSION, ENotUpgrade);
+    position.version = POSITION_VERSION;
     access::new_request(AMigrate {}, ctx)
 }
 
