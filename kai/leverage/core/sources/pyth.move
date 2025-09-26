@@ -141,15 +141,36 @@ fun get_price_lo_hi_expo_dec(
     (p, p - conf, p + conf, expo, dec)
 }
 
-/// Returns the price of `Y` in `X` such that `X * price = Y` i.e. `price = Y / X`.
-/// The returned value is in Q64.128 format.
-public fun div_price_numeric_x128(
+fun get_ema_price_lo_hi_expo_dec(
+    price_info: &ValidatedPythPriceInfo,
+    t: TypeName,
+): (u64, u64, u64, u64, u64) {
+    let price = get_ema_price(price_info, t);
+
+    let conf = price.get_conf();
+    let p = i64::get_magnitude_if_positive(&price.get_price());
+    let expo = i64::get_magnitude_if_negative(&price.get_expo());
+    let dec = decimals(t) as u64;
+
+    (p, p - conf, p + conf, expo, dec)
+}
+
+fun div_price_numeric_x128_inner(
     price_info: &ValidatedPythPriceInfo,
     x: TypeName,
     y: TypeName,
+    use_ema: bool,
 ): u256 {
-    let (price_x, _, _, ex, dx) = get_price_lo_hi_expo_dec(price_info, x);
-    let (price_y, _, _, ey, dy) = get_price_lo_hi_expo_dec(price_info, y);
+    let (price_x, _, _, ex, dx) = if (use_ema) {
+        get_ema_price_lo_hi_expo_dec(price_info, x)
+    } else {
+        get_price_lo_hi_expo_dec(price_info, x)
+    };
+    let (price_y, _, _, ey, dy) = if (use_ema) {
+        get_ema_price_lo_hi_expo_dec(price_info, y)
+    } else {
+        get_price_lo_hi_expo_dec(price_info, y)
+    };
 
     let (scale_num, scale_denom) = if (ey + dy > ex + dx) {
         let exp = (ey + dy - ex - dx as u8);
@@ -169,4 +190,25 @@ public fun div_price_numeric_x128(
     assert!(val <= q64_128_max, EPriceUndefined);
 
     val
+}
+
+/// Returns the price of `Y` in `X` such that `X * price = Y` i.e. `price = Y / X`.
+/// The returned value is in Q64.128 format.
+public fun div_price_numeric_x128(
+    price_info: &ValidatedPythPriceInfo,
+    x: TypeName,
+    y: TypeName,
+): u256 {
+    div_price_numeric_x128_inner(price_info, x, y, false)
+}
+
+/// Returns the price of `Y` in `X` such that `X * price = Y` i.e. `price = Y / X`.
+/// The returned value is in Q64.128 format.
+/// Uses EMA price instead of spot price.
+public fun div_ema_price_numeric_x128(
+    price_info: &ValidatedPythPriceInfo,
+    x: TypeName,
+    y: TypeName,
+): u256 {
+    div_price_numeric_x128_inner(price_info, x, y, true)
 }

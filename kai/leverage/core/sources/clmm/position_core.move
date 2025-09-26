@@ -255,6 +255,10 @@ public(package) macro fun e_invalid_balance_value(): u64 {
 public(package) macro fun e_function_deprecated(): u64 {
     30
 }
+/// The deviation between the oracle price and the pool price is too high.
+public(package) macro fun e_price_deviation_too_high(): u64 {
+    31
+}
 
 /* ================= access ================= */
 
@@ -1790,6 +1794,22 @@ public(package) fun calc_borrow_amt(principal: u64, need_for_position: u64): (u6
     }
 }
 
+public(package) fun price_deviation_is_acceptable(
+    config: &PositionConfig,
+    p0_oracle_ema_x128: u256,
+    p0_x128: u256,
+): bool {
+    let delta_bps = (config.min_liq_start_price_delta_bps as u256);
+    let pl_x128 = p0_oracle_ema_x128 - (p0_oracle_ema_x128 * delta_bps) / 10000;
+    let ph_x128 = p0_oracle_ema_x128 + (p0_oracle_ema_x128 * delta_bps) / 10000;
+
+    if (p0_x128 < pl_x128 || p0_x128 > ph_x128) {
+        false
+    } else {
+        true
+    }
+}
+
 public(package) fun liq_margin_is_valid(
     config: &PositionConfig,
     model: &PositionModel,
@@ -1982,6 +2002,18 @@ public(package) macro fun create_position_ticket<$X, $Y, $I32>(
         type_name::with_defining_ids<$Y>(),
     );
     let p0_x128 = (sqrt_p0_x64 as u256) * (sqrt_p0_x64 as u256);
+
+    // validate price deviation
+    {
+        let p0_oracle_ema_x128 = price_info.div_ema_price_numeric_x128(
+            type_name::with_defining_ids<$X>(),
+            type_name::with_defining_ids<$Y>(),
+        );
+        assert!(
+            price_deviation_is_acceptable(config, p0_oracle_ema_x128, p0_x128),
+            e_price_deviation_too_high!(),
+        )
+    };
 
     let p0_min_x128 = util::min_u256(p0_oracle_x128, p0_x128);
     let p0_max_x128 = util::max_u256(p0_oracle_x128, p0_x128);
