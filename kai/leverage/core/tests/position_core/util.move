@@ -10,6 +10,7 @@ use kai_leverage::pyth_test_util;
 use kai_leverage::supply_pool::SupplyPool;
 use kai_leverage::supply_pool_tests::{Self, SSUI, SUSDC};
 use pyth::price_info::PriceInfoObject;
+use rate_limiter::net_sliding_sum_limiter;
 use std::type_name;
 use std::u128;
 use std::u64;
@@ -196,6 +197,19 @@ public fun initialize_config_for_testing(
             object::id(&usdc_pio),
             scenario.ctx(),
         );
+        request.admin_approve_request(package_admin);
+
+        // add rate limiter
+        let rate_limiter = net_sliding_sum_limiter::new(
+            5 * 60 * 1000, // 5 minutes per bucket
+            12, // 12 buckets (1 hour total)
+            option::none(), // no max inflow limit
+            option::none(), // no max outflow limit
+            option::none(), // no max net inflow limit
+            option::none(), // no max net outflow limit
+            clock,
+        );
+        let request = config.add_create_withdraw_limiter(rate_limiter, scenario.ctx());
         request.admin_approve_request(package_admin);
 
         test_scenario::return_shared(config);

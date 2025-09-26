@@ -158,7 +158,19 @@ fun standard_flow_is_correct() {
         assert!(position.col_y().value() == 0);
         assert!(position.debt_bag().length() == 2);
         assert!(position.collected_fees().amounts().length() == 1);
-        assert!(position.collected_fees().amounts()[&type_name::with_defining_ids<SUI>()] == 1_000000000);
+        assert!(
+            position.collected_fees().amounts()[&type_name::with_defining_ids<SUI>()] == 1_000000000,
+        );
+
+        // check rate limiter after position creation
+        assert!(config.has_create_withdraw_limiter());
+        let limiter = config.borrow_create_withdraw_limiter();
+        // Expected: 100 SUI * $3.50 + 100 USDC * $1.00 = $350 + $100 = $450 = 450000000 (6 decimals)
+        assert!(limiter.inflow_total() == 450000000);
+        assert!(limiter.outflow_total() == 0);
+        let (net_amount, is_outflow) = limiter.net_value();
+        assert!(net_amount == 450000000);
+        assert!(is_outflow == false);
 
         let mut debt_info = debt_info::empty(object::id(config.lend_facil_cap()));
         debt_info.add_from_supply_pool(
@@ -246,7 +258,9 @@ fun standard_flow_is_correct() {
         assert!(reward_balance_x.value() == 0_200000000 - exp_reward_sui);
         assert!(receipt.collected_amm_fee_x() == 0_150000000);
         assert!(receipt.collected_amm_fee_y() == 1_100000);
-        assert!(receipt.collected_amm_rewards()[&type_name::with_defining_ids<SUI>()] == 0_200000000);
+        assert!(
+            receipt.collected_amm_rewards()[&type_name::with_defining_ids<SUI>()] == 0_200000000,
+        );
         assert!(
             receipt.fees_taken()[&type_name::with_defining_ids<SUI>()] == exp_rebalance_fee_x + exp_reward_sui,
         );
@@ -330,7 +344,9 @@ fun standard_flow_is_correct() {
         assert!(receipt.position_id() == object::id(&position));
         assert!(receipt.collected_amm_fee_x() == 0_150000000);
         assert!(receipt.collected_amm_fee_y() == 1_100000);
-        assert!(receipt.collected_amm_rewards()[&type_name::with_defining_ids<SUI>()] == 0_200000000);
+        assert!(
+            receipt.collected_amm_rewards()[&type_name::with_defining_ids<SUI>()] == 0_200000000,
+        );
         assert!(
             receipt.fees_taken()[&type_name::with_defining_ids<SUI>()] == exp_rebalance_fee_x + exp_reward_sui,
         );
@@ -555,6 +571,8 @@ fun standard_flow_is_correct() {
         assert!(ticket.sy().facil_id() == object::id(config.lend_facil_cap()));
         assert!(ticket.sy().value_x64() == 465534178 * Q64);
         assert!(ticket.info().position_id() == object::id(&position));
+        let withdrawn_balance_x_amount = balance_x.value();
+        let withdrawn_balance_y_amount = balance_y.value();
         destroy(balance_x);
         destroy(balance_y);
 
@@ -576,6 +594,38 @@ fun standard_flow_is_correct() {
         assert!(info.withdrawn_y() == exp_y + exp_cy);
         assert!(info.x_repaid() == 0);
         assert!(info.y_repaid() == 0);
+
+        // check rate limiter after position reduction
+        let limiter = config.borrow_create_withdraw_limiter();
+        assert!(limiter.inflow_total() == 450_000000);
+
+        let validated_price_info = core::validate_price_info(&config, &price_info);
+        let withdrawn_x_value = core::get_amount_ema_usd_value_6_decimals<SUI>(
+            withdrawn_balance_x_amount,
+            &validated_price_info,
+            true,
+        );
+        let withdrawn_y_value = core::get_amount_ema_usd_value_6_decimals<USDC>(
+            withdrawn_balance_y_amount,
+            &validated_price_info,
+            true,
+        );
+        let repaid_x_value = core::get_amount_ema_usd_value_6_decimals<SUI>(
+            exp_dx,
+            &validated_price_info,
+            true,
+        );
+        let repaid_y_value = core::get_amount_ema_usd_value_6_decimals<USDC>(
+            exp_dy,
+            &validated_price_info,
+            true,
+        );
+        let expected_outflow =
+            (withdrawn_x_value + withdrawn_y_value) - (repaid_x_value + repaid_y_value);
+        assert!(limiter.outflow_total() == (expected_outflow as u256));
+        let (net_amount, is_outflow) = limiter.net_value();
+        assert!(net_amount == 450_000000 - (expected_outflow as u256));
+        assert!(is_outflow == false);
 
         // repay ticket
         let repay_amt_x = core::reduction_ticket_calc_repay_amt_x(

@@ -809,6 +809,14 @@ fun has_config_extension<Key: copy + drop + store>(config: &PositionConfig, key:
     df::exists_(&config.id, key)
 }
 
+fun borrow_config_extension<Key: copy + drop + store, Val: store>(
+    config: &PositionConfig,
+    key: Key,
+): &Val {
+    check_config_version(config);
+    df::borrow<Key, Val>(&config.id, key)
+}
+
 fun get_config_extension_or_default<Key: copy + drop + store, Val: copy + drop + store>(
     config: &PositionConfig,
     key: Key,
@@ -903,7 +911,7 @@ public fun delete_position_disabled(config: &PositionConfig): bool {
     get_config_extension_or_default(config, DeletePositionDisabledKey(), false)
 }
 
-public fun add_position_create_withdraw_limiter<L: store>(
+public fun add_create_withdraw_limiter<L: store>(
     config: &mut PositionConfig,
     rate_limiter: L,
     ctx: &mut TxContext,
@@ -911,11 +919,15 @@ public fun add_position_create_withdraw_limiter<L: store>(
     add_config_extension(config, PositionCreateWithdrawLimiterKey(), rate_limiter, ctx)
 }
 
-public(package) fun has_position_create_withdraw_limiter(config: &PositionConfig): bool {
+public(package) fun has_create_withdraw_limiter(config: &PositionConfig): bool {
     has_config_extension(config, PositionCreateWithdrawLimiterKey())
 }
 
-public(package) fun position_create_withdraw_limiter_mut(
+public(package) fun borrow_create_withdraw_limiter(config: &PositionConfig): &NetSlidingSumLimiter {
+    borrow_config_extension(config, PositionCreateWithdrawLimiterKey())
+}
+
+public(package) fun borrow_create_withdraw_limiter_mut(
     config: &mut PositionConfig,
 ): &mut NetSlidingSumLimiter {
     config_extension_mut(config, PositionCreateWithdrawLimiterKey())
@@ -929,7 +941,7 @@ public fun set_max_create_withdraw_net_inflow_and_outflow_limits(
 ): ActionRequest {
     check_config_version(config);
 
-    let rate_limiter = config.position_create_withdraw_limiter_mut();
+    let rate_limiter = config.borrow_create_withdraw_limiter_mut();
     rate_limiter.set_max_net_inflow_limit(max_net_inflow_limit);
     rate_limiter.set_max_net_outflow_limit(max_net_outflow_limit);
 
@@ -1944,8 +1956,8 @@ public(package) macro fun create_position_ticket<$X, $Y, $I32>(
     assert!(object::id(pool_object) == config.pool_object_id(), e_invalid_pool!());
     let price_info = validate_price_info(config, $price_info);
 
-    if (config.has_position_create_withdraw_limiter()) {
-        let limiter = config.position_create_withdraw_limiter_mut();
+    if (config.has_create_withdraw_limiter()) {
+        let limiter = config.borrow_create_withdraw_limiter_mut();
         let x_value = get_balance_ema_usd_value_6_decimals(&principal_x, &price_info, true);
         let y_value = get_balance_ema_usd_value_6_decimals(&principal_y, &price_info, true);
         limiter.consume_inflow(x_value + y_value, $clock);
@@ -2828,8 +2840,8 @@ public(package) macro fun reduce<$X, $Y, $SX, $SY, $Pool, $LP>(
     let sy = position.debt_bag_mut().take_amt(delta_shares_y);
 
     // calculate the inflow and outflow of the position
-    if (config.has_position_create_withdraw_limiter()) {
-        let limiter = config.position_create_withdraw_limiter_mut();
+    if (config.has_create_withdraw_limiter()) {
+        let limiter = config.borrow_create_withdraw_limiter_mut();
 
         let dx = supply_pool_x.calc_repay_by_shares(sx.facil_id(), sx.value_x64(), $clock);
         let dy = supply_pool_y.calc_repay_by_shares(sy.facil_id(), sy.value_x64(), $clock);
