@@ -73,7 +73,7 @@ module cetusclmm::rewarder {
         after_amount: u64
     }
 
-    /// init the `RewarderGlobalVault
+    /// init the `RewarderGlobalVault`
     fun init(_ctx: &mut TxContext) {
         abort 0
     }

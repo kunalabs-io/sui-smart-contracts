@@ -351,7 +351,7 @@ module cetusclmm::pool {
     ///
     /// params
     ///     - `config` The global config object of clmm package.
-    ///     - `pool'  The clmpool object.
+    ///     - `pool`  The clmpool object.
     ///     - `position_nft`  "clmm" uses NFTs to hold positions, which we call "position_nft".
     /// It serves as the unique authority representing the position. If you transfer it to another address,
     /// it means that you have also transferred the position to that address.
