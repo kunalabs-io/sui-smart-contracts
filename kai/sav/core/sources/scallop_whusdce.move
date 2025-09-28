@@ -1,6 +1,7 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// SAV strategy integrating Scallop whUSDC.e with Kai vaults.
 module kai_sav::scallop_whusdce;
 
 use kai_sav::util::muldiv;

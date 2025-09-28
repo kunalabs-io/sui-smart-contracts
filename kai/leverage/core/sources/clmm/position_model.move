@@ -1,6 +1,19 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// Mathematical model for leveraged CLMM position analysis implementing formal theoretical guarantees.
+/// 
+/// This module implements the mathematical framework from "Concentrated Liquidity with Leverage" 
+/// ([arXiv:2409.12803](https://arxiv.org/pdf/2409.12803)), providing analytical functions for position
+/// valuation, risk assessment, and safety validation with formal mathematical proofs.
+/// 
+/// ## Theoretical Foundation
+/// 
+/// The module implements key mathematical concepts from the paper:
+/// - **Position Value**: V_pos(P) = L·f(P, p_a, p_b) where f varies by price range
+/// - **Asset Value**: A(P) = V_pos(P) + x_C·P + y_C (total position assets)
+/// - **Debt Value**: D(P) = x_D·P + y_D (linear debt evolution)
+/// - **Margin Function**: M(P) = A(P)/D(P) with proven monotonicity properties
 module kai_leverage::position_model_clmm;
 
 use kai_leverage::util;
@@ -13,6 +26,7 @@ const U128_MAX: u128 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
 /// The requested `delta_l` is greater than the available liquidity in the position.
 const EInsufficientLiquidity: u64 = 0;
 
+/// Immutable snapshot of a position's parameters.
 public struct PositionModel has copy, drop {
     // range low
     sqrt_pa_x64: u128,
@@ -30,6 +44,7 @@ public struct PositionModel has copy, drop {
     dy: u64,
 }
 
+/// Create a new `PositionModel` from range, liquidity, collateral and debt.
 public fun create(
     sqrt_pa_x64: u128,
     sqrt_pb_x64: u128,
@@ -50,30 +65,37 @@ public fun create(
     }
 }
 
+/// Lower bound price sqrt in Q64.64.
 public fun sqrt_pa_x64(self: &PositionModel): u128 {
     self.sqrt_pa_x64
 }
 
+/// Upper bound price sqrt in Q64.64.
 public fun sqrt_pb_x64(self: &PositionModel): u128 {
     self.sqrt_pb_x64
 }
 
+/// Current position liquidity.
 public fun l(self: &PositionModel): u128 {
     self.l
 }
 
+/// Additional collateral in token X (outside LP).
 public fun cx(self: &PositionModel): u64 {
     self.cx
 }
 
+/// Additional collateral in token Y (outside LP).
 public fun cy(self: &PositionModel): u64 {
     self.cy
 }
 
+/// Debt amount of token X.
 public fun dx(self: &PositionModel): u64 {
     self.dx
 }
 
+/// Debt amount of token Y.
 public fun dy(self: &PositionModel): u64 {
     self.dy
 }
@@ -204,37 +226,31 @@ public fun sqrt_ph_x64(sqrt_p_x64: u128, delta_bps: u16): u128 {
 }
 
 /// Calculate the `l` by which the LP position must be reduced so that the margin level goes above
-/// the
-/// deleverage threshold after debt repayment w.r.t. the `base_deleverage_factor`. It assumes that
-/// conversion between X and Y is not done so `dx` is only repaid using available `cx` and the X
-/// amounts from
-/// the LP position and same for Y.
+/// the deleverage threshold after debt repayment w.r.t. the `base_deleverage_factor`.
+/// It assumes that conversion between X and Y is not done, so `dx` is only repaid using available
+/// `cx` and the X amounts from the LP position, and same for Y.
 ///
 /// The `l` is calculated so that the position reaches a target margin level after the debt
-/// repayment.
-/// The target margin level is defined as the margin level that would be reached if
-/// `deleverage_factor_bps`
-/// of the debt is repaid at the moment margin falls below the deleverage threshold. This means that
-/// the returned
-/// `l` increases as the margin level decreases.
+/// repayment. The target margin level is defined as the margin level that would be reached if
+/// `deleverage_factor_bps` of the debt is repaid at the moment margin falls below the deleverage
+/// threshold. This means that the returned `l` increases as the margin level decreases.
 ///
 /// When extra collateral `cx` or `cy` is present, it is assumed that this will also be used to
-/// repay debt and together
-/// with returned `l` will amount to `deleverage_factor_bps` of debt repaid.
+/// repay debt, and together with returned `l` will amount to `deleverage_factor_bps` of debt
+/// repaid.
 ///
 /// Summary:
 /// - when `M >= Md` returns 0
 /// - when `Md > M > 1` returns `l` such that the position reaches a constant target margin after
-/// the deleverage
+///   the deleverage
 /// - when `1 >= M` returns `position.l`
 /// - if the position has no debt, returns 0
 /// - when extra collateral `cx` or `cy` is present, it is assumed that this will also be used to
-/// repay debt and together
-///   with returned `l` will amount to `deleverage_factor_bps` of debt repaid.
-/// - if extra collateral `cx` and `cy` are enough to repay all debt, returns 0.
+///   repay debt, and together with returned `l` will amount to `deleverage_factor_bps` of debt
+///   repaid
+/// - if extra collateral `cx` and `cy` are enough to repay all debt, returns 0
 /// - if the target debt value cannot be repaid with position's total liquidity and extra collateral
-/// (`cx` and `cy`),
-///   returns `position.l`
+///   (`cx` and `cy`), returns `position.l`
 public fun calc_max_deleverage_delta_l(
     position: &PositionModel,
     p_x128: u256,
@@ -361,35 +377,27 @@ public fun calc_max_deleverage_delta_l(
 /// 0 means no liquidation and `1 << 64` means full liquidation (Q64.64 format).
 ///
 /// The factor is calculated so that the position is above the liquidation threshold after the
-/// liquidation.
-/// The target margin level is one that would be reached if `base_liq_factor_bps` of the debt is
-/// repaid
-/// at the moment margin falls below the liquidation threshold. This means that the returned factor
-/// increases
-/// as the margin level decreases.
+/// liquidation. The target margin level is one that would be reached if `base_liq_factor_bps` of
+/// the debt is repaid at the moment margin falls below the liquidation threshold. This means that
+/// the returned factor increases as the margin level decreases.
 ///
 /// If the margin level is below the half-way point between the liquidation threshold and the
-/// critical margin level,
-/// the factor is 1. The critical margin level is defined as the margin level at which the position
-/// cannot be
-/// liquidated without incuring bad debt (while respecting the liquidation bonus, `Mc = 1 +
-/// liq_bonus`).
+/// critical margin level, the factor is 1. The critical margin level is defined as the margin
+/// level at which the position cannot be liquidated without incurring bad debt (while respecting
+/// the liquidation bonus, `Mc = 1 + liq_bonus`).
 ///
 /// If the margin level is below the critical margin level, then the factor is calculated so that
-/// maximum possible
-/// of debt amount is liquidated while making sure there's enough collateral to cover the
-/// liquidation bonus.
-/// This means that as the current margin falls below the critical margin level, the factor
-/// decreases.
+/// the maximum possible amount of debt is liquidated while making sure there's enough collateral
+/// to cover the liquidation bonus. This means that as the current margin falls below the critical
+/// margin level, the factor decreases.
 ///
 /// Summary:
 /// - when `M >= Ml` returns 0
 /// - when `Ml > M > (Ml + Mc) / 2` returns a factor so that the position reaches a constant target
-/// margin after liquidation
+///   margin after liquidation
 /// - when `(Ml + Mc) / 2 >= M >= Mc` returns 1
 /// - when `Mc > M` returns a factor so that maximum possible debt is liquidated while respecting
-/// the liquidation bonus
-///
+///   the liquidation bonus
 public fun calc_max_liq_factor_x64(
     current_margin_x64: u128,
     liq_margin_bps: u16,
@@ -424,14 +432,12 @@ public fun calc_max_liq_factor_x64(
     }
 }
 
-/// Returns `true` if the position is "fully deleveraged". A position is considered fully
-/// deleveraged
-/// when all the liquidity has been withdrawn from the AMM pool and the debt that can be repaid
-/// directly
-/// (i.e. cx -> dx, cy -> dy) has been repaid.
-/// If this is true, then `dx > 0` implies `cx = 0` and `dy > 0` implies `cy = 0`. Also if `dx > 0
-/// && dy > 0`
-/// then `cx == 0 && cy == 0`.
+/// Returns `true` if the position is "fully deleveraged".
+/// A position is considered fully deleveraged when all the liquidity has been withdrawn
+/// from the AMM pool and the debt that can be repaid directly (i.e. `cx -> dx`, `cy -> dy`)
+/// has been repaid.
+/// If this is true, then `dx > 0` implies `cx = 0` and `dy > 0` implies `cy = 0`.
+/// Also, if `dx > 0 && dy > 0` then `cx == 0 && cy == 0`.
 public fun is_fully_deleveraged(position: &PositionModel): bool {
     if (position.l > 0) {
         return false
@@ -457,25 +463,23 @@ public fun margin_below_threshold(
 }
 
 /// Liquidates the collateral X from the position for the given `repayment_amt_y`.
-/// Returns `(repayment_amt_y, reward_amt_x)` where `repayment_amt_y` is the amount of Y repaid
-/// (up to given `max_repayment_amt_y`) and `reward_amt_x` is the amount of X returned to the
-/// liquidator.
+/// Returns `(repayment_amt_y, reward_amt_x)` where:
+///   - `repayment_amt_y` is the amount of Y repaid (up to `max_repayment_amt_y`)
+///   - `reward_amt_x` is the amount of X returned to the liquidator.
 ///
-/// Note:
-/// - returns `(0, 0)` when the position can't be liquidated:
-///   - it's not below the liquidation threshold
-///   - it's not "fully deleveraged"
-///   - `cx == 0`
-/// - the position is liquidated so that the margin level is above the liquidation threshold after
-/// the liquidation
-///   if possible for the the given `max_repayment_amt_y` and available collateral.
-/// - always respects the liquidation bonus, even if there's not enough collateral to cover a full
-/// liquidation
-/// - never aborts
+/// Notes:
+/// - Returns `(0, 0)` when the position can't be liquidated:
+///     - It's not below the liquidation threshold
+///     - It's not "fully deleveraged"
+///     - `cx == 0`
+/// - The position is liquidated so that the margin level is above the liquidation threshold after
+///   the liquidation, if possible for the given `max_repayment_amt_y` and available collateral.
+/// - Always respects the liquidation bonus, even if there's not enough collateral to cover a full
+///   liquidation.
+/// - Never aborts.
 ///
 /// See documentation for `calc_max_liq_factor_x64` for more details on how the liquidation factor
 /// is calculated.
-///
 public fun calc_liquidate_col_x(
     position: &PositionModel,
     p_x128: u256,
@@ -543,20 +547,18 @@ public fun calc_liquidate_col_x(
 /// liquidator.
 ///
 /// Note:
-/// - returns `(0, 0)` when the position can't be liquidated:
-///   - it's not below the liquidation threshold
-///   - it's not "fully deleveraged"
+/// - Returns `(0, 0)` when the position can't be liquidated:
+///   - It's not below the liquidation threshold
+///   - It's not "fully deleveraged"
 ///   - `cy == 0`
-/// - the position is liquidated so that the margin level is above the liquidation threshold after
-/// the liquidation
-///   if possible for the the given `max_repayment_amt_x` and available collateral.
-/// - always respects the liquidation bonus, even if there's not enough collateral to cover a full
-/// liquidation
-/// - never aborts
+/// - The position is liquidated so that the margin level is above the liquidation threshold after
+///   the liquidation, if possible for the given `max_repayment_amt_x` and available collateral.
+/// - Always respects the liquidation bonus, even if there's not enough collateral to cover a full
+///   liquidation.
+/// - Never aborts.
 ///
 /// See documentation for `calc_max_liq_factor_x64` for more details on how the liquidation factor
 /// is calculated.
-///
 public fun calc_liquidate_col_y(
     position: &PositionModel,
     p_x128: u256,

@@ -1,6 +1,8 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// Kai Leverage supply pool strategy for SAV integration.
+/// Implements basic compounding of rewards.
 module kai_sav::kai_leverage_supply_pool;
 
 use access_management::access::{Self, Entity, Policy};
@@ -40,6 +42,7 @@ const ENotUpgrade: u64 = 3;
 
 /* ================= events ================= */
 
+/// Incentive injection event.
 public struct IncentiveInjectInfo has copy, drop {
     strategy_id: ID,
     amount: u64,
@@ -47,20 +50,33 @@ public struct IncentiveInjectInfo has copy, drop {
 
 /* ================= AdminCap ================= */
 
+/// Administrative capability for strategy management.
 public struct AdminCap has key, store {
     id: UID,
 }
 
 /* ================= Strategy ================= */
 
+/// Strategy managing supply pool integration with vault.
+/// 
+/// Deposits funds from a Kai Single Asset Vault into a Kai Leverage supply pool,
+/// managing deposits, withdrawals, and profit collection while maintaining
+/// proper accounting of shares and underlying values.
 public struct Strategy<phantom T, phantom ST> has key {
     id: UID,
+    /// ID of the admin capability that controls this strategy
     admin_cap_id: ID,
+    /// Vault access token for vault interactions
     vault_access: Option<VaultAccess>,
+    /// Access Management entity for authentication and authorization in Kai Leverage
     entity: Entity,
+    /// Balance of supply pool share tokens representing stake in the supply pool
     shares: Balance<ST>,
+    /// Nominal value of underlying assets deposited to the supply pool
     underlying_nominal_value_t: u64,
+    /// Accumulated profits collected from the supply pool
     collected_profit_t: Balance<T>,
+    /// Version number for upgrade compatibility
     version: u64,
 }
 
@@ -95,6 +111,7 @@ fun assert_version<T, ST>(strategy: &Strategy<T, ST>) {
 
 /* ================= read ================= */
 
+/// Get the admin capability ID from strategy.
 public fun admin_cap_id<T, ST>(strategy: &Strategy<T, ST>): ID {
     strategy.admin_cap_id
 }
@@ -106,6 +123,7 @@ fun assert_admin<T, ST>(cap: &AdminCap, strategy: &Strategy<T, ST>) {
     assert!(admin_cap_id == strategy.admin_cap_id, EInvalidAdmin);
 }
 
+/// Join the strategy to a vault.
 public fun join_vault<T, ST, YT>(
     strategy: &mut Strategy<T, ST>,
     strategy_cap: &AdminCap,
@@ -120,6 +138,7 @@ public fun join_vault<T, ST, YT>(
     strategy.vault_access.fill(access); // aborts if `is_some`
 }
 
+/// Remove strategy from vault and return removal ticket.
 public fun remove_from_vault<T, ST, YT>(
     strategy: &mut Strategy<T, ST>,
     cap: &AdminCap,
@@ -140,6 +159,7 @@ public fun remove_from_vault<T, ST, YT>(
     )
 }
 
+/// Migrate strategy to current module version.
 entry fun migrate<T, ST>(cap: &AdminCap, strategy: &mut Strategy<T, ST>) {
     assert_admin(cap, strategy);
     assert!(strategy.version < MODULE_VERSION, ENotUpgrade);
@@ -148,6 +168,7 @@ entry fun migrate<T, ST>(cap: &AdminCap, strategy: &mut Strategy<T, ST>) {
 
 /* ================= strategy operations ================= */
 
+/// Rebalance strategy position based on vault requirements.
 public fun rebalance<T, ST, YT>(
     strategy: &mut Strategy<T, ST>,
     cap: &AdminCap,
@@ -227,7 +248,7 @@ public fun inject_incentives<T, ST>(strategy: &mut Strategy<T, ST>, balance: Bal
     strategy.collected_profit_t.join(balance);
 }
 
-/// Collect the profits and hand them over to the vault.
+/// Collect profits and transfer to vault.
 public fun collect_and_hand_over_profit<T, ST, YT>(
     strategy: &mut Strategy<T, ST>,
     cap: &AdminCap,
@@ -247,6 +268,7 @@ public fun collect_and_hand_over_profit<T, ST, YT>(
 
 /* ================= user operations ================= */
 
+/// Process withdrawal request from vault.
 public fun withdraw<T, ST, YT>(
     strategy: &mut Strategy<T, ST>,
     ticket: &mut WithdrawTicket<T, YT>,

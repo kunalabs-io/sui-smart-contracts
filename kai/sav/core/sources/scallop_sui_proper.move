@@ -1,6 +1,7 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// SAV strategy integrating Scallop SUI staking with Kai vaults.
 module kai_sav::scallop_sui_proper;
 
 use kai_sav::util::muldiv;

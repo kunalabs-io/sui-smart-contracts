@@ -10,7 +10,6 @@
 /// This module doesn't implement any permission functionality and it is intended to be used
 /// as a basic building block and to provide safety guarantees for building more complex token
 /// emission modules (e.g. vesting).
-///
 module kai_sav::time_locked_balance;
 
 use kai_sav::util::timestamp_sec;
@@ -33,18 +32,22 @@ public struct TimeLockedBalance<phantom T> has store {
     previous_unlock_at: u64,
 }
 
+/// Get the unlock start timestamp in seconds.
 public fun unlock_start_ts_sec<T>(self: &TimeLockedBalance<T>): u64 {
     self.unlock_start_ts_sec
 }
 
+/// Get the unlock rate per second.
 public fun unlock_per_second<T>(self: &TimeLockedBalance<T>): u64 {
     self.unlock_per_second
 }
 
+/// Get the final unlock timestamp in seconds.
 public fun final_unlock_ts_sec<T>(self: &TimeLockedBalance<T>): u64 {
     self.final_unlock_ts_sec
 }
 
+/// Get unlock configuration values.
 public fun get_values<T>(self: &TimeLockedBalance<T>): (u64, u64, u64) {
     (self.unlock_start_ts_sec, self.unlock_per_second, self.final_unlock_ts_sec)
 }
@@ -90,7 +93,7 @@ public fun extraneous_locked_amount<T>(self: &TimeLockedBalance<T>): u64 {
     }
 }
 
-/// Returns the max. available amount that can be withdrawn at this time.
+/// Get the maximum withdrawable amount at current time.
 public fun max_withdrawable<T>(self: &TimeLockedBalance<T>, clock: &Clock): u64 {
     balance::value(&self.unlocked_balance) + unlockable_amount(self, clock)
 }
@@ -111,7 +114,7 @@ public fun withdraw<T>(self: &mut TimeLockedBalance<T>, amount: u64, clock: &Clo
     balance::split(&mut self.unlocked_balance, amount)
 }
 
-/// Withdraws all available (unlocked) balance.
+/// Withdraw all available unlocked balance.
 public fun withdraw_all<T>(self: &mut TimeLockedBalance<T>, clock: &Clock): Balance<T> {
     unlock(self, clock);
 

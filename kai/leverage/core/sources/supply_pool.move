@@ -1,6 +1,19 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// Core supply pool module for Kai Leverage lending facilities.
+///
+/// The supply pool is the heart of the lending and borrowing system. It manages
+/// the available liquidity, tracks total liabilities, and coordinates the interaction
+/// between liquidity suppliers and leveraged positions. The supply pool enforces
+/// risk and utilization limits, accrues interest, and collects protocol fees.
+///
+/// Key responsibilities:
+/// - Maintains the available balance and total liabilities for each lending facility.
+/// - Issues and redeems equity shares representing claims on pool assets.
+/// - Issues and tracks debt shares for borrowers, ensuring precise debt accounting.
+/// - Enforces risk parameters such as maximum utilization and outstanding debt.
+/// - Accrues interest and protocol fees over time.
 module kai_leverage::supply_pool;
 
 use access_management::access::{Self, ActionRequest};
@@ -64,31 +77,41 @@ const ENotUpgrade: u64 = 6;
 
 /* ================= access ================= */
 
+/// Access control witness for pool creation.
 public struct ACreatePool has drop {}
+/// Access control witness for lending facility configuration.
 public struct AConfigLendFacil has drop {}
+/// Access control witness for fee configuration.
 public struct AConfigFees has drop {}
+/// Access control witness for taking collected fees.
 public struct ATakeFees has drop {}
+/// Access control witness for deposits.
 public struct ADeposit has drop {}
+/// Access control witness for migrations.
 public struct AMigrate has drop {}
 
 /* ================= structs ================= */
 
+/// Event emitted for a supply operation.
 public struct SupplyInfo has copy, drop {
     supply_pool_id: ID,
     deposited: u64,
     share_balance: u64,
 }
 
+/// Event emitted for a withdraw operation.
 public struct WithdrawInfo has copy, drop {
     supply_pool_id: ID,
     share_balance: u64,
     withdrawn: u64,
 }
 
+/// Capability for managing a lending facility. Enables the owner to borrow from the pool.
 public struct LendFacilCap has key, store {
     id: UID,
 }
 
+/// Configuration and state for a lending facility.
 public struct LendFacilInfo<phantom ST> has store {
     interest_model: Piecewise,
     // Shares of the debt (borrowed amount). Its total liability value is the total amount lent out,
@@ -101,17 +124,21 @@ public struct LendFacilInfo<phantom ST> has store {
     max_utilization_bps: u64,
 }
 
+/// Debt shares for a specific lending facility.
 public struct FacilDebtShare<phantom ST> has store {
     facil_id: ID,
     inner: DebtShareBalance<ST>,
 }
 
+/// Collection of debt shares for a lending facility.
 public struct FacilDebtBag has key, store {
     id: UID,
     facil_id: ID,
     inner: DebtBag,
 }
 
+/// The central structure for managing lending and borrowing operations within the supply pool.
+/// Tracks available balances, liabilities, interest, and equity shares for robust pool management.
 public struct SupplyPool<phantom T, phantom ST> has key {
     id: UID,
     // The unutilized balance of the pool.
@@ -138,6 +165,7 @@ public(package) fun check_version<T, ST>(pool: &SupplyPool<T, ST>) {
     assert!(pool.version == MODULE_VERSION, EInvalidSupplyPoolVersion);
 }
 
+/// Migrate supply pool to current module version.
 public fun migrate_supply_pool_version<T, ST>(
     pool: &mut SupplyPool<T, ST>,
     ctx: &mut TxContext,
@@ -149,6 +177,7 @@ public fun migrate_supply_pool_version<T, ST>(
 
 /* ================= Pool ================= */
 
+/// Create a new supply pool with empty equity treasury.
 public fun create_pool<T, ST: drop>(
     equity_treasury: EquityTreasury<ST>,
     ctx: &mut TxContext,
@@ -177,14 +206,17 @@ public fun create_pool<T, ST: drop>(
     access::new_request(ACreatePool {}, ctx)
 }
 
+/// Get total liabilities in Q64.64 format.
 public fun total_liabilities_x64<T, ST>(pool: &SupplyPool<T, ST>): u128 {
     pool.total_liabilities_x64
 }
 
+/// Create a lending facility capability.
 public fun create_lend_facil_cap(ctx: &mut TxContext): LendFacilCap {
     LendFacilCap { id: object::new(ctx) }
 }
 
+/// Add a new lending facility to the supply pool.
 public fun add_lend_facil<T, ST: drop>(
     pool: &mut SupplyPool<T, ST>,
     facil_id: ID,
@@ -209,6 +241,7 @@ public fun add_lend_facil<T, ST: drop>(
     access::new_request(AConfigLendFacil {}, ctx)
 }
 
+/// Remove a lending facility from the supply pool.
 public fun remove_lend_facil<T, ST>(
     pool: &mut SupplyPool<T, ST>,
     facil_id: ID,
@@ -223,6 +256,7 @@ public fun remove_lend_facil<T, ST>(
     access::new_request(AConfigLendFacil {}, ctx)
 }
 
+/// Set the interest model for a lending facility.
 public fun set_lend_facil_interest_model<T, ST>(
     pool: &mut SupplyPool<T, ST>,
     facil_id: ID,
@@ -237,6 +271,7 @@ public fun set_lend_facil_interest_model<T, ST>(
     access::new_request(AConfigLendFacil {}, ctx)
 }
 
+/// Set the maximum liability outstanding for a lending facility.
 public fun set_lend_facil_max_liability_outstanding<T, ST>(
     pool: &mut SupplyPool<T, ST>,
     facil_id: ID,
@@ -251,6 +286,7 @@ public fun set_lend_facil_max_liability_outstanding<T, ST>(
     access::new_request(AConfigLendFacil {}, ctx)
 }
 
+/// Set the maximum utilization in basis points for a lending facility.
 public fun set_lend_facil_max_utilization_bps<T, ST>(
     pool: &mut SupplyPool<T, ST>,
     facil_id: ID,
@@ -265,6 +301,7 @@ public fun set_lend_facil_max_utilization_bps<T, ST>(
     access::new_request(AConfigLendFacil {}, ctx)
 }
 
+/// Set the interest fee in basis points for the supply pool.
 public fun set_interest_fee_bps<T, ST>(
     pool: &mut SupplyPool<T, ST>,
     fee_bps: u16,
@@ -276,6 +313,7 @@ public fun set_interest_fee_bps<T, ST>(
     access::new_request(AConfigFees {}, ctx)
 }
 
+/// Take all collected fees from the supply pool.
 public fun take_collected_fees<T, ST>(
     pool: &mut SupplyPool<T, ST>,
     ctx: &mut TxContext,
@@ -290,6 +328,7 @@ public fun total_value_x64<T, ST>(pool: &SupplyPool<T, ST>): u128 {
     pool.supply_equity.borrow_registry().underlying_value_x64()
 }
 
+/// Get current utilization in basis points.
 public fun utilization_bps<T, ST>(pool: &SupplyPool<T, ST>): u64 {
     let total_value_x64 = total_value_x64(pool);
     if (total_value_x64 == 0) {
@@ -359,6 +398,7 @@ public(package) fun borrow_debt_registry<T, ST>(
     &info.debt_registry
 }
 
+/// Supply liquidity to the pool and receive shares.
 public fun supply<T, ST>(
     pool: &mut SupplyPool<T, ST>,
     balance: Balance<T>,
@@ -399,10 +439,9 @@ public fun calc_withdraw_by_shares<T, ST>(
     )
 }
 
-/// Calculates the amount of  shares needed to withdraw the given amount. Since the redeemed amount
-/// can sometimes be higher than the requested amount due to rounding, this function also returns
-/// the actual
-/// amount that will be withdrawn.
+/// Calculates the amount of shares needed to withdraw the given amount. 
+/// Since the redeemed amount can sometimes be higher than the requested amount due to rounding, 
+/// this function also returns the actual amount that will be withdrawn.
 /// Returns `(share_amount, redeem_amount)`.
 public fun calc_withdraw_by_amount<T, ST>(
     pool: &mut SupplyPool<T, ST>,
@@ -417,6 +456,7 @@ public fun calc_withdraw_by_amount<T, ST>(
     )
 }
 
+/// Withdraw tokens from the pool using shares.
 public fun withdraw<T, ST>(
     pool: &mut SupplyPool<T, ST>,
     balance: Balance<ST>,

@@ -11,6 +11,7 @@ use sui::dynamic_field as field;
 // Attempted to destroy a non-empty map
 const EMapNotEmpty: u64 = 0;
 
+/// A dynamic map where keys are homogeneous and values are heterogeneous.
 public struct DynamicMap<phantom K: copy + drop + store> has key, store {
     /// the ID of this map
     id: UID,

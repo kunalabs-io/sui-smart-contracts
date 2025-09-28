@@ -1,6 +1,26 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// Core implementation for leveraged concentrated liquidity market maker (CLMM) positions.
+///
+/// This module implements the theoretical framework described in "Concentrated Liquidity
+/// with Leverage" ([arXiv:2409.12803](https://arxiv.org/pdf/2409.12803)), providing mathematically
+/// proven safe leveraged liquidity provisioning. It serves as the foundational layer for managing
+/// leveraged positions on concentrated liquidity AMMs with formal guarantees about margin behavior,
+/// liquidation safety, and oracle manipulation resistance.
+///
+/// The module provides a protocol-agnostic interface that wrapper modules (like `cetus.move`
+/// and `bluefin_spot.move`) use to implement protocol-specific position management while
+/// maintaining consistent risk management and operational logic backed by formal mathematical analysis.
+///
+/// Wrapper modules implement protocol-specific logic by:
+/// 1. Calling position core macros with protocol-specific lambda functions
+/// 2. Handling protocol-specific LP position types and operations
+/// 3. Translating between generic interfaces and protocol-specific calls
+///
+/// This design ensures that core business logic, risk management, and mathematical
+/// calculations remain consistent across all supported protocols while enabling
+/// seamless integration with diverse AMM architectures.
 module kai_leverage::position_core_clmm;
 
 use access_management::access::{Self, ActionRequest};
@@ -263,12 +283,19 @@ public(package) macro fun e_price_deviation_too_high(): u64 {
 
 /* ================= access ================= */
 
+/// Access control witness for position config creation.
 public struct ACreateConfig has drop {}
+/// Access control witness for position config modification.
 public struct AModifyConfig has drop {}
+/// Access control witness for module migrations.
 public struct AMigrate has drop {}
+/// Access control witness for position deleveraging.
 public struct ADeleverage has drop {}
+/// Access control witness for position rebalancing.
 public struct ARebalance has drop {}
+/// Access control witness for protocol fee collection.
 public struct ACollectProtocolFees has drop {}
+/// Access control witness for bad debt repayment.
 public struct ARepayBadDebt has drop {}
 
 public(package) fun a_deleverage(): ADeleverage {
@@ -285,6 +312,7 @@ public(package) fun a_repay_bad_debt(): ARepayBadDebt {
 
 /* ================= CreatePositionTicket ================= */
 
+/// Ticket for creating a new leveraged position with borrowed funds.
 public struct CreatePositionTicket<phantom X, phantom Y, I32> {
     config_id: ID,
     tick_a: I32,
@@ -301,6 +329,7 @@ public struct CreatePositionTicket<phantom X, phantom Y, I32> {
 
 /* ================= Position ================= */
 
+/// Leveraged position containing LP position, collateral, and debt.
 public struct Position<phantom X, phantom Y, LP> has key {
     id: UID,
     config_id: ID,
@@ -372,22 +401,27 @@ public(package) fun position_share_object<X, Y, LP: store>(position: Position<X,
     transfer::share_object(position);
 }
 
+/// Get the position configuration ID.
 public fun position_config_id<X, Y, LP>(position: &Position<X, Y, LP>): ID {
     position.config_id
 }
 
+/// Get reference to the LP position.
 public fun lp_position<X, Y, LP>(position: &Position<X, Y, LP>): &LP {
     &position.lp_position
 }
 
+/// Get reference to X token collateral balance.
 public fun col_x<X, Y, LP>(position: &Position<X, Y, LP>): &Balance<X> {
     &position.col_x
 }
 
+/// Get reference to Y token collateral balance.
 public fun col_y<X, Y, LP>(position: &Position<X, Y, LP>): &Balance<Y> {
     &position.col_y
 }
 
+/// Get reference to the position's debt bag.
 public fun position_debt_bag<X, Y, LP>(position: &Position<X, Y, LP>): &FacilDebtBag {
     &position.debt_bag
 }
@@ -440,6 +474,7 @@ public(package) fun owner_reward_stash_mut<X, Y, LP>(
 
 /* ================= PositionCap ================= */
 
+/// Capability granting ownership and control over a position.
 public struct PositionCap has key, store {
     id: UID,
     position_id: ID,
@@ -463,40 +498,73 @@ public fun pc_position_id(cap: &PositionCap): ID {
 
 /* ================= PositionConfig ================= */
 
+/// Configuration for Pyth oracle integration.
 public struct PythConfig has copy, drop, store {
     max_age_secs: u64,
     pio_allowlist: VecMap<TypeName, ID>,
 }
 
+/// Configuration for leveraged concentrated liquidity position parameters and risk management.
+///
+/// This configuration implements the theoretical framework described in "Concentrated Liquidity
+/// with Leverage" (arXiv:2409.12803), which provides mathematical guarantees for safe leveraged
+/// liquidity provisioning.
 public struct PositionConfig has key {
     id: UID,
+    /// The object ID of the underlying AMM pool this configuration applies to.
     pool_object_id: ID,
+    /// Whether new positions can be created under this configuration.
     allow_new_positions: bool,
+    /// Lending facility capability (`SupplyPool`) associated with this position configuration.
     lend_facil_cap: LendFacilCap,
-    /// The minimum required distance between the initial price and the price
-    /// at which the liquidation will be triggered.
+    /// Minimum price deviation required between initial price and liquidation trigger price.
+    /// Prevents positions from being created too close to liquidation thresholds.
+    /// Based on paper's price range analysis ensuring safe margin evolution.
     min_liq_start_price_delta_bps: u16,
-    /// The minimum initial margin allowed for position creation. Multiplied by 10000.
+    /// Minimum initial margin level required for position creation (basis points).
+    /// Ensures sufficient collateralization based on margin function M(P) = A(P)/D(P).
     min_init_margin_bps: u16,
+    /// Bag of allowed oracle sources for this position configuration.
     allowed_oracles: Bag,
-    /// When the position margin level is below or at this value, it can be deleveraged. Multiplied
-    /// by 10000.
+    /// Deleveraging margin threshold (basis points). When margin falls to this level,
+    /// automated deleveraging reduces position size to restore safety.
+    /// Must be higher than liquidation margin to provide deleveraging buffer.
     deleverage_margin_bps: u16,
+    /// Base factor for deleveraging amount calculation (basis points).
+    /// Determines how aggressively positions are deleveraged when margin deteriorates.
     base_deleverage_factor_bps: u16,
-    /// When the position margin level is below or at this value, it can be liquidated. Multiplied
-    /// by 10000.
+    /// Liquidation margin threshold (basis points). Positions below this margin
+    /// can be liquidated by external parties to protect lenders from losses.
     liq_margin_bps: u16,
+    /// Base liquidation factor (basis points) controlling liquidation aggressiveness.
+    /// Ensures liquidations restore position health while minimizing impact.
     base_liq_factor_bps: u16,
+    /// Liquidation bonus (basis points) guaranteed to liquidators as incentive.
+    /// Always awarded even for underwater positions to minimize bad debt formation.
     liq_bonus_bps: u16,
+    /// Maximum liquidity allowed per individual position.
+    /// Implements position size limits for risk management.
     max_position_l: u128,
+    /// Maximum total liquidity across all positions globally.
+    /// Implements system-wide exposure limits.
     max_global_l: u128,
+    /// Current total liquidity across all active positions.
+    /// Tracked for enforcing global limits.
     current_global_l: u128,
+    /// Protocol fee taken during rebalancing operations (basis points).
+    /// Applied to collected AMM fees and rewards.
     rebalance_fee_bps: u16,
+    /// Protocol fee taken during liquidation operations (basis points).
+    /// Applied to liquidation bonuses before distribution to liquidators.
     liq_fee_bps: u16,
+    /// Fee charged for position creation in SUI tokens.
+    /// Helps cover operational costs and prevent spam.
     position_creation_fee_sui: u64,
+    /// Version for upgrade compatibility.
     version: u16,
 }
 
+/// Create an empty position configuration with default values.
 public fun create_empty_config(pool_object_id: ID, ctx: &mut TxContext): (ID, ActionRequest) {
     let lend_facil_cap = supply_pool::create_lend_facil_cap(ctx);
     let lend_facil_cap_id = object::id(&lend_facil_cap);
@@ -527,10 +595,12 @@ public fun create_empty_config(pool_object_id: ID, ctx: &mut TxContext): (ID, Ac
     (lend_facil_cap_id, access::new_request(ACreateConfig {}, ctx))
 }
 
+/// Get the pool object ID from position config.
 public fun pool_object_id(config: &PositionConfig): ID {
     config.pool_object_id
 }
 
+/// Check if new position creation is allowed.
 public fun allow_new_positions(config: &PositionConfig): bool {
     config.allow_new_positions
 }
@@ -539,58 +609,72 @@ public(package) fun lend_facil_cap(config: &PositionConfig): &LendFacilCap {
     &config.lend_facil_cap
 }
 
+/// Get minimum liquidation start price delta in basis points.
 public fun min_liq_start_price_delta_bps(config: &PositionConfig): u16 {
     config.min_liq_start_price_delta_bps
 }
 
+/// Get minimum initial margin in basis points.
 public fun min_init_margin_bps(config: &PositionConfig): u16 {
     config.min_init_margin_bps
 }
 
+/// Get allowed oracles bag.
 public fun allowed_oracles(config: &PositionConfig): &Bag {
     &config.allowed_oracles
 }
 
+/// Get deleveraging margin threshold in basis points.
 public fun deleverage_margin_bps(config: &PositionConfig): u16 {
     config.deleverage_margin_bps
 }
 
+/// Get base deleveraging factor in basis points.
 public fun base_deleverage_factor_bps(config: &PositionConfig): u16 {
     config.base_deleverage_factor_bps
 }
 
+/// Get liquidation margin threshold in basis points.
 public fun liq_margin_bps(config: &PositionConfig): u16 {
     config.liq_margin_bps
 }
 
+/// Get base liquidation factor in basis points.
 public fun base_liq_factor_bps(config: &PositionConfig): u16 {
     config.base_liq_factor_bps
 }
 
+/// Get liquidation bonus in basis points.
 public fun liq_bonus_bps(config: &PositionConfig): u16 {
     config.liq_bonus_bps
 }
 
+/// Get maximum allowed liquidity per position.
 public fun max_position_l(config: &PositionConfig): u128 {
     config.max_position_l
 }
 
+/// Get maximum global liquidity limit.
 public fun max_global_l(config: &PositionConfig): u128 {
     config.max_global_l
 }
 
+/// Get current total global liquidity.
 public fun current_global_l(config: &PositionConfig): u128 {
     config.current_global_l
 }
 
+/// Get rebalancing fee in basis points.
 public fun rebalance_fee_bps(config: &PositionConfig): u16 {
     config.rebalance_fee_bps
 }
 
+/// Get liquidation fee in basis points.
 public fun liq_fee_bps(config: &PositionConfig): u16 {
     config.liq_fee_bps
 }
 
+/// Get position creation fee in SUI tokens.
 public fun position_creation_fee_sui(config: &PositionConfig): u64 {
     config.position_creation_fee_sui
 }
@@ -603,6 +687,7 @@ public(package) fun decrease_current_global_l(config: &mut PositionConfig, delta
     config.current_global_l = config.current_global_l - delta_l;
 }
 
+/// Set whether new position creation is allowed.
 public fun set_allow_new_positions(
     config: &mut PositionConfig,
     value: bool,
@@ -612,6 +697,7 @@ public fun set_allow_new_positions(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Set minimum liquidation start price delta in basis points.
 public fun set_min_liq_start_price_delta_bps(
     config: &mut PositionConfig,
     value: u16,
@@ -621,6 +707,7 @@ public fun set_min_liq_start_price_delta_bps(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Set minimum initial margin requirement in basis points.
 public fun set_min_init_margin_bps(
     config: &mut PositionConfig,
     value: u16,
@@ -630,6 +717,7 @@ public fun set_min_init_margin_bps(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Add empty Pyth configuration to position config.
 public fun config_add_empty_pyth_config(
     config: &mut PositionConfig,
     ctx: &mut TxContext,
@@ -643,6 +731,7 @@ public fun config_add_empty_pyth_config(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Set maximum age for Pyth price feeds in seconds.
 public fun set_pyth_config_max_age_secs(
     config: &mut PositionConfig,
     max_age_secs: u64,
@@ -654,6 +743,7 @@ public fun set_pyth_config_max_age_secs(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Allow a specific Pyth price info object for a coin type.
 public fun pyth_config_allow_pio(
     config: &mut PositionConfig,
     coin_type: TypeName,
@@ -666,6 +756,7 @@ public fun pyth_config_allow_pio(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Remove allowlist for a specific Pyth price info object.
 public fun pyth_config_disallow_pio(
     config: &mut PositionConfig,
     coin_type: TypeName,
@@ -677,6 +768,7 @@ public fun pyth_config_disallow_pio(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Set deleveraging margin threshold in basis points.
 public fun set_deleverage_margin_bps(
     config: &mut PositionConfig,
     value: u16,
@@ -687,6 +779,7 @@ public fun set_deleverage_margin_bps(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Set base deleveraging factor in basis points.
 public fun set_base_deleverage_factor_bps(
     config: &mut PositionConfig,
     value: u16,
@@ -696,6 +789,7 @@ public fun set_base_deleverage_factor_bps(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Set liquidation margin threshold in basis points.
 public fun set_liq_margin_bps(
     config: &mut PositionConfig,
     value: u16,
@@ -706,6 +800,7 @@ public fun set_liq_margin_bps(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Set base liquidation factor in basis points.
 public fun set_base_liq_factor_bps(
     config: &mut PositionConfig,
     value: u16,
@@ -715,6 +810,7 @@ public fun set_base_liq_factor_bps(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Set liquidation bonus in basis points.
 public fun set_liq_bonus_bps(
     config: &mut PositionConfig,
     value: u16,
@@ -724,6 +820,7 @@ public fun set_liq_bonus_bps(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Set maximum liquidity allowed per position.
 public fun set_max_position_l(
     config: &mut PositionConfig,
     value: u128,
@@ -733,6 +830,7 @@ public fun set_max_position_l(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Set maximum global liquidity limit across all positions.
 public fun set_max_global_l(
     config: &mut PositionConfig,
     value: u128,
@@ -742,6 +840,7 @@ public fun set_max_global_l(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Set rebalancing fee in basis points.
 public fun set_rebalance_fee_bps(
     config: &mut PositionConfig,
     value: u16,
@@ -751,6 +850,7 @@ public fun set_rebalance_fee_bps(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Set liquidation fee in basis points.
 public fun set_liq_fee_bps(
     config: &mut PositionConfig,
     value: u16,
@@ -760,6 +860,7 @@ public fun set_liq_fee_bps(
     access::new_request(AModifyConfig {}, ctx)
 }
 
+/// Set position creation fee in SUI tokens.
 public fun set_position_creation_fee_sui(
     config: &mut PositionConfig,
     value: u64,
@@ -844,6 +945,7 @@ fun config_extension_mut<Key: copy + drop + store, Val: store>(
     df::borrow_mut<Key, Val>(&mut config.id, key)
 }
 
+/// Enable or disable liquidation operations.
 public fun set_liquidation_disabled(
     config: &mut PositionConfig,
     disabled: bool,
@@ -852,10 +954,12 @@ public fun set_liquidation_disabled(
     upsert_config_extension(config, LiquidationDisabledKey(), disabled, ctx)
 }
 
+/// Check if liquidation operations are disabled.
 public fun liquidation_disabled(config: &PositionConfig): bool {
     get_config_extension_or_default(config, LiquidationDisabledKey(), false)
 }
 
+/// Enable or disable position reduction (withdrawal) operations.
 public fun set_reduction_disabled(
     config: &mut PositionConfig,
     disabled: bool,
@@ -864,10 +968,12 @@ public fun set_reduction_disabled(
     upsert_config_extension(config, ReductionDisabledKey(), disabled, ctx)
 }
 
+/// Check if position reduction operations are disabled.
 public fun reduction_disabled(config: &PositionConfig): bool {
     get_config_extension_or_default(config, ReductionDisabledKey(), false)
 }
 
+/// Enable or disable adding liquidity to positions.
 public fun set_add_liquidity_disabled(
     config: &mut PositionConfig,
     disabled: bool,
@@ -876,10 +982,12 @@ public fun set_add_liquidity_disabled(
     upsert_config_extension(config, AddLiquidityDisabledKey(), disabled, ctx)
 }
 
+/// Check if adding liquidity to positions is disabled.
 public fun add_liquidity_disabled(config: &PositionConfig): bool {
     get_config_extension_or_default(config, AddLiquidityDisabledKey(), false)
 }
 
+/// Enable or disable owner fee collection.
 public fun set_owner_collect_fee_disabled(
     config: &mut PositionConfig,
     disabled: bool,
@@ -888,10 +996,12 @@ public fun set_owner_collect_fee_disabled(
     upsert_config_extension(config, OwnerCollectFeeDisabledKey(), disabled, ctx)
 }
 
+/// Check if owner fee collection is disabled.
 public fun owner_collect_fee_disabled(config: &PositionConfig): bool {
     get_config_extension_or_default(config, OwnerCollectFeeDisabledKey(), false)
 }
 
+/// Enable or disable owner reward collection.
 public fun set_owner_collect_reward_disabled(
     config: &mut PositionConfig,
     disabled: bool,
@@ -900,10 +1010,12 @@ public fun set_owner_collect_reward_disabled(
     upsert_config_extension(config, OwnerCollectRewardDisabledKey(), disabled, ctx)
 }
 
+/// Check if owner reward collection is disabled.
 public fun owner_collect_reward_disabled(config: &PositionConfig): bool {
     get_config_extension_or_default(config, OwnerCollectRewardDisabledKey(), false)
 }
 
+/// Enable or disable position deletion.
 public fun set_delete_position_disabled(
     config: &mut PositionConfig,
     disabled: bool,
@@ -912,10 +1024,12 @@ public fun set_delete_position_disabled(
     upsert_config_extension(config, DeletePositionDisabledKey(), disabled, ctx)
 }
 
+/// Check if position deletion is disabled.
 public fun delete_position_disabled(config: &PositionConfig): bool {
     get_config_extension_or_default(config, DeletePositionDisabledKey(), false)
 }
 
+/// Add rate limiter for position creation and withdrawal operations.
 public fun add_create_withdraw_limiter<L: store>(
     config: &mut PositionConfig,
     rate_limiter: L,
@@ -938,6 +1052,7 @@ public(package) fun borrow_create_withdraw_limiter_mut(
     config_extension_mut(config, PositionCreateWithdrawLimiterKey())
 }
 
+/// Set maximum net inflow and outflow limits for rate limiter.
 public fun set_max_create_withdraw_net_inflow_and_outflow_limits(
     config: &mut PositionConfig,
     max_net_inflow_limit: Option<u256>,
@@ -1017,6 +1132,11 @@ public(package) fun rrt_info<SX, SY>(self: &ReductionRepaymentTicket<SX, SY>): &
 
 /* ================= RebalanceReceipt ================= */
 
+/// Receipt for a position rebalance operation, tracking all fee, reward, and liquidity changes.
+///
+/// This struct records the results of a rebalance, including all AMM fees and rewards collected,
+/// protocol fees taken, changes to position liquidity, debt repayments, and any rewards stashed
+/// back into the position. It is used for event emission and downstream accounting.
 public struct RebalanceReceipt {
     id: ID,
     position_id: ID,
@@ -1264,6 +1384,12 @@ public(package) fun cpt_tick_b<X, Y, I32>(ticket: &CreatePositionTicket<X, Y, I3
 
 /* ================= DeletedPositionCollectedFees ================= */
 
+/// Object representing the collected fees from a deleted position.
+///
+/// This struct is created and shared when a position is deleted, containing
+/// the final balance bag of fees and rewards that were accumulated by the position.
+/// It allows downstream consumers to claim or account for these fees after
+/// the position object has been deleted.
 public struct DeletedPositionCollectedFees has key {
     id: UID,
     position_id: ID,
@@ -1281,6 +1407,12 @@ public(package) fun share_deleted_position_collected_fees(
 
 /* ================= PositionCreationInfo ================= */
 
+/// Event emitted when a new leveraged position is created.
+///
+/// This event records all relevant parameters and amounts for the newly created position,
+/// including the position and config IDs, price range, liquidity, initial and collateral
+/// balances, borrowed amounts, and the SUI fee paid at creation. It is used for downstream
+/// analytics, auditing, and protocol integrations.
 public struct PositionCreationInfo has copy, drop {
     position_id: ID,
     config_id: ID,
@@ -1329,22 +1461,27 @@ public(package) fun emit_position_creation_info(
 
 /* ================= DeleverageInfo ================= */
 
+/// Information about a deleveraging operation on a leveraged CLMM position.
 public struct DeleverageInfo has copy, drop {
+    /// The unique ID of the position being deleveraged.
     position_id: ID,
+    /// The position model snapshot at the time of deleverage.
     model: PositionModel,
+    /// The oracle-reported price at the time of deleverage, as a Q128.128 fixed-point value.
     oracle_price_x128: u256,
+    /// The pool's square root price at the time of deleverage, as a Q64.64 fixed-point value.
     sqrt_pool_price_x64: u128,
-    /// The amount of L removed from the LP position.
+    /// The amount of liquidity (L) removed from the LP position during deleverage.
     delta_l: u128,
-    /// The amount of X withdrawn from the LP position (corresponds to delta_l),
-    /// and added to cx.
+    /// The amount of X withdrawn from the LP position (corresponding to `delta_l`)
+    /// and added to the position's cx (collateral X) balance.
     delta_x: u64,
-    /// The amount of Y withdrawn from the LP position (corresponds to delta_l),
-    /// and added to cy.
+    /// The amount of Y withdrawn from the LP position (corresponding to `delta_l`)
+    /// and added to the position's cy (collateral Y) balance.
     delta_y: u64,
-    /// The amount of X debt repaid with cx.
+    /// The amount of X debt repaid using cx (collateral X) as part of deleverage.
     x_repaid: u64,
-    /// The amount of Y debt repaid with cy.
+    /// The amount of Y debt repaid using cy (collateral Y) as part of deleverage.
     y_repaid: u64,
 }
 
@@ -1422,21 +1559,25 @@ public(package) fun di_y_repaid(self: &DeleverageInfo): u64 {
 
 /* ================= LiquidationInfo ================= */
 
+/// Information emitted for a position liquidation event, capturing all key amounts and rewards.
 public struct LiquidationInfo has copy, drop {
+    /// The ID of the liquidated position.
     position_id: ID,
+    /// The position model at the time of liquidation.
     model: PositionModel,
+    /// The oracle price (P = Y / X) at the time of liquidation, Q128 fixed-point.
     oracle_price_x128: u256,
-    /// The amount of X debt repaid, using the inputted repayment `Balance<X>`.
+    /// The amount of X debt repaid by the liquidator (from their inputted Balance<X>).
     x_repaid: u64,
-    /// The amount of Y debt repaid, using the inputted repayment `Balance<Y>`.
+    /// The amount of Y debt repaid by the liquidator (from their inputted Balance<Y>).
     y_repaid: u64,
-    /// The amount of X the liquidator receives for `y_repaid` (after fees), taken from cx.
+    /// The amount of X paid out to the liquidator as a reward (after protocol fees), taken from cx.
     liquidator_reward_x: u64,
-    /// The amount of Y the liquidator receives for `x_repaid` (after fees), taken from cy.
+    /// The amount of Y paid out to the liquidator as a reward (after protocol fees), taken from cy.
     liquidator_reward_y: u64,
-    /// The liquidation fee taken before returning `liquidator_reward_x` to the liquidator.
+    /// The protocol fee (in X) taken from the liquidator's reward before payout.
     liquidation_fee_x: u64,
-    /// The liquidation fee taken before returning `liquidator_reward_y` to the liquidator.
+    /// The protocol fee (in Y) taken from the liquidator's reward before payout.
     liquidation_fee_y: u64,
 }
 
@@ -1562,19 +1703,29 @@ public(package) fun ri_y_repaid(self: &ReductionInfo): u64 {
 
 /* ================= AddCollateralInfo ================= */
 
+/// Event emitted when collateral is added to a position.
 public struct AddCollateralInfo has copy, drop {
+    /// The ID of the position to which collateral was added.
     position_id: ID,
+    /// The amount of X collateral added.
     amount_x: u64,
+    /// The amount of Y collateral added.
     amount_y: u64,
 }
 
 /* ================= AddLiquidityInfo ================= */
 
+/// Event emitted when liquidity is added to a position.
 public struct AddLiquidityInfo has copy, drop {
+    /// The ID of the position to which liquidity was added.
     position_id: ID,
+    /// The pool's square root price (Q64.64) at the time of liquidity addition.
     sqrt_pool_price_x64: u128,
+    /// The amount of liquidity (L) added to the position.
     delta_l: u128,
+    /// The amount of X tokens added to the position (corresponds to delta_l).
     delta_x: u64,
+    /// The amount of Y tokens added to the position (corresponds to delta_l).
     delta_y: u64,
 }
 
@@ -1612,23 +1763,29 @@ public(package) fun ali_delta_y(self: &AddLiquidityInfo): u64 {
 
 /* ================= RepayDebtInfo ================= */
 
+/// Event emitted when debt is repaid on a position by the owner.
 public struct RepayDebtInfo has copy, drop {
+    /// The ID of the position for which debt was repaid.
     position_id: ID,
+    /// The amount of X repaid to the position's debt.
     x_repaid: u64,
+    /// The amount of Y repaid to the position's debt.
     y_repaid: u64,
 }
 
 /* ================= OwnerCollectFeeInfo ================= */
 
+/// Event emitted when the position owner collects AMM trading fees directly.
 public struct OwnerCollectFeeInfo has copy, drop {
+    /// The ID of the position for which AMM trading fees were collected.
     position_id: ID,
-    /// The amount of X fees collected (before fees are taken)
+    /// The total amount of X fees collected from the AMM (before protocol fees are taken).
     collected_x_amt: u64,
-    /// The amount of Y fees collected (before fees are taken)
+    /// The total amount of Y fees collected from the AMM (before protocol fees are taken).
     collected_y_amt: u64,
-    /// The amount of X fees taken
+    /// The protocol fee amount deducted from the collected X fees.
     fee_amt_x: u64,
-    /// The amount of Y fees taken
+    /// The protocol fee amount deducted from the collected Y fees.
     fee_amt_y: u64,
 }
 
@@ -1651,11 +1808,13 @@ public(package) fun emit_owner_collect_fee_info(
 
 /* ================= OwnerCollectRewardInfo ================= */
 
+/// Event emitted when the position owner collects AMM rewards directly (not trading fees).
 public struct OwnerCollectRewardInfo<phantom T> has copy, drop {
+    /// The ID of the position for which AMM rewards were collected.
     position_id: ID,
-    /// The amount of rewards collected (before fees are taken)
+    /// The total amount of rewards collected from the AMM (before protocol fees are taken).
     collected_reward_amt: u64,
-    /// The amount of fees taken
+    /// The protocol fee amount deducted from the collected rewards.
     fee_amt: u64,
 }
 
@@ -1670,15 +1829,21 @@ public(package) fun emit_owner_collect_reward_info<T>(
 
 /* ================= OwnerTakeStahedRewards ================= */
 
+/// Event emitted when the position owner takes stashed AMM rewards of a specific type from their position.
 public struct OwnerTakeStashedRewardsInfo<phantom T> has copy, drop {
+    /// The ID of the position from which stashed rewards were taken.
     position_id: ID,
+    /// The amount of stashed rewards of type `T` that were taken.
     amount: u64,
 }
 
 /* ================= DeletePositionInfo ================= */
 
+/// Event emitted when a leveraged position is deleted.
 public struct DeletePositionInfo has copy, drop {
+    /// The ID of the deleted position.
     position_id: ID,
+    /// The ID of the `PositionCap` capability associated with the deleted position.
     cap_id: ID,
 }
 
@@ -1689,42 +1854,69 @@ public(package) fun emit_delete_position_info(position_id: ID, cap_id: ID) {
 
 /* ================= RebalanceInfo ================= */
 
+/// Comprehensive information about position rebalancing operations.
 public struct RebalanceInfo has copy, drop {
+    /// Unique identifier for this rebalancing operation. Used for tracking and auditing.
     id: ID,
+    /// ID of the position that was rebalanced
     position_id: ID,
+    /// Amount of X tokens collected from AMM fees (before protocol fee deduction)
     collected_amm_fee_x: u64,
+    /// Amount of Y tokens collected from AMM fees (before protocol fee deduction)
     collected_amm_fee_y: u64,
+    /// Protocol-specific rewards collected from AMM (before protocol fee deduction)
     collected_amm_rewards: VecMap<TypeName, u64>,
+    /// Protocol fees taken from collected rewards and fees
     fees_taken: VecMap<TypeName, u64>,
+    /// Amount of X tokens taken from extra collateral
     taken_cx: u64,
+    /// Amount of Y tokens taken from extra collateral
     taken_cy: u64,
+    /// Liquidity added to the LP position
     delta_l: u128,
+    /// Amount of X tokens added to LP position (corresponding to delta_l)
     delta_x: u64,
+    /// Amount of Y tokens added to LP position (corresponding to delta_l)
     delta_y: u64,
+    /// Amount of X debt repaid
     x_repaid: u64,
+    /// Amount of Y debt repaid
     y_repaid: u64,
+    /// Amount of X tokens added to extra collateral
     added_cx: u64,
+    /// Amount of Y tokens added to extra collateral
     added_cy: u64,
+    /// Protocol-specific rewards stashed in position for later owner withdrawal
     stashed_amm_rewards: VecMap<TypeName, u64>,
 }
 
 /* ================= CollectProtocolFeesInfo ================= */
 
+/// Event emitted when protocol fees are collected from a position for a specific token type.
 public struct CollectProtocolFeesInfo<phantom T> has copy, drop {
+    /// The ID of the position from which protocol fees were collected.
     position_id: ID,
+    /// The amount of protocol fees collected (in token T).
     amount: u64,
 }
 
+/// Event emitted when the remaining fees are collected from a position that was previously deleted.
 public struct DeletedPositionCollectedFeesInfo has copy, drop {
+    /// The ID of the deleted position.
     position_id: ID,
+    /// Mapping from token type to amount of fees collected.
     amounts: VecMap<TypeName, u64>,
 }
 
 /* ================= BadDebtRepaid ================= */
 
+/// Event emitted when bad debt is repaid for a position.
 public struct BadDebtRepaid<phantom ST> has copy, drop {
+    /// The ID of the position for which bad debt was repaid.
     position_id: ID,
+    /// The number of debt shares repaid.
     shares_repaid: u128,
+    /// The amount of underlying balance repaid.
     balance_repaid: u64,
 }
 
@@ -1754,12 +1946,14 @@ public(package) fun check_versions<X, Y, LP>(
     check_position_version(position);
 }
 
+/// Migrate position configuration to current module version.
 public fun migrate_config(config: &mut PositionConfig, ctx: &mut TxContext): ActionRequest {
     assert!(config.version < CONFIG_VERSION, ENotUpgrade);
     config.version = CONFIG_VERSION;
     access::new_request(AMigrate {}, ctx)
 }
 
+/// Migrate position to current module version.
 public fun migrate_position<X, Y, LP>(
     position: &mut Position<X, Y, LP>,
     ctx: &mut TxContext,
@@ -1854,6 +2048,11 @@ public(package) fun init_margin_is_valid(
     true
 }
 
+/// Extract position model from current position state.
+///
+/// This internal macro creates a PositionModel snapshot from the current
+/// position state, including LP position parameters, collateral balances,
+/// and calculated debt amounts from the debt bag.
 public(package) macro fun model_from_position<$X, $Y, $LP>(
     $position: &Position<$X, $Y, $LP>,
     $debt_info: &ValidatedDebtInfo,
@@ -1895,6 +2094,7 @@ public(package) macro fun model_from_position<$X, $Y, $LP>(
     )
 }
 
+/// Validate pool price is within acceptable slippage tolerance.
 public(package) macro fun slippage_tolerance_assertion(
     $pool_object: _,
     $p0_desired_x128: u256,
@@ -1951,6 +2151,11 @@ public(package) fun get_balance_ema_usd_value_6_decimals<T>(
 
 /* ================= position creation ================= */
 
+/// Create a position creation ticket with validation and borrowing preparation.
+///
+/// This macro performs comprehensive validation including price deviation checks,
+/// margin requirements, and position size limits before creating a ticket that
+/// can be used to open a leveraged position.
 public(package) macro fun create_position_ticket<$X, $Y, $I32>(
     $pool_object: _,
     $config: &mut PositionConfig,
@@ -2065,6 +2270,10 @@ public(package) macro fun create_position_ticket<$X, $Y, $I32>(
     )
 }
 
+/// Borrow X tokens from supply pool for position creation.
+///
+/// This macro borrows the required amount of X tokens from the specified
+/// supply pool and adds the debt shares to the position ticket.
 public(package) macro fun borrow_for_position_x<$X, $Y, $SX, $I32>(
     $ticket: &mut CreatePositionTicket<$X, $Y, $I32>,
     $config: &PositionConfig,
@@ -2086,6 +2295,7 @@ public(package) macro fun borrow_for_position_x<$X, $Y, $SX, $I32>(
     ticket.debt_bag_mut().add<$X, $SX>(shares);
 }
 
+/// Borrow Y tokens from supply pool for position creation.
 public(package) macro fun borrow_for_position_y<$X, $Y, $SY, $I32>(
     $ticket: &mut CreatePositionTicket<$X, $Y, $I32>,
     $config: &PositionConfig,
@@ -2107,6 +2317,11 @@ public(package) macro fun borrow_for_position_y<$X, $Y, $SY, $I32>(
     ticket.debt_bag_mut().add<$Y, $SY>(shares);
 }
 
+/// Create a leveraged position from a prepared ticket.
+///
+/// This macro finalizes position creation by opening the LP position on the
+/// target pool, creating the Position object with all collateral and debt,
+/// and returning a PositionCap for ownership control.
 public(package) macro fun create_position<$X, $Y, $I32, $Pool, $LP>(
     $config: &PositionConfig,
     $ticket: CreatePositionTicket<$X, $Y, $I32>,
@@ -2309,6 +2524,11 @@ public(package) macro fun create_deleverage_ticket_inner<$X, $Y, $Pool, $LP>(
     }
 }
 
+/// Initialize deleveraging for a position that has fallen below the safe margin threshold.
+/// It removes liquidity from the LP position and repays all possible debt to attempt
+/// to restore healthy margin levels.
+/// 
+/// This operation is permissioned.
 public(package) macro fun create_deleverage_ticket<$X, $Y, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
@@ -2336,6 +2556,8 @@ public(package) macro fun create_deleverage_ticket<$X, $Y, $Pool, $LP>(
     (ticket, request)
 }
 
+/// Create deleveraging ticket specifically for liquidation scenarios.
+/// Unlike the regular deleveraging, this operation is permissionless.
 public(package) macro fun create_deleverage_ticket_for_liquidation<$X, $Y, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
@@ -2362,6 +2584,7 @@ public(package) macro fun create_deleverage_ticket_for_liquidation<$X, $Y, $Pool
     )
 }
 
+/// Repay X debt for deleveraging.
 public fun deleverage_ticket_repay_x<X, Y, SX, LP: store>(
     position: &mut Position<X, Y, LP>,
     config: &PositionConfig,
@@ -2387,6 +2610,7 @@ public fun deleverage_ticket_repay_x<X, Y, SX, LP: store>(
     ticket.info.x_repaid = x_repaid;
 }
 
+/// Repay Y debt for deleveraging.
 public fun deleverage_ticket_repay_y<X, Y, SY, LP: store>(
     position: &mut Position<X, Y, LP>,
     config: &PositionConfig,
@@ -2412,6 +2636,12 @@ public fun deleverage_ticket_repay_y<X, Y, SY, LP: store>(
     ticket.can_repay_y = false;
 }
 
+/// Destroys a `DeleverageTicket` after all possible debt repayments have been performed,
+/// emits a `DeleverageInfo` event if any deleveraging occurred. This function asserts that
+/// the ticket is fully exhausted (i.e., both X and Y repayments are complete).
+///
+/// If no deleveraging was performed (i.e., no liquidity removed and no debt repaid),
+/// no event is emitted.
 public fun destroy_deleverage_ticket<X, Y, LP: store>(
     position: &mut Position<X, Y, LP>,
     ticket: DeleverageTicket,
@@ -2431,6 +2661,8 @@ public fun destroy_deleverage_ticket<X, Y, LP: store>(
     };
 }
 
+/// Helper macro that combines the creation of a deleverage ticket and the repayment of both X and Y debts
+/// in a single operation for a leveraged CLMM position.
 public(package) macro fun deleverage<$X, $Y, $SX, $SY, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
@@ -2531,6 +2763,11 @@ public(package) fun calc_liq_fee_from_reward(config: &PositionConfig, reward_amt
     )
 }
 
+/// Liquidate X collateral by repaying Y debt.
+///
+/// This macro performs partial liquidation of a position's X collateral
+/// in exchange for repaying Y debt. Liquidators receive X tokens as reward
+/// for helping restore position health by reducing debt obligations.
 public(package) macro fun liquidate_col_x<$X, $Y, $SY, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &PositionConfig,
@@ -2610,6 +2847,11 @@ public(package) macro fun liquidate_col_x<$X, $Y, $SY, $LP>(
     reward
 }
 
+/// Liquidate Y collateral by repaying X debt.
+///
+/// This macro performs partial liquidation of a position's Y collateral
+/// in exchange for repaying X debt. Liquidators receive Y tokens as reward
+/// for helping restore position health by reducing debt obligations.
 public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &PositionConfig,
@@ -2689,39 +2931,13 @@ public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
     reward
 }
 
-/// If a position falls below the critical margin threshold `(1 + liq_bonus)`, liquidations
-/// will not restore the margin level due to the liquidation math and guaranteed liquidation bonus.
-/// In this scenario, the position is considered to be in a "bad debt" state, allowing an entity
-/// with the `ARepayBadDebt` permission to repay the debt and help restore the position's solvency.
+/// Handles repayment of "bad debt" for a position that has fallen below
+/// the critical margin threshold `(1 + liq_bonus)`.
 ///
-/// ### Type Parameters
-/// - `$X`: The type of the first asset in the position.
-/// - `$Y`: The type of the second asset in the position.
-/// - `$T`: The asset type being repaid (must match the supply pool and balance).
-/// - `$ST`: The share type for the debt being repaid.
-/// - `$LP`: The type of the LP position.
-///
-/// ### Arguments
-/// - `$position`: Mutable reference to the `Position` to repay bad debt for.
-/// - `$config`: Reference to the position's `PositionConfig`.
-/// - `$price_info`: Reference to the `PriceInfo` object containing info for relevant prices.
-/// - `$debt_info`: Reference to the `DebtInfo` object containing info for the position's debt.
-/// - `$supply_pool`: Mutable reference to the `SupplyPool` for the debt being repaid.
-/// - `$repayment`: Mutable reference to the `Balance` for the debt being repaid.
-/// - `$clock`: Reference to the current `Clock`.
-/// - `$ctx`: Mutable reference to the `TxContext`.
-///
-/// ### Returns
-/// - `ActionRequest`: An action request representing the bad debt repayment operation.
-///
-/// ### Aborts
-/// - If the position is not fully deleveraged.
-/// - If the position is not below the bad debt margin threshold.
-/// - If the config and position mismatch.
-/// - If the hot-potato ticket is active.
-///
-/// ### Emits
-/// - Emits a `BadDebtRepaid` event if any shares or balance are repaid.
+/// In such cases, standard liquidations cannot restore the margin due to
+/// the guaranteed liquidation bonus. This macro allows an entity with the
+/// `ARepayBadDebt` permission to repay the debt and help restore the
+/// position's solvency.
 public(package) macro fun repay_bad_debt<$X, $Y, $T, $ST, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &PositionConfig,
@@ -2781,6 +2997,10 @@ public(package) macro fun repay_bad_debt<$X, $Y, $T, $ST, $LP>(
 
 /* ================= user operations ================= */
 
+/// Reduce position size while preserving mathematical safety guarantees.
+/// 
+/// This macro implements position reduction based on the theoretical framework where
+/// safe operations maintain or improve the margin function M(P) = A(P)/D(P).
 public(package) macro fun reduce<$X, $Y, $SX, $SY, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
@@ -2918,6 +3138,7 @@ public(package) macro fun reduce<$X, $Y, $SX, $SY, $Pool, $LP>(
     (got_x, got_y, ticket)
 }
 
+/// Calculate X token repayment amount for reduction ticket.
 public fun reduction_ticket_calc_repay_amt_x<X, SX, SY>(
     ticket: &ReductionRepaymentTicket<SX, SY>,
     supply_pool: &mut SupplyPool<X, SX>,
@@ -2928,6 +3149,7 @@ public fun reduction_ticket_calc_repay_amt_x<X, SX, SY>(
     supply_pool.calc_repay_by_shares(facil_id, amount, clock)
 }
 
+/// Calculate Y token repayment amount for reduction ticket.
 public fun reduction_ticket_calc_repay_amt_y<Y, SX, SY>(
     ticket: &ReductionRepaymentTicket<SX, SY>,
     supply_pool: &mut SupplyPool<Y, SY>,
@@ -2938,6 +3160,7 @@ public fun reduction_ticket_calc_repay_amt_y<Y, SX, SY>(
     supply_pool.calc_repay_by_shares(facil_id, amount, clock)
 }
 
+/// Repay X debt for reduction ticket.
 public fun reduction_ticket_repay_x<X, SX, SY>(
     ticket: &mut ReductionRepaymentTicket<SX, SY>,
     supply_pool: &mut SupplyPool<X, SX>,
@@ -2949,6 +3172,7 @@ public fun reduction_ticket_repay_x<X, SX, SY>(
     supply_pool.repay(shares, balance, clock);
 }
 
+/// Repay Y debt for reduction ticket.
 public fun reduction_ticket_repay_y<Y, SX, SY>(
     ticket: &mut ReductionRepaymentTicket<SX, SY>,
     supply_pool: &mut SupplyPool<Y, SY>,
@@ -2960,6 +3184,7 @@ public fun reduction_ticket_repay_y<Y, SX, SY>(
     supply_pool.repay(shares, balance, clock);
 }
 
+/// Destroy exhausted reduction ticket and emit event.
 public fun destroy_reduction_ticket<SX, SY>(ticket: ReductionRepaymentTicket<SX, SY>) {
     assert!(ticket.sx.value_x64() == 0, ETicketNotExhausted);
     assert!(ticket.sy.value_x64() == 0, ETicketNotExhausted);
@@ -2979,6 +3204,7 @@ public fun destroy_reduction_ticket<SX, SY>(ticket: ReductionRepaymentTicket<SX,
     event::emit(info);
 }
 
+/// Add X token collateral to position.
 public fun add_collateral_x<X, Y, LP: store>(
     position: &mut Position<X, Y, LP>,
     cap: &PositionCap,
@@ -3001,6 +3227,7 @@ public fun add_collateral_x<X, Y, LP: store>(
     });
 }
 
+/// Add Y token collateral to position.
 public fun add_collateral_y<X, Y, LP: store>(
     position: &mut Position<X, Y, LP>,
     cap: &PositionCap,
@@ -3024,6 +3251,10 @@ public fun add_collateral_y<X, Y, LP: store>(
     });
 }
 
+/// Add liquidity to position with protocol-specific receipt handling.
+///
+/// Used by wrapper modules to add liquidity to existing positions while
+/// maintaining risk limits and collecting protocol-specific receipts.
 public(package) macro fun add_liquidity_with_receipt_inner<$X, $Y, $Pool, $LP, $Receipt>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
@@ -3081,6 +3312,10 @@ public(package) macro fun add_liquidity_with_receipt_inner<$X, $Y, $Pool, $LP, $
     (receipt, info)
 }
 
+/// Add liquidity to position.
+///
+/// This macro is used by wrapper modules to add liquidity to existing positions,
+/// ensuring all risk and protocol constraints are maintained.
 public(package) macro fun add_liquidity_inner<$X, $Y, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
@@ -3103,6 +3338,11 @@ public(package) macro fun add_liquidity_inner<$X, $Y, $Pool, $LP>(
     info
 }
 
+/// Add liquidity to a position and return a custom receipt.
+///
+/// This macro allows wrapper modules to add liquidity to an existing position,
+/// enforcing all protocol and risk constraints, and returns a custom receipt
+/// type provided by the caller.
 public(package) macro fun add_liquidity_with_receipt<$X, $Y, $Pool, $LP, $Receipt>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
@@ -3130,6 +3370,9 @@ public(package) macro fun add_liquidity_with_receipt<$X, $Y, $Pool, $LP, $Receip
     receipt
 }
 
+/// Add liquidity to a position, enforcing all protocol and risk constraints.
+///
+/// This macro allows wrapper modules to add liquidity to an existing position.
 public(package) macro fun add_liquidity<$X, $Y, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
@@ -3155,6 +3398,7 @@ public(package) macro fun add_liquidity<$X, $Y, $Pool, $LP>(
     };
 }
 
+/// Repay as much X token debt as possible using the available balance.
 public fun repay_debt_x<X, Y, SX, LP: store>(
     position: &mut Position<X, Y, LP>,
     cap: &PositionCap,
@@ -3186,6 +3430,7 @@ public fun repay_debt_x<X, Y, SX, LP: store>(
     };
 }
 
+/// Repay as much Y token debt as possible using the available balance.
 public fun repay_debt_y<X, Y, SY, LP: store>(
     position: &mut Position<X, Y, LP>,
     cap: &PositionCap,
@@ -3217,6 +3462,10 @@ public fun repay_debt_y<X, Y, SY, LP: store>(
     };
 }
 
+/// Collect accumulated AMM fees for position owner directly.
+///
+/// Used by wrapper modules to collect fees from LP positions while
+/// automatically deducting protocol fees according to configuration.
 public(package) macro fun owner_collect_fee<$X, $Y, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &PositionConfig,
@@ -3257,6 +3506,10 @@ public(package) macro fun owner_collect_fee<$X, $Y, $Pool, $LP>(
     (x, y)
 }
 
+/// Collect accumulated AMM rewards for position owner directly.
+///
+/// Used by wrapper modules to collect protocol-specific rewards from LP
+/// positions while automatically deducting protocol fees.
 public(package) macro fun owner_collect_reward<$X, $Y, $T, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &PositionConfig,
@@ -3290,6 +3543,7 @@ public(package) macro fun owner_collect_reward<$X, $Y, $T, $Pool, $LP>(
     reward
 }
 
+/// Withdraw stashed rewards from position.
 public fun owner_take_stashed_rewards<X, Y, T, LP: store>(
     position: &mut Position<X, Y, LP>,
     cap: &PositionCap,
@@ -3313,6 +3567,10 @@ public fun owner_take_stashed_rewards<X, Y, T, LP: store>(
     rewards
 }
 
+/// Delete position. The position needs to be fully reduced and all assets withdrawn first.
+///
+/// Used by wrapper modules to safely delete empty positions while
+/// preserving any collected fees for later retrieval by protocol admins.
 public(package) macro fun delete_position<$X, $Y, $LP: store>(
     $position: Position<$X, $Y, $LP>,
     $config: &PositionConfig,
@@ -3372,6 +3630,7 @@ public(package) macro fun delete_position<$X, $Y, $LP: store>(
 
 /* ================= rebalance ================= */
 
+/// Create rebalance receipt for tracking position rebalancing operations.
 public fun create_rebalance_receipt<X, Y, LP: store>(
     position: &mut Position<X, Y, LP>,
     config: &PositionConfig,
@@ -3426,6 +3685,8 @@ public(package) fun take_rebalance_fee<X, Y, LP, T>(
     add_amount_to_map<T>(&mut receipt.fees_taken, fee_amt);
 }
 
+/// Collects AMM trading fees for a leveraged CLMM position during rebalancing,
+/// applies protocol fee, and updates the `RebalanceReceipt`.
 public(package) macro fun rebalance_collect_fee<$X, $Y, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &PositionConfig,
@@ -3451,6 +3712,8 @@ public(package) macro fun rebalance_collect_fee<$X, $Y, $Pool, $LP>(
     (x, y)
 }
 
+/// Collects AMM rewards for a leveraged CLMM position during rebalancing,
+/// applies protocol fee, and updates the `RebalanceReceipt`.
 public(package) macro fun rebalance_collect_reward<$X, $Y, $T, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &PositionConfig,
@@ -3473,6 +3736,9 @@ public(package) macro fun rebalance_collect_reward<$X, $Y, $T, $Pool, $LP>(
     reward
 }
 
+/// Adds liquidity to a leveraged CLMM position during rebalancing, using a custom lambda that returns a receipt.
+/// Updates the `RebalanceReceipt` with the amounts added (delta_l, delta_x, delta_y).
+/// Returns the custom receipt produced by the lambda.
 public(package) macro fun rebalance_add_liquidity_with_receipt<$X, $Y, $Pool, $LP, $Receipt>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
@@ -3503,6 +3769,9 @@ public(package) macro fun rebalance_add_liquidity_with_receipt<$X, $Y, $Pool, $L
     cetus_receipt
 }
 
+/// Adds liquidity to a leveraged CLMM position during rebalancing.
+/// This macro uses a custom lambda to perform the liquidity addition and updates the
+/// `RebalanceReceipt` with the amounts of liquidity and tokens added.
 public(package) macro fun rebalance_add_liquidity<$X, $Y, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
@@ -3531,6 +3800,7 @@ public(package) macro fun rebalance_add_liquidity<$X, $Y, $Pool, $LP>(
     receipt.increase_delta_y(info.delta_y());
 }
 
+/// Repay X debt during rebalancing and update receipt.
 public fun rebalance_repay_debt_x<X, Y, SX, LP: store>(
     position: &mut Position<X, Y, LP>,
     balance: &mut Balance<X>,
@@ -3560,6 +3830,7 @@ public fun rebalance_repay_debt_x<X, Y, SX, LP: store>(
     receipt.x_repaid = receipt.x_repaid + x_repaid;
 }
 
+/// Repay Y debt during rebalancing and update receipt.
 public fun rebalance_repay_debt_y<X, Y, SY, LP: store>(
     position: &mut Position<X, Y, LP>,
     balance: &mut Balance<Y>,
@@ -3584,6 +3855,7 @@ public fun rebalance_repay_debt_y<X, Y, SY, LP: store>(
     receipt.y_repaid = receipt.y_repaid + y_repaid;
 }
 
+/// Stash rewards in position during rebalancing.
 public fun rebalance_stash_rewards<X, Y, T, LP: store>(
     position: &mut Position<X, Y, LP>,
     receipt: &mut RebalanceReceipt,
@@ -3595,6 +3867,7 @@ public fun rebalance_stash_rewards<X, Y, T, LP: store>(
     position.owner_reward_stash.add(rewards);
 }
 
+/// Consume rebalance receipt and emit comprehensive rebalancing event.
 public fun consume_rebalance_receipt<X, Y, LP: store>(
     position: &mut Position<X, Y, LP>,
     receipt: RebalanceReceipt,
@@ -3643,6 +3916,7 @@ public fun consume_rebalance_receipt<X, Y, LP: store>(
 
 /* ================= admin ================= */
 
+/// Collect protocol fees from position.
 public fun collect_protocol_fees<X, Y, T, LP: store>(
     position: &mut Position<X, Y, LP>,
     amount: Option<u64>,
@@ -3665,6 +3939,7 @@ public fun collect_protocol_fees<X, Y, T, LP: store>(
     (fee, access::new_request(ACollectProtocolFees {}, ctx))
 }
 
+/// Collect fees from deleted position.
 public fun collect_deleted_position_fees(
     fees: DeletedPositionCollectedFees,
     ctx: &mut TxContext,
@@ -3682,6 +3957,9 @@ public fun collect_deleted_position_fees(
 
 /* ================= read ================= */
 
+/// Create validated position model for analysis and calculations.
+/// Used to obtain position models for risk assessment,
+/// liquidation calculations, and other analytical operations.
 public(package) macro fun validated_model_for_position<$X, $Y, $LP>(
     $position: &Position<$X, $Y, $LP>,
     $config: &PositionConfig,
@@ -3696,6 +3974,7 @@ public(package) macro fun validated_model_for_position<$X, $Y, $LP>(
     model_from_position!(position, &debt_info)
 }
 
+/// Calculate the required amounts to liquidate X collateral by repaying Y debt.
 public(package) macro fun calc_liquidate_col_x<$X, $Y, $LP>(
     $position: &Position<$X, $Y, $LP>,
     $config: &PositionConfig,
@@ -3726,6 +4005,7 @@ public(package) macro fun calc_liquidate_col_x<$X, $Y, $LP>(
     )
 }
 
+/// Calculate the required amounts to liquidate Y collateral by repaying X debt.
 public(package) macro fun calc_liquidate_col_y<$X, $Y, $LP>(
     $position: &Position<$X, $Y, $LP>,
     $config: &PositionConfig,

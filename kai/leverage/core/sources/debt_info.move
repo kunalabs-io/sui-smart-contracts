@@ -1,6 +1,8 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// Debt information for a `SupplyPool` lending facility. Can contain
+/// debt information for multiple share types for the same lending facility.
 module kai_leverage::debt_info;
 
 use kai_leverage::debt::DebtRegistry;
@@ -14,28 +16,35 @@ const Q64: u128 = 1 << 64;
 
 const EInvalidFacilID: u64 = 0;
 
+/// Entry containing debt information for a specific share type.
 public struct DebtInfoEntry has copy, store, drop {
     supply_x64: u128,
     liability_value_x64: u128,
 }
 
+/// Collection of debt information for a lending facility.
 public struct DebtInfo has copy, drop {
     facil_id: ID,
     map: VecMap<TypeName, DebtInfoEntry>,
 }
 
+/// Validated debt information ready for calculations. Extra percausion to ensure
+/// the info is for the expected lending facility.
 public struct ValidatedDebtInfo has copy, drop {
     map: VecMap<TypeName, DebtInfoEntry>,
 }
 
+/// Create an empty debt info collection for a lending facility.
 public fun empty(facil_id: ID): DebtInfo {
     DebtInfo { facil_id, map: vec_map::empty() }
 }
 
+/// Get the lending facility ID.
 public fun facil_id(self: &DebtInfo): ID {
     self.facil_id
 }
 
+/// Add debt information from a debt registry.
 public fun add<ST>(self: &mut DebtInfo, registry: &DebtRegistry<ST>) {
     let entry = DebtInfoEntry {
         supply_x64: registry.supply_x64(),
@@ -44,6 +53,7 @@ public fun add<ST>(self: &mut DebtInfo, registry: &DebtRegistry<ST>) {
     self.map.insert(type_name::with_defining_ids<ST>(), entry);
 }
 
+/// Add debt information from a `SupplyPool`'s debt registry for the matching lending facility.
 public fun add_from_supply_pool<T, ST>(
     self: &mut DebtInfo,
     pool: &mut SupplyPool<T, ST>,
@@ -54,6 +64,8 @@ public fun add_from_supply_pool<T, ST>(
     add(self, registry);
 }
 
+/// Validate debt info and return validated version for calculations. Extra percausion to ensure
+/// the info is for the expected lending facility.
 public fun validate(self: &DebtInfo, facil_id: ID): ValidatedDebtInfo {
     assert!(self.facil_id == facil_id, EInvalidFacilID);
     ValidatedDebtInfo { map: self.map }

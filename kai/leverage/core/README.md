@@ -57,7 +57,7 @@ The project is organized into several key modules:
 ### Supply Pool
 
 - **`kai_leverage::supply_pool`**  
-  This is the heart of the lending functionality. It maintains the available balance, tracks total liabilities, and manages the interaction between users supplying liquidity and borrowers taking funds. It uses both debt and equity registries and enforces risk and utilization limits.
+  This is the heart of the lending functionality. It maintains the available balance, tracks total liabilities, and manages the interaction between users supplying liquidity and positions taking funds. It uses both debt and equity registries and enforces risk and utilization limits.
 
   Additionally, it includes:
 

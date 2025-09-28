@@ -1,6 +1,20 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// Debt share management system for general-purpose facilities, with fungible debt coin minting.
+///
+/// This module provides the core infrastructure for tracking debt obligations in pools or other systems.
+/// It implements a share-based system where debt is represented as shares that maintain their
+/// proportional value even as the total debt changes due to interest accrual or other mechanisms.
+/// 
+/// In addition to share-based accounting, this module supports minting debt as fungible coins,
+/// enabling seamless integration with token-based protocols and facilitating transferability of debt positions.
+/// 
+/// Importantly, this system is designed to prevent losses due to integer arithmetic rounding:
+/// whenever fractional values arise from division or share calculations, the rounding is always
+/// performed in a way that increases the borrower's debt rather than reducing it. This ensures
+/// that the system never underestimates liabilities due to rounding, preserving the solvency
+/// and integrity of the protocol.
 module kai_leverage::debt;
 
 use kai_leverage::util;
@@ -22,15 +36,18 @@ const ENonZero: u64 = 0;
 
 /* ================= structs ================= */
 
+/// Represents a balance of debt shares in Q64.64 format.
 public struct DebtShareBalance<phantom T> has store {
     value_x64: u128,
 }
 
+/// Registry tracking total debt shares and liability value.
 public struct DebtRegistry<phantom T> has store {
     supply_x64: u128,
     liability_value_x64: u128,
 }
 
+/// Treasury combining debt registry with coin minting capability.
 public struct DebtTreasury<phantom T> has store {
     registry: DebtRegistry<T>,
     cap: TreasuryCap<T>,
@@ -38,32 +55,39 @@ public struct DebtTreasury<phantom T> has store {
 
 /* ================= read ================= */
 
+/// Get the share value in Q64.64 format.
 public fun value_x64<T>(share: &DebtShareBalance<T>): u128 {
     share.value_x64
 }
 
+/// Get the total share supply in Q64.64 format.
 public fun supply_x64<T>(registry: &DebtRegistry<T>): u128 {
     registry.supply_x64
 }
 
+/// Get the total liability value in Q64.64 format.
 public fun liability_value_x64<T>(registry: &DebtRegistry<T>): u128 {
     registry.liability_value_x64
 }
 
+/// Borrow immutable reference to the debt registry.
 public fun borrow_registry<T>(treasury: &DebtTreasury<T>): &DebtRegistry<T> {
     &treasury.registry
 }
 
+/// Borrow mutable reference to the debt registry.
 public fun borrow_mut_registry<T>(treasury: &mut DebtTreasury<T>): &mut DebtRegistry<T> {
     &mut treasury.registry
 }
 
+/// Borrow the treasury capability for minting debt tokens.
 public fun borrow_treasury_cap<T>(treasury: &DebtTreasury<T>): &TreasuryCap<T> {
     &treasury.cap
 }
 
 /* ================= impl ================= */
 
+/// Create a new empty debt registry.
 public fun create_registry<T: drop>(_: T): DebtRegistry<T> {
     DebtRegistry {
         supply_x64: 0,
@@ -71,6 +95,7 @@ public fun create_registry<T: drop>(_: T): DebtRegistry<T> {
     }
 }
 
+/// Create a new debt registry using an existing treasury cap.
 public fun create_registry_with_cap<T: drop>(_: &TreasuryCap<T>): DebtRegistry<T> {
     DebtRegistry {
         supply_x64: 0,
@@ -78,6 +103,7 @@ public fun create_registry_with_cap<T: drop>(_: &TreasuryCap<T>): DebtRegistry<T
     }
 }
 
+/// Create a new debt treasury. The treasury has the ability to mint debt as fungible coins.
 public fun create_treasury<T: drop>(
     witness: T,
     decimals: u8,
@@ -106,13 +132,14 @@ public fun create_treasury<T: drop>(
     (treasury, metadata)
 }
 
+/// Create a zero debt share balance.
 public fun zero<T>(): DebtShareBalance<T> {
     DebtShareBalance {
         value_x64: 0,
     }
 }
 
-/// Increase the liability value and issue corresponding debt shares. Input value is in `UQ64.64`
+/// Increase the liability value and issue corresponding debt shares. Input value is in Q64.64
 /// format.
 public fun increase_liability_and_issue_x64<T>(
     registry: &mut DebtRegistry<T>,
@@ -144,7 +171,7 @@ public fun increase_liability_and_issue<T>(
     increase_liability_and_issue_x64(registry, value_x64)
 }
 
-/// Increase the liability without issuing new shares. Input value is in `UQ64.64` format.
+/// Increase the liability without issuing new shares. Input value is in Q64.64 format.
 public fun increase_liability_x64<T>(registry: &mut DebtRegistry<T>, value_x64: u128) {
     registry.liability_value_x64 = registry.liability_value_x64 + value_x64;
 }
@@ -155,7 +182,7 @@ public fun increase_liability<T>(registry: &mut DebtRegistry<T>, value: u64) {
     increase_liability_x64(registry, value_x64)
 }
 
-/// Decrease the liability without repaying shares. Input value is in `UQ64.64` format.
+/// Decrease the liability without repaying shares. Input value is in Q64.64 format.
 public fun decrease_liability_x64<T>(registry: &mut DebtRegistry<T>, value_x64: u128) {
     registry.liability_value_x64 = registry.liability_value_x64 - value_x64;
 }
@@ -168,7 +195,7 @@ public fun decrease_liability<T>(registry: &mut DebtRegistry<T>, value: u64) {
 
 /// Calculate the liability amount that would be repaid for the given share value when calling the
 /// `repay_x64` function.
-/// The input and return values are in `UQ64.64` format.
+/// The input and return values are in Q64.64 format.
 public fun calc_repay_x64<T>(registry: &DebtRegistry<T>, share_value_x64: u128): u128 {
     util::muldiv_round_up_u128(
         registry.liability_value_x64,
@@ -179,7 +206,7 @@ public fun calc_repay_x64<T>(registry: &DebtRegistry<T>, share_value_x64: u128):
 
 /// Repay the share debt. Reduces the total liability and supply.
 /// Returns the value repaid (the amount the liability was reduced by).
-/// The returned value is in `UQ64.64` format.
+/// The returned value is in Q64.64 format.
 public fun repay_x64<T>(registry: &mut DebtRegistry<T>, share: DebtShareBalance<T>): u128 {
     let DebtShareBalance { value_x64: share_value_x64 } = share;
 
@@ -196,7 +223,7 @@ public fun repay_x64<T>(registry: &mut DebtRegistry<T>, share: DebtShareBalance<
 
 /// Calculate the liability amount that would be repaid for the given share value when calling the
 /// `repay_lossy` function.
-/// The input and return values are in `UQ64.64` format.
+/// The input and return values are in Q64.64 format.
 public fun calc_repay_lossy<T>(registry: &DebtRegistry<T>, share_value_x64: u128): u64 {
     let value_x64 = calc_repay_x64(registry, share_value_x64);
     (util::divide_and_round_up_u128(value_x64, Q64) as u64)
@@ -227,12 +254,10 @@ public fun repay_lossy<T>(registry: &mut DebtRegistry<T>, share: DebtShareBalanc
 /// Calculate the `EquityShareBalance` required to repay the given amount when calling the
 /// `repay_x64` function.
 /// Since the resulting repaid value can sometimes be different from the required due to integer
-/// arithmetic,
-/// the function also returns the calculated repaid value (the amount the liability would be reduced
-/// by).
-/// This value is always lower than or equal to the required amount.
+/// arithmetic, the function also returns the calculated repaid value (the amount the liability
+/// would be reduced by). This value is always lower than or equal to the required amount.
 /// Returns `(share_amount_x64, repaid_value_x64)` tuple. The input and return values are in
-/// `UQ64.64` format.
+/// Q64.64 format.
 public fun calc_repay_for_amount_x64<T>(
     registry: &DebtRegistry<T>,
     amount_x64: u128,
@@ -251,7 +276,7 @@ public fun calc_repay_for_amount_x64<T>(
 /// Calculate the `EquityShareBalance` required to repay the given amount when calling the
 /// `repay_lossy` function.
 /// The resulting repaid amount will always be exactly equal to the specified amount.
-/// Returns the share amount. The input and return values are in `UQ64.64` format.
+/// Returns the share amount. The input and return values are in Q64.64 format.
 public fun calc_repay_for_amount<T>(registry: &DebtRegistry<T>, amount: u64): u128 {
     util::muldiv_u128(
         (amount as u128) * Q64,
@@ -260,14 +285,16 @@ public fun calc_repay_for_amount<T>(registry: &DebtRegistry<T>, amount: u64): u1
     )
 }
 
-/// Calculate the share `Balance` required to repay the given amount when calling the `repay_lossy`
-/// function.
-/// Since the resulting repaid value can sometimes be different from the required due to integer
-/// arithmetic,
-/// the function also returns the calculated repaid value (the amount the liability would be reduced
-/// by).
-/// This value is always lower than or equal to the required amount.
-public fun calc_balance_repay_for_amount<T>(registry: &DebtRegistry<T>, amount: u64): (u64, u64) {
+/// Calculate the share `Balance` required to repay the given amount when calling the
+/// `repay_lossy` function.
+/// Since the resulting repaid value can sometimes be different from the required due to
+/// integer arithmetic, the function also returns the calculated repaid value (the amount
+/// the liability would be reduced by). This value is always lower than or equal to the
+/// required amount.
+public fun calc_balance_repay_for_amount<T>(
+    registry: &DebtRegistry<T>,
+    amount: u64
+): (u64, u64) {
     let share_amount = (
         util::muldiv_u128(
             (amount as u128),
@@ -280,10 +307,9 @@ public fun calc_balance_repay_for_amount<T>(registry: &DebtRegistry<T>, amount: 
     (share_amount, repaid_value)
 }
 
-/// Lossy. Converts the `DebtShareBalance` to a corresponding `Balance`. The fractional difference
-/// from rounding
-/// up is added to the total supply of shares which effectively reduces the debt of other shares
-/// against the total liability.
+/// Lossy. Converts the `DebtShareBalance` to a corresponding `Balance`.
+/// The fractional difference from rounding up is added to the total supply of shares,
+/// which effectively reduces the debt of other shares against the total liability.
 public fun into_balance_lossy<T>(
     share: DebtShareBalance<T>,
     treasury: &mut DebtTreasury<T>,
@@ -309,9 +335,8 @@ public fun into_balance_lossy<T>(
     coin::mint_balance(&mut treasury.cap, value)
 }
 
-/// Convert a `DebtShareBalance` to a `Balance` while preserving the fractional part. Not lossy but
-/// doesn't
-/// consume all the shares.
+/// Convert a `DebtShareBalance` to a `Balance` while preserving the fractional part.
+/// Not lossy but doesn't consume all the shares.
 public fun into_balance<T>(
     share: &mut DebtShareBalance<T>,
     treasury: &mut DebtTreasury<T>,
@@ -336,7 +361,7 @@ public fun from_balance<T>(
     DebtShareBalance { value_x64 }
 }
 
-/// Split a `DebtShareBalance` and take a sub balance from it. Input amount is in `UQ64.64` format.
+/// Split a `DebtShareBalance` and take a sub balance from it. Input amount is in Q64.64 format.
 public fun split_x64<T>(shares: &mut DebtShareBalance<T>, amount_x64: u128): DebtShareBalance<T> {
     let new_shares = DebtShareBalance { value_x64: amount_x64 };
     shares.value_x64 = shares.value_x64 - amount_x64;

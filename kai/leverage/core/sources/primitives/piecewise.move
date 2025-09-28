@@ -1,6 +1,11 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// Piecewise-linear function implementation for modeling interest rate curves.
+/// 
+/// This module provides utilities for creating and evaluating piecewise-linear functions,
+/// commonly used in DeFi protocols for modeling interest rates that change based on
+/// utilization levels or other parameters.
 module kai_leverage::piecewise;
 
 use kai_leverage::util;
@@ -16,11 +21,13 @@ const ESectionsNotSorted: u64 = 2;
 
 /* ================= types ================= */
 
+/// A single piece of a piecewise-linear function.
 public struct Section has store, copy, drop {
     end: u64,
     end_val: u64,
 }
 
+/// A piecewise-linear function defined by a start point and sections.
 public struct Piecewise has store, copy, drop {
     start: u64,
     start_val: u64,
@@ -29,6 +36,7 @@ public struct Piecewise has store, copy, drop {
 
 /* ================= functions ================= */
 
+/// Create a section with end point and value.
 public fun section(end: u64, end_val: u64): Section {
     Section {
         end,
@@ -36,6 +44,7 @@ public fun section(end: u64, end_val: u64): Section {
     }
 }
 
+/// Create a piecewise function from start point and ordered sections.
 public fun create(start: u64, start_val: u64, sections: vector<Section>): Piecewise {
     assert!(sections.length() > 0, ENoSections);
 
@@ -52,6 +61,7 @@ public fun create(start: u64, start_val: u64, sections: vector<Section>): Piecew
     }
 }
 
+/// Evaluate the piecewise function at given input using linear interpolation.
 public fun value_at(pw: &Piecewise, x: u64): u64 {
     assert!(x >= pw.start, EOutOfRange);
 
@@ -93,6 +103,7 @@ public fun value_at(pw: &Piecewise, x: u64): u64 {
     }
 }
 
+/// Get the valid input range for this piecewise function.
 public fun range(pw: &Piecewise): (u64, u64) {
     let len = pw.sections.length();
     let last_section = pw.sections[len -1];

@@ -1,6 +1,7 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// Pyth price feed integration for Kai Leverage.
 module kai_leverage::pyth;
 
 use pyth::i64;
@@ -26,18 +27,21 @@ const EUnsupportedPriceFeed: u64 = 0;
 const EStalePrice: u64 = 1;
 const EPriceUndefined: u64 = 2;
 
+/// Collection of Pyth price information objects.
 public struct PythPriceInfo has copy, drop {
     pio_map: VecMap<ID, PriceInfo>,
     current_ts_sec: u64,
     max_age_secs: u64,
 }
 
+/// Validated Pyth price information ready for calculations.
 public struct ValidatedPythPriceInfo has copy, drop {
     map: VecMap<TypeName, PriceInfo>,
     current_ts_sec: u64,
     max_age_secs: u64,
 }
 
+/// Create a new Pyth price info collection.
 public fun create(clock: &Clock): PythPriceInfo {
     PythPriceInfo {
         pio_map: vec_map::empty(),
@@ -46,6 +50,7 @@ public fun create(clock: &Clock): PythPriceInfo {
     }
 }
 
+/// Add a price info object to the collection.
 public fun add(self: &mut PythPriceInfo, info: &PriceInfoObject) {
     let price_info = price_info::get_price_info_from_price_info_object(info);
     let price = price_info.get_price_feed().get_price();
@@ -59,6 +64,7 @@ public fun add(self: &mut PythPriceInfo, info: &PriceInfoObject) {
     self.max_age_secs = u64::max(self.max_age_secs, age);
 }
 
+/// Validate price info against age limits and allowlist.
 public fun validate(
     info: &PythPriceInfo,
     max_age_secs: u64,
@@ -85,10 +91,12 @@ public fun validate(
     }
 }
 
+/// Get the maximum age of price feeds in seconds.
 public fun max_age_secs(self: &ValidatedPythPriceInfo): u64 {
     self.max_age_secs
 }
 
+/// Get the decimal places for a supported token type.
 public fun decimals(`type`: TypeName): u8 {
     if (`type` == type_name::with_defining_ids<SUI>()) {
         9
@@ -117,11 +125,13 @@ public fun decimals(`type`: TypeName): u8 {
     }
 }
 
+/// Get the current price for a token type.
 public fun get_price(self: &ValidatedPythPriceInfo, `type`: TypeName): Price {
     let info = vec_map::get(&self.map, &`type`);
     info.get_price_feed().get_price()
 }
 
+/// Get the EMA price for a token type.
 public fun get_ema_price(self: &ValidatedPythPriceInfo, `type`: TypeName): Price {
     let info = vec_map::get(&self.map, &`type`);
     info.get_price_feed().get_ema_price()

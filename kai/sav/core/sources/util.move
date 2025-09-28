@@ -1,6 +1,7 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// Utility functions for mathematical operations and time handling.
 module kai_sav::util;
 
 use sui::clock::{Self, Clock};
@@ -10,10 +11,12 @@ public fun timestamp_sec(clock: &Clock): u64 {
     clock::timestamp_ms(clock) / 1000
 }
 
+/// Multiply and divide u64 values.
 public fun muldiv(a: u64, b: u64, c: u64): u64 {
     (((a as u128) * (b as u128)) / (c as u128) as u64)
 }
 
+/// Multiply and divide with rounding up.
 public fun muldiv_round_up(a: u64, b: u64, c: u64): u64 {
     let ab = (a as u128) * (b as u128);
     let c = (c as u128);

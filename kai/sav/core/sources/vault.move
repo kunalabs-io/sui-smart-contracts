@@ -1,6 +1,12 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// Single-Asset Vault (SAV) implementation with multi-strategy yield optimization.
+/// 
+/// This module implements a sophisticated vault system that accepts deposits of a single
+/// asset type and distributes funds across multiple yield-generating strategies. It provides
+/// automated rebalancing, fee management, time-locked profit distribution, and comprehensive
+/// risk management features.
 module kai_sav::vault;
 
 use kai_sav::time_locked_balance::{Self as tlb, TimeLockedBalance};
@@ -71,22 +77,26 @@ const EWithdrawalsDisabled: u64 = 13;
 
 /* ================= events ================= */
 
+/// Event emitted when tokens are deposited into the vault.
 public struct DepositEvent<phantom YT> has copy, drop {
     amount: u64,
     lp_minted: u64,
 }
 
+/// Event emitted when tokens are withdrawn from the vault.
 public struct WithdrawEvent<phantom YT> has copy, drop {
     amount: u64,
     lp_burned: u64,
 }
 
+/// Event emitted when a strategy generates profit.
 public struct StrategyProfitEvent<phantom YT> has copy, drop {
     strategy_id: ID,
     profit: u64,
     fee_amt_yt: u64,
 }
 
+/// Event emitted when a strategy experiences a loss.
 public struct StrategyLossEvent<phantom YT> has copy, drop {
     strategy_id: ID,
     to_withdraw: u64,
@@ -115,6 +125,7 @@ public(package) fun vault_access_id(access: &VaultAccess): ID {
 
 /* ================= StrategyRemovalTicket ================= */
 
+/// Ticket for safely removing a strategy from the vault.
 public struct StrategyRemovalTicket<phantom T, phantom YT> {
     access: VaultAccess,
     returned_balance: Balance<T>,
@@ -132,12 +143,14 @@ public(package) fun new_strategy_removal_ticket<T, YT>(
 
 /* ================= WithdrawTicket ================= */
 
+/// Information about strategy withdrawal requirements.
 public struct StrategyWithdrawInfo<phantom T> has store {
     to_withdraw: u64,
     withdrawn_balance: Balance<T>,
     has_withdrawn: bool,
 }
 
+/// Ticket for processing user withdrawals across multiple strategies.
 public struct WithdrawTicket<phantom T, phantom YT> {
     to_withdraw_from_free_balance: u64,
     strategy_infos: VecMap<ID, StrategyWithdrawInfo<T>>,
@@ -155,6 +168,7 @@ public(package) fun withdraw_ticket_to_withdraw<T, YT>(
 
 /* ================= RebalanceInfo ================= */
 
+/// Information about rebalancing targets for a strategy.
 public struct RebalanceInfo has copy, drop, store {
     /// The target amount the strategy should repay. The strategy shouldn't
     /// repay more than this amount.
@@ -165,6 +179,7 @@ public struct RebalanceInfo has copy, drop, store {
     can_borrow: u64,
 }
 
+/// Collection of rebalancing amounts for all strategies.
 public struct RebalanceAmounts has copy, drop {
     inner: VecMap<ID, RebalanceInfo>,
 }
@@ -180,6 +195,7 @@ public(package) fun rebalance_amounts_get(
 
 /* ================= StrategyState ================= */
 
+/// State information for a strategy within the vault.
 public struct StrategyState has store {
     borrowed: u64,
     target_alloc_weight_bps: u64,
@@ -188,6 +204,7 @@ public struct StrategyState has store {
 
 /* ================= Vault ================= */
 
+/// Main vault managing single-asset deposits and multi-strategy allocation.
 public struct Vault<phantom T, phantom YT> has key {
     id: UID,
     /// balance that's not allocated to any strategy
@@ -213,6 +230,8 @@ public struct Vault<phantom T, phantom YT> has key {
     version: u64,
 }
 
+/// Creates a new vault and admin cap for the given yield token.
+/// Fails if the treasury cap has a nonzero supply.
 public(package) fun new<T, YT>(lp_treasury: TreasuryCap<YT>, ctx: &mut TxContext): AdminCap<YT> {
     assert!(coin::total_supply(&lp_treasury) == 0, ETreasurySupplyPositive);
 
@@ -261,14 +280,17 @@ fun assert_version<T, YT>(vault: &Vault<T, YT>) {
 
 /* ================= read ================= */
 
+/// Returns the vault's free (unallocated) balance.
 public fun free_balance<T, YT>(vault: &Vault<T, YT>): u64 {
     balance::value(&vault.free_balance)
 }
 
+/// Get the vault's TVL cap. Returns `None` if there is no cap.
 public fun tvl_cap<T, YT>(vault: &Vault<T, YT>): Option<u64> {
     vault.tvl_cap
 }
 
+/// Returns the total available balance in the vault, including free, unlocked profit, and strategy allocations.
 public fun total_available_balance<T, YT>(vault: &Vault<T, YT>, clock: &Clock): u64 {
     let mut total: u64 = 0;
 
@@ -286,17 +308,20 @@ public fun total_available_balance<T, YT>(vault: &Vault<T, YT>, clock: &Clock): 
     total
 }
 
+/// Returns the total supply of LP tokens for the vault.
 public fun total_yt_supply<T, YT>(vault: &Vault<T, YT>): u64 {
     coin::total_supply(&vault.lp_treasury)
 }
 
 /* ================= admin ================= */
 
+/// Set the vault's TVL cap. Only callable by admin.
 entry fun set_tvl_cap<T, YT>(_cap: &AdminCap<YT>, vault: &mut Vault<T, YT>, tvl_cap: Option<u64>) {
     assert_version(vault);
     vault.tvl_cap = tvl_cap;
 }
 
+/// Set the profit unlock duration (seconds). Admin only.
 entry fun set_profit_unlock_duration_sec<T, YT>(
     _cap: &AdminCap<YT>,
     vault: &mut Vault<T, YT>,
@@ -306,6 +331,7 @@ entry fun set_profit_unlock_duration_sec<T, YT>(
     vault.profit_unlock_duration_sec = profit_unlock_duration_sec;
 }
 
+/// Set the performance fee in basis points. Admin only.
 entry fun set_performance_fee_bps<T, YT>(
     _cap: &AdminCap<YT>,
     vault: &mut Vault<T, YT>,
@@ -316,6 +342,7 @@ entry fun set_performance_fee_bps<T, YT>(
     vault.performance_fee_bps = performance_fee_bps;
 }
 
+/// Withdraws the specified amount of performance fees. Admin only.
 public fun withdraw_performance_fee<T, YT>(
     _cap: &AdminCap<YT>,
     vault: &mut Vault<T, YT>,
@@ -325,6 +352,7 @@ public fun withdraw_performance_fee<T, YT>(
     balance::split(&mut vault.performance_fee_balance, amount)
 }
 
+/// Move all unlocked profits to the vault's free balance. Admin only.
 entry fun pull_unlocked_profits_to_free_balance<T, YT>(
     _cap: &AdminCap<YT>,
     vault: &mut Vault<T, YT>,
@@ -337,6 +365,7 @@ entry fun pull_unlocked_profits_to_free_balance<T, YT>(
     );
 }
 
+/// Add a new strategy to the vault.
 public(package) fun add_strategy<T, YT>(
     _cap: &AdminCap<YT>,
     vault: &mut Vault<T, YT>,
@@ -367,6 +396,7 @@ public(package) fun add_strategy<T, YT>(
     access
 }
 
+/// Set the maximum borrow amount for a strategy. Admin only.
 entry fun set_strategy_max_borrow<T, YT>(
     _cap: &AdminCap<YT>,
     vault: &mut Vault<T, YT>,
@@ -379,6 +409,7 @@ entry fun set_strategy_max_borrow<T, YT>(
     state.max_borrow = max_borrow;
 }
 
+/// Set target allocation weights (in BPS) for all strategies. Admin only.
 entry fun set_strategy_target_alloc_weights_bps<T, YT>(
     _cap: &AdminCap<YT>,
     vault: &mut Vault<T, YT>,
@@ -409,6 +440,7 @@ entry fun set_strategy_target_alloc_weights_bps<T, YT>(
     assert!(total_bps == BPS_IN_100_PCT, EInvalidWeights);
 }
 
+/// Remove a strategy from the vault and update allocation weights. Admin only.
 public fun remove_strategy<T, YT>(
     cap: &AdminCap<YT>,
     vault: &mut Vault<T, YT>,
@@ -448,6 +480,7 @@ public fun remove_strategy<T, YT>(
     set_strategy_target_alloc_weights_bps(cap, vault, ids_for_weights, weights_bps);
 }
 
+/// Disable or enable withdrawals from the vault. Admin only.
 entry fun set_withdrawals_disabled<T, YT>(
     _cap: &AdminCap<YT>,
     vault: &mut Vault<T, YT>,
@@ -463,6 +496,7 @@ entry fun set_withdrawals_disabled<T, YT>(
     }
 }
 
+/// Returns true if withdrawals are currently disabled for the vault.
 public fun withdrawals_disabled<T, YT>(vault: &Vault<T, YT>): bool {
     if (df::exists_(&vault.id, b"withdrawals_disabled")) {
         let val = df::borrow(&vault.id, b"withdrawals_disabled");
@@ -472,6 +506,7 @@ public fun withdrawals_disabled<T, YT>(vault: &Vault<T, YT>): bool {
     }
 }
 
+/// Set the rate limiter for the vault. Admin only.
 public fun set_rate_limiter<T, YT, L: store>(
     _cap: &AdminCap<YT>,
     vault: &mut Vault<T, YT>,
@@ -481,6 +516,7 @@ public fun set_rate_limiter<T, YT, L: store>(
     df::add(&mut vault.id, b"rate_limiter", rate_limiter);
 }
 
+/// Remove the rate limiter from the vault. Admin only.
 entry fun remove_rate_limiter<T, YT>(
     _cap: &AdminCap<YT>,
     vault: &mut Vault<T, YT>
@@ -497,6 +533,7 @@ fun rate_limiter_mut<T, YT>(vault: &mut Vault<T, YT>): &mut NetSlidingSumLimiter
     df::borrow_mut(&mut vault.id, b"rate_limiter")
 }
 
+/// Sets the maximum inflow and outflow limits for the vault's rate limiter. Admin only.
 entry fun set_max_inflow_and_outflow_limits<T, YT>(
     _cap: &AdminCap<YT>,
     vault: &mut Vault<T, YT>,
@@ -510,6 +547,7 @@ entry fun set_max_inflow_and_outflow_limits<T, YT>(
     rate_limiter.set_max_outflow_limit(max_outflow_limit);
 }
 
+/// Upgrade the vault to the latest module version. Admin only.
 entry fun migrate<T, YT>(_cap: &AdminCap<YT>, vault: &mut Vault<T, YT>) {
     assert!(vault.version < MODULE_VERSION, ENotUpgrade);
     vault.version = MODULE_VERSION;
@@ -517,6 +555,7 @@ entry fun migrate<T, YT>(_cap: &AdminCap<YT>, vault: &mut Vault<T, YT>) {
 
 /* ================= user operations ================= */
 
+/// Deposit tokens into the vault and receive LP shares.
 public fun deposit<T, YT>(
     vault: &mut Vault<T, YT>,
     balance: Balance<T>,
@@ -606,6 +645,14 @@ fun create_withdraw_ticket<T, YT>(vault: &Vault<T, YT>): WithdrawTicket<T, YT> {
     }
 }
 
+/// Withdraws assets from the vault by burning LP tokens and issues a withdraw ticket.
+///
+/// This function processes a withdrawal request by burning the specified LP token balance,
+/// joining any unlocked profits to the free balance, and calculating the withdrawable amount.
+/// If the free balance is insufficient, it initiates withdrawals from strategies according to
+/// the configured priority order. Withdrawals may be subject to rate limiting and time locks.
+/// The returned `WithdrawTicket` must be used to call withdrawal for each strategy that needs to be withdrawn from
+/// before the withdrawal can be fully claimed.
 public fun withdraw<T, YT>(
     vault: &mut Vault<T, YT>,
     balance: Balance<YT>,
@@ -740,6 +787,7 @@ public fun withdraw<T, YT>(
     ticket
 }
 
+/// Redeems a withdraw ticket, finalizing the withdrawal and burning the corresponding LP tokens.
 public fun redeem_withdraw_ticket<T, YT>(
     vault: &mut Vault<T, YT>,
     ticket: WithdrawTicket<T, YT>,
@@ -804,6 +852,8 @@ public fun redeem_withdraw_ticket<T, YT>(
     out
 }
 
+/// Withdraws a specified amount of the underlying token from the vault, burning the corresponding amount of LP tokens.
+/// Returns a `WithdrawTicket` representing the withdrawal.
 public fun withdraw_t_amt<T, YT>(
     vault: &mut Vault<T, YT>,
     t_amt: u64,

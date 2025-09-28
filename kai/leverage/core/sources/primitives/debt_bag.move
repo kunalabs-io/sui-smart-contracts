@@ -1,6 +1,19 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// Collection for managing heterogeneous debt share balances.
+/// 
+/// This module provides a type-safe collection that can store debt shares for multiple
+/// asset types and share types simultaneously. It enforces a one-to-one mapping between
+/// asset types and their corresponding share types: for any asset type `T`, there can be
+/// only a single associated debt share type `ST`, and vice versa. This ensures type-level
+/// consistency and prevents ambiguous or conflicting associations between assets and shares.
+/// 
+/// Key properties:
+/// - Enforces a unique mapping between each asset type and its share type (bijective mapping)
+/// - Validates type consistency to prevent mismatched operations  
+/// - Supports partial and full withdrawals by share type
+/// - Tracks total amounts for efficient queries
 module kai_leverage::debt_bag;
 
 use kai_leverage::debt::{Self, DebtShareBalance};
@@ -13,12 +26,14 @@ const ETypeDoesNotExist: u64 = 1;
 
 const ENotEnough: u64 = 2;
 
+/// Internal info about shares stored per asset/share type.
 public struct Info has store {
     asset_type: TypeName,
     share_type: TypeName,
     amount: u128,
 }
 
+/// Collection of debt shares for multiple facilities and share types.
 public struct DebtBag has key, store {
     id: UID,
     infos: vector<Info>,
@@ -32,6 +47,7 @@ public struct Key has copy, drop, store {
 
 /* ================= DebtBag ================= */
 
+/// Create an empty `DebtBag`.
 public fun empty(ctx: &mut TxContext): DebtBag {
     DebtBag {
         id: object::new(ctx),
@@ -79,6 +95,14 @@ fun key(info: &Info): Key {
     }
 }
 
+/// Add `DebtShareBalance<ST>` for asset `T`, merging with existing entry when present.
+/// 
+/// Guarantees:
+/// - Enforces bijective mapping between asset type `T` and share type `ST`
+/// - Merges with existing shares if asset exists, creates new entry otherwise
+/// - Automatically destroys zero-value shares
+/// - Maintains synchronized state between `infos` vector and `bag` storage
+/// - Aborts with `EAssetShareTypeMismatch` if share type conflicts with existing asset
 public fun add<T, ST>(self: &mut DebtBag, shares: DebtShareBalance<ST>) {
     let asset_type = type_name::with_defining_ids<T>();
     let share_type = type_name::with_defining_ids<ST>();
@@ -117,6 +141,7 @@ public fun add<T, ST>(self: &mut DebtBag, shares: DebtShareBalance<ST>) {
     };
 }
 
+/// Take `amount` of shares of type `ST` from the bag. Returns zero if `amount` is 0.
 public fun take_amt<ST>(self: &mut DebtBag, amount: u128): DebtShareBalance<ST> {
     if (amount == 0) {
         return debt::zero()
@@ -140,6 +165,7 @@ public fun take_amt<ST>(self: &mut DebtBag, amount: u128): DebtShareBalance<ST> 
     shares
 }
 
+/// Remove and return all shares of type `ST`. Returns zero if not present.
 public fun take_all<ST>(self: &mut DebtBag): DebtShareBalance<ST> {
     let type_st = type_name::with_defining_ids<ST>();
 
@@ -156,6 +182,7 @@ public fun take_all<ST>(self: &mut DebtBag): DebtShareBalance<ST> {
     shares
 }
 
+/// Total shares amount for the given asset type `T`.
 public fun get_share_amount_by_asset_type<T>(self: &DebtBag): u128 {
     let asset_type = type_name::with_defining_ids<T>();
     let idx_opt = get_asset_idx_opt(self, &asset_type);
@@ -168,6 +195,7 @@ public fun get_share_amount_by_asset_type<T>(self: &DebtBag): u128 {
     }
 }
 
+/// Total shares amount for the given share type `ST`.
 public fun get_share_amount_by_share_type<ST>(debt_bag: &DebtBag): u128 {
     let share_type = type_name::with_defining_ids<ST>();
     let idx_opt = get_share_idx_opt(debt_bag, &share_type);
@@ -180,6 +208,7 @@ public fun get_share_amount_by_share_type<ST>(debt_bag: &DebtBag): u128 {
     }
 }
 
+/// Get the share type corresponding to asset type `T`. Aborts if none.
 public fun get_share_type_for_asset<T>(self: &DebtBag): TypeName {
     let asset_type = type_name::with_defining_ids<T>();
     let idx_opt = get_asset_idx_opt(self, &asset_type);
@@ -194,16 +223,6 @@ public fun get_share_type_for_asset<T>(self: &DebtBag): TypeName {
 /// - Both exist and the share type corresponds to the asset type.
 /// Returns false if only one exists, or if both exist but the share type
 /// does not correspond to the asset type.
-///
-/// # Type Parameters
-/// - `T`: The asset type to check.
-/// - `ST`: The share type to check.
-///
-/// # Arguments
-/// - `self`: Reference to the `DebtBag`.
-///
-/// # Returns
-/// - `bool`: True if the types are both absent or both present and matched; false otherwise.
 public fun share_type_matches_asset_if_any_exists<T, ST>(self: &DebtBag): bool {
     let asset_type = type_name::with_defining_ids<T>();
     let share_type = type_name::with_defining_ids<ST>();
@@ -221,11 +240,13 @@ public fun share_type_matches_asset_if_any_exists<T, ST>(self: &DebtBag): bool {
     return true
 }
 
+/// True if the bag contains no entries.
 public fun is_empty(self: &DebtBag): bool {
     // infos is empty iff. bag is empty, but let's be explicit
     self.infos.is_empty() && self.bag.is_empty()
 }
 
+/// Destroy an empty bag and its inner storage.
 public fun destroy_empty(self: DebtBag) {
     let DebtBag { id, infos, bag } = self;
     id.delete();
@@ -238,6 +259,7 @@ public fun size(self: &DebtBag): u64 {
     self.infos.length()
 }
 
+/// Number of different asset/share entries in the bag.
 public fun length(self: &DebtBag): u64 {
     self.infos.length()
 }

@@ -1,6 +1,12 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// Cetus DEX integration for leveraged concentrated liquidity positions.
+/// 
+/// This module provides a complete adapter layer for integrating Kai Leverage
+/// with the Cetus concentrated liquidity AMM. It translates between the generic
+/// position management interface and Cetus-specific pool operations, handling
+/// liquidity provision, fee collection, and reward distribution.
 module kai_leverage::cetus;
 
 use access_management::access::{Self, ActionRequest};
@@ -35,6 +41,7 @@ public struct AHandleExploitedPosition() has drop;
 
 /* ================= util ================= */
 
+/// Assert that current pool price is within slippage tolerance.
 public fun slippage_tolerance_assertion<X, Y>(
     pool: &cetus_pool::Pool<X, Y>,
     p0_desired_x128: u256,
@@ -43,6 +50,7 @@ public fun slippage_tolerance_assertion<X, Y>(
     core::slippage_tolerance_assertion!(pool, p0_desired_x128, max_slippage_bps);
 }
 
+/// Calculate token amounts needed for given liquidity on Cetus.
 public fun calc_deposit_amounts_by_liquidity<X, Y>(
     pool: &cetus_pool::Pool<X, Y>,
     tick_a: I32,
@@ -61,6 +69,7 @@ public fun calc_deposit_amounts_by_liquidity<X, Y>(
     )
 }
 
+/// Remove liquidity from a Cetus position and return token balances.
 public fun remove_liquidity<X, Y>(
     config: &cetus_config::GlobalConfig,
     pool: &mut cetus_pool::Pool<X, Y>,
@@ -92,6 +101,7 @@ public fun create_position_ticket<X, Y>(
     abort e_function_deprecated!()
 }
 
+/// Initialize position creation for a leveraged Cetus position.
 public fun create_position_ticket_v2<X, Y>(
     cetus_pool: &mut cetus_pool::Pool<X, Y>,
     config: &mut PositionConfig,
@@ -118,6 +128,7 @@ public fun create_position_ticket_v2<X, Y>(
     )
 }
 
+/// Borrow X tokens for position creation.
 public fun borrow_for_position_x<X, Y, SX>(
     ticket: &mut CreatePositionTicket<X, Y, I32>,
     config: &PositionConfig,
@@ -127,6 +138,7 @@ public fun borrow_for_position_x<X, Y, SX>(
     core::borrow_for_position_x!(ticket, config, supply_pool, clock)
 }
 
+/// Borrow Y tokens for position creation.
 public fun borrow_for_position_y<X, Y, SY>(
     ticket: &mut CreatePositionTicket<X, Y, I32>,
     config: &PositionConfig,
@@ -136,6 +148,7 @@ public fun borrow_for_position_y<X, Y, SY>(
     core::borrow_for_position_y!(ticket, config, supply_pool, clock)
 }
 
+/// Create a leveraged position from a prepared ticket.
 public fun create_position<X, Y>(
     config: &PositionConfig,
     ticket: CreatePositionTicket<X, Y, I32>,
@@ -181,6 +194,8 @@ public fun create_position<X, Y>(
 
 /* ================= deleverage and liquidation ================= */
 
+/// Initialize deleveraging for a position that has fallen below
+/// the deleverage margin threshold (permissioned).
 public fun create_deleverage_ticket<X, Y>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
@@ -208,6 +223,8 @@ public fun create_deleverage_ticket<X, Y>(
     )
 }
 
+/// Initialize deleveraging for a position that has fallen below
+/// the liquidation margin threshold (permissionless).
 public fun create_deleverage_ticket_for_liquidation<X, Y>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
@@ -231,6 +248,8 @@ public fun create_deleverage_ticket_for_liquidation<X, Y>(
     )
 }
 
+/// Execute deleveraging for a position that has fallen below
+/// the deleverage margin threshold (permissioned).
 public fun deleverage<X, Y, SX, SY>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
@@ -261,6 +280,8 @@ public fun deleverage<X, Y, SX, SY>(
     )
 }
 
+/// Execute deleveraging for a position that has fallen below
+/// the liquidation margin threshold (permissionless).
 public fun deleverage_for_liquidation<X, Y, SX, SY>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
@@ -287,6 +308,8 @@ public fun deleverage_for_liquidation<X, Y, SX, SY>(
     )
 }
 
+/// Liquidate X collateral by repaying Y debt. The position needs to be fully deleveraged and
+/// below the liquidation margin threshold.
 public fun liquidate_col_x<X, Y, SY>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &PositionConfig,
@@ -299,6 +322,8 @@ public fun liquidate_col_x<X, Y, SY>(
     core::liquidate_col_x!(position, config, price_info, debt_info, repayment, supply_pool, clock)
 }
 
+/// Liquidate Y collateral by repaying X debt. The position needs to be fully deleveraged and
+/// below the liquidation margin threshold.
 public fun liquidate_col_y<X, Y, SX>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &PositionConfig,
@@ -311,6 +336,7 @@ public fun liquidate_col_y<X, Y, SX>(
     core::liquidate_col_y!(position, config, price_info, debt_info, repayment, supply_pool, clock)
 }
 
+/// Repay bad debt for X tokens.
 public fun repay_bad_debt_x<X, Y, SX>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &PositionConfig,
@@ -333,6 +359,7 @@ public fun repay_bad_debt_x<X, Y, SX>(
     )
 }
 
+/// Repay bad debt for Y tokens.
 public fun repay_bad_debt_y<X, Y, SY>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &PositionConfig,
@@ -355,6 +382,8 @@ public fun repay_bad_debt_y<X, Y, SY>(
     )
 }
 
+/// Initialize position size reduction (withdraw), while preserving mathematical safety guarantees.
+/// A factor_x64 percentage of the position is withdrawn and the same percentage of debt is repaid.
 public fun reduce<X, Y, SX, SY>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
@@ -385,6 +414,7 @@ public fun reduce<X, Y, SX, SY>(
     )
 }
 
+/// Add liquidity to the inner LP position.
 public fun add_liquidity<X, Y>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
@@ -417,6 +447,7 @@ public fun add_liquidity<X, Y>(
     )
 }
 
+/// Add liquidity to the inner LP position with a fixed coin amount.
 public fun add_liquidity_fix_coin<X, Y>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
@@ -455,6 +486,7 @@ public fun add_liquidity_fix_coin<X, Y>(
     )
 }
 
+/// Repay as much X token debt as possible using the available balance.
 public fun repay_debt_x<X, Y, SX>(
     position: &mut Position<X, Y, CetusPosition>,
     cap: &PositionCap,
@@ -465,6 +497,7 @@ public fun repay_debt_x<X, Y, SX>(
     core::repay_debt_x(position, cap, balance, supply_pool, clock)
 }
 
+/// Repay as much Y token debt as possible using the available balance.
 public fun repay_debt_y<X, Y, SY>(
     position: &mut Position<X, Y, CetusPosition>,
     cap: &PositionCap,
@@ -475,6 +508,7 @@ public fun repay_debt_y<X, Y, SY>(
     core::repay_debt_y(position, cap, balance, supply_pool, clock)
 }
 
+/// Collect accumulated AMM fees for position owner directly.
 public fun owner_collect_fee<X, Y>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &PositionConfig,
@@ -494,6 +528,7 @@ public fun owner_collect_fee<X, Y>(
     )
 }
 
+/// Collect accumulated AMM rewards for position owner directly.
 public fun owner_collect_reward<X, Y, T>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &PositionConfig,
@@ -515,6 +550,7 @@ public fun owner_collect_reward<X, Y, T>(
     )
 }
 
+/// Withdraw stashed rewards from position.
 public fun owner_take_stashed_rewards<X, Y, T>(
     position: &mut Position<X, Y, CetusPosition>,
     cap: &PositionCap,
@@ -523,6 +559,7 @@ public fun owner_take_stashed_rewards<X, Y, T>(
     core::owner_take_stashed_rewards(position, cap, amount)
 }
 
+/// Delete position. The position needs to be fully reduced and all assets withdrawn first.
 public fun delete_position<X, Y>(
     position: Position<X, Y, CetusPosition>,
     config: &PositionConfig,
@@ -542,6 +579,8 @@ public fun delete_position<X, Y>(
 
 /* ================= rebalance ================= */
 
+/// Collects AMM trading fees for a leveraged CLMM position during rebalancing,
+/// applies protocol fee, and updates the `RebalanceReceipt`.
 #[allow(unused_mut_ref)]
 public fun rebalance_collect_fee<X, Y>(
     position: &mut Position<X, Y, CetusPosition>,
@@ -562,6 +601,8 @@ public fun rebalance_collect_fee<X, Y>(
     )
 }
 
+/// Collects AMM rewards for a leveraged CLMM position during rebalancing,
+/// applies protocol fee, and updates the `RebalanceReceipt`.
 #[allow(unused_mut_ref)]
 public fun rebalance_collect_reward<X, Y, T>(
     position: &mut Position<X, Y, CetusPosition>,
@@ -584,6 +625,7 @@ public fun rebalance_collect_reward<X, Y, T>(
     )
 }
 
+/// Adds liquidity to a the underlying LP position during rebalancing.
 public fun rebalance_add_liquidity<X, Y>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
@@ -616,6 +658,7 @@ public fun rebalance_add_liquidity<X, Y>(
     )
 }
 
+/// Adds liquidity to a the underlying LP position during rebalancing with a fixed coin amount.
 public fun rebalance_add_liquidity_by_fix_coin<X, Y>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
@@ -656,6 +699,8 @@ public fun rebalance_add_liquidity_by_fix_coin<X, Y>(
 
 /* ================= cetus incident recovery ================= */
 
+/// Sync exploited position liquidity by performing a small withdrawal to update
+/// the position's liquidity state after a Cetus incident.
 public fun sync_exploited_position_liquidity_by_small_withdraw<X, Y>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
@@ -695,6 +740,7 @@ public fun sync_exploited_position_liquidity_by_small_withdraw<X, Y>(
     access::new_request(AHandleExploitedPosition(), ctx)
 }
 
+/// Destruct an exploited position and return the underlying LP position for recovery.
 public fun destruct_exploited_position_and_return_lp<X, Y>(
     position: Position<X, Y, CetusPosition>,
     config: &PositionConfig,
@@ -753,6 +799,9 @@ public fun destruct_exploited_position_and_return_lp<X, Y>(
 
 /* ================= read ================= */
 
+/// Create validated position model for analysis and calculations.
+/// Used to obtain position models for risk assessment,
+/// liquidation calculations, and other analytical operations.
 public fun position_model<X, Y>(
     position: &Position<X, Y, CetusPosition>,
     config: &PositionConfig,
@@ -761,6 +810,7 @@ public fun position_model<X, Y>(
     core::validated_model_for_position!(position, config, debt_info)
 }
 
+/// Calculate the required amounts to liquidate X collateral by repaying Y debt.
 public fun calc_liquidate_col_x<X, Y>(
     position: &Position<X, Y, CetusPosition>,
     config: &PositionConfig,
@@ -771,6 +821,7 @@ public fun calc_liquidate_col_x<X, Y>(
     core::calc_liquidate_col_x!(position, config, price_info, debt_info, max_repayment_amt_y)
 }
 
+/// Calculate the required amounts to liquidate Y collateral by repaying X debt.
 public fun calc_liquidate_col_y<X, Y>(
     position: &Position<X, Y, CetusPosition>,
     config: &PositionConfig,

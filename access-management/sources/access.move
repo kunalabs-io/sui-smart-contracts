@@ -1,6 +1,8 @@
 // Copyright (c) Kuna Labs d.o.o.
 // SPDX-License-Identifier: Apache-2.0
 
+/// Access Management module for Sui packages.
+/// Provides fine-grained, configurable permissions using PackageAdmin, Policy, Rule, and ActionRequest.
 module access_management::access;
 
 use access_management::dynamic_map::{Self, DynamicMap};
@@ -42,48 +44,72 @@ const MODULE_VERSION: u16 = 1;
 
 /* ================= structs ================= */
 
+/// Represents the administrator for a specific package.
 public struct PackageAdmin has key, store {
     id: UID,
     /// The address string of the package that this admin is for.
     package: String,
 }
 
+/// Represents an entity that can be granted permissions in a policy.
 public struct Entity has key, store {
     id: UID,
 }
 
+/// Represents a rule within a policy, specifying allowed actions and required conditions.
 public struct Rule has store {
+    /// The set of action type names that are allowed by this rule.
     actions: VecSet<TypeName>,
     /// Conditions that must be met for the actions to be allowed.
     conditions: VecSet<TypeName>,
+    /// A dynamic map from condition type name to its configuration for this rule.
     condition_configs: DynamicMap<TypeName>,
 }
 
+/// Represents an access control policy for a package, specifying which entities are allowed,
+/// the rules governing actions, and the policy's status and version.
 public struct Policy has key {
     id: UID,
+    /// The address string of the package this policy applies to.
     package: String,
+    /// The set of entity IDs that are allowed by this policy.
     allowed_entities: VecSet<ID>,
+    /// A mapping from rule ID (address) to the corresponding rule definition.
     rules: VecMap<address, Rule>,
+    /// Indicates whether the policy is currently enabled.
     enabled: bool,
+    /// The version of the policy, used for upgrade and compatibility checks.
     version: u16,
 }
 
+/// Represents a request to perform a specific action.
 public struct ActionRequest {
+    /// The type name of the action being requested.
     action_name: TypeName,
+    /// A dynamic map containing contextual information for the action, keyed by string.
     context: DynamicMap<String>,
     /// Conditions that have been approved for this request. Maps condition type to
     /// to rule id.
     approved_conditions: VecMap<TypeName, address>,
 }
 
+/// Carries condition configuration and context for condition approval functions.
+/// 
+/// Type Parameters:
+/// - `Condition`: The condition type being witnessed
+/// - `Config`: Configuration data for the condition
 public struct ConditionWitness<phantom Condition, Config: store + copy + drop> has drop {
+    /// Address of the rule containing this condition
     rule_id: address,
+    /// Configuration data for the condition
     config: Config,
-    // extra fields to give more context to condition functions
+    /// Policy ID for additional context
     policy: ID,
+    /// Entity ID for additional context
     entity: ID,
 }
 
+/// Represents a default configuration for a condition that does not require any additional configuration.
 public struct ConfigNone has store, copy, drop {}
 
 /* ================= upgrade ================= */
@@ -92,6 +118,7 @@ public(package) fun check_version(policy: &Policy) {
     assert!(policy.version == MODULE_VERSION, EInvalidPolicyVersion);
 }
 
+/// Migrates the given policy to the current module version.
 public fun migrate_policy_version(policy: &mut Policy, admin: &PackageAdmin) {
     assert!(policy.version < MODULE_VERSION, ENotUpgrade);
     assert!(policy.package == admin.package, ENotPolicyAdmin);
@@ -100,6 +127,9 @@ public fun migrate_policy_version(policy: &mut Policy, admin: &PackageAdmin) {
 
 /* ================= package admin ================= */
 
+/// Claims package admin rights using a one-time witness.
+/// 
+/// Aborts if the witness is not a valid one-time witness or if it does not originate from the expected module.
 public fun claim_package<OTW: drop>(otw: OTW, ctx: &mut TxContext): PackageAdmin {
     assert!(types::is_one_time_witness(&otw), ENotOneTimeWitness);
 
@@ -113,6 +143,7 @@ public fun claim_package<OTW: drop>(otw: OTW, ctx: &mut TxContext): PackageAdmin
     }
 }
 
+/// Irreversibly destroys a package admin.
 public fun irreversibly_destroy_admin(admin: PackageAdmin) {
     let PackageAdmin { id, package: _ } = admin;
     id.delete();
@@ -120,12 +151,14 @@ public fun irreversibly_destroy_admin(admin: PackageAdmin) {
 
 /* ================= entity ================= */
 
+/// Creates a new entity.
 public fun create_entity(ctx: &mut TxContext): Entity {
     Entity {
         id: object::new(ctx),
     }
 }
 
+/// Destroys an entity.
 public fun destroy_entity(entity: Entity) {
     let Entity { id } = entity;
     id.delete();
@@ -133,6 +166,7 @@ public fun destroy_entity(entity: Entity) {
 
 /* ================= policy ================= */
 
+/// Creates a new, empty policy.
 public fun create_empty_policy(admin: &PackageAdmin, ctx: &mut TxContext): Policy {
     Policy {
         id: object::new(ctx),
@@ -146,6 +180,7 @@ public fun create_empty_policy(admin: &PackageAdmin, ctx: &mut TxContext): Polic
 
 public use fun allowlist_entity_for_policy as Policy.allowlist_entity;
 
+/// Adds an entity to the allowlist for a policy.
 public fun allowlist_entity_for_policy(policy: &mut Policy, admin: &PackageAdmin, entity_id: &ID) {
     check_version(policy);
     assert!(policy.package == admin.package, ENotPolicyAdmin);
@@ -154,6 +189,7 @@ public fun allowlist_entity_for_policy(policy: &mut Policy, admin: &PackageAdmin
 
 public use fun remove_entity_from_policy as Policy.remove_entity;
 
+/// Removes an entity from the policy allowlist.
 public fun remove_entity_from_policy(policy: &mut Policy, admin: &PackageAdmin, entity_id: &ID) {
     check_version(policy);
     assert!(policy.package == admin.package, ENotPolicyAdmin);
@@ -162,6 +198,7 @@ public fun remove_entity_from_policy(policy: &mut Policy, admin: &PackageAdmin, 
 
 public use fun enable_policy as Policy.enable;
 
+/// Enables a policy.
 public fun enable_policy(policy: &mut Policy, admin: &PackageAdmin) {
     check_version(policy);
     assert!(policy.package == admin.package, ENotPolicyAdmin);
@@ -170,6 +207,7 @@ public fun enable_policy(policy: &mut Policy, admin: &PackageAdmin) {
 
 public use fun disable_policy as Policy.disable;
 
+/// Disables a policy.
 public fun disable_policy(policy: &mut Policy, admin: &PackageAdmin) {
     check_version(policy);
     assert!(policy.package == admin.package, ENotPolicyAdmin);
@@ -178,6 +216,7 @@ public fun disable_policy(policy: &mut Policy, admin: &PackageAdmin) {
 
 public use fun destroy_empty_policy as Policy.destroy;
 
+/// Destroys an empty policy.
 public fun destroy_empty_policy(policy: Policy, admin: &PackageAdmin) {
     check_version(&policy);
     assert!(policy.package == admin.package, ENotPolicyAdmin);
@@ -188,6 +227,7 @@ public fun destroy_empty_policy(policy: Policy, admin: &PackageAdmin) {
 
 public use fun share_policy as Policy.share;
 
+/// Shares a policy object.
 public fun share_policy(policy: Policy, admin: &PackageAdmin) {
     check_version(&policy);
     assert!(policy.package == admin.package, ENotPolicyAdmin);
@@ -227,6 +267,7 @@ public fun drop_rule(policy: &mut Policy, admin: &PackageAdmin, rule_id: address
 
 /* ================= action ================= */
 
+/// Adds an action to a rule.
 public fun add_action_to_rule<Action: drop>(
     policy: &mut Policy,
     admin: &PackageAdmin,
@@ -243,6 +284,7 @@ public fun add_action_to_rule<Action: drop>(
     rule.actions.insert(action_name);
 }
 
+/// Removes an action from a rule.
 public fun remove_action_from_rule<Action: drop>(
     policy: &mut Policy,
     admin: &PackageAdmin,
@@ -258,6 +300,7 @@ public fun remove_action_from_rule<Action: drop>(
 
 /* ================= condition ================= */
 
+/// Adds a condition with configuration to a rule.
 public fun add_condition_to_rule_with_config<Condition: drop, Config: store + copy + drop>(
     policy: &mut Policy,
     admin: &PackageAdmin,
@@ -274,6 +317,7 @@ public fun add_condition_to_rule_with_config<Condition: drop, Config: store + co
     rule.condition_configs.insert(condition_name, config);
 }
 
+/// Adds a condition without configuration to a rule.
 public fun add_condition_to_rule<Condition: drop>(
     policy: &mut Policy,
     admin: &PackageAdmin,
@@ -288,6 +332,7 @@ public fun add_condition_to_rule<Condition: drop>(
     );
 }
 
+/// Removes a condition from a rule.
 /// Aborts if the condition config is not the `ConfigNone` default config.
 public fun remove_condition_from_rule<Condition: drop>(
     policy: &mut Policy,
@@ -306,6 +351,7 @@ public fun remove_condition_from_rule<Condition: drop>(
 
 /* ================= condition config ================= */
 
+/// Adds configuration for a condition.
 /// Aborts if the config is not the `ConfigNone` default config.
 public fun add_config_for_condition<Condition, Config: store + copy + drop>(
     policy: &mut Policy,
@@ -323,6 +369,7 @@ public fun add_config_for_condition<Condition, Config: store + copy + drop>(
     rule.condition_configs.insert(condition_name, config);
 }
 
+/// Removes configuration for a condition.
 public fun remove_config_for_condition<Condition, Config: store + copy + drop>(
     policy: &mut Policy,
     admin: &PackageAdmin,
@@ -338,6 +385,7 @@ public fun remove_config_for_condition<Condition, Config: store + copy + drop>(
     rule.condition_configs.insert(condition_name, ConfigNone {});
 }
 
+/// Borrows condition configuration from a policy.
 public fun borrow_condition_config<Condition, Config: store + copy + drop>(
     policy: &Policy,
     rule_id: &address,
@@ -348,6 +396,7 @@ public fun borrow_condition_config<Condition, Config: store + copy + drop>(
     &rule.condition_configs[condition_name]
 }
 
+/// Borrows mutable condition configuration from a policy.
 public fun borrow_mut_condition_config<Condition, Config: store + copy + drop>(
     policy: &mut Policy,
     admin: &PackageAdmin,
@@ -364,6 +413,7 @@ public fun borrow_mut_condition_config<Condition, Config: store + copy + drop>(
 
 /* ================= action request ================= */
 
+/// Creates a new action request.
 public fun new_request<Action: drop>(_: Action, ctx: &mut TxContext): ActionRequest {
     ActionRequest {
         action_name: type_name::get<Action>(),
@@ -387,6 +437,7 @@ public fun new_request_for_resource<T: key>(
     request
 }
 
+/// Creates a new action request with pre-populated context.
 public fun new_request_with_context<Action: drop>(
     _: Action,
     context: DynamicMap<std::ascii::String>,
@@ -398,16 +449,19 @@ public fun new_request_with_context<Action: drop>(
     }
 }
 
+/// Borrows the context from an action request.
 public fun borrow_context(request: &ActionRequest): &DynamicMap<String> {
     &request.context
 }
 
+/// Gets a value from the action request context.
 public fun context_value<Value: store + copy + drop>(request: &ActionRequest, key: String): &Value {
     &request.context[key]
 }
 
 /* ================= approval ================= */
 
+/// Gets a condition witness for approval.
 public fun get_condition_witness<Condition, Action: drop, Config: store + copy + drop>(
     policy: &Policy,
     entity: &Entity,
@@ -434,6 +488,7 @@ public fun get_condition_witness<Condition, Action: drop, Config: store + copy +
 
 public use fun cw_rule_id as ConditionWitness.rule_id;
 
+/// Gets the rule ID from a condition witness.
 public fun cw_rule_id<Condition, Config: store + copy + drop>(
     witness: &ConditionWitness<Condition, Config>,
 ): address {
@@ -442,6 +497,7 @@ public fun cw_rule_id<Condition, Config: store + copy + drop>(
 
 public use fun cw_config as ConditionWitness.config;
 
+/// Gets the configuration from a condition witness.
 public fun cw_config<Condition, Config: store + copy + drop>(
     witness: &ConditionWitness<Condition, Config>,
 ): Config {
@@ -450,6 +506,7 @@ public fun cw_config<Condition, Config: store + copy + drop>(
 
 public use fun cw_policy_id as ConditionWitness.policy_id;
 
+/// Gets the policy ID from a condition witness.
 public fun cw_policy_id<Condition, Config: store + copy + drop>(
     witness: &ConditionWitness<Condition, Config>,
 ): ID {
@@ -458,12 +515,14 @@ public fun cw_policy_id<Condition, Config: store + copy + drop>(
 
 public use fun cw_entity_id as ConditionWitness.entity_id;
 
+/// Gets the entity ID from a condition witness.
 public fun cw_entity_id<Condition, Config: store + copy + drop>(
     witness: &ConditionWitness<Condition, Config>,
 ): ID {
     witness.entity
 }
 
+/// Approves a condition for an action request.
 /// Aborts if the condition is not needed for the action request.
 public fun approve_condition<Condition: drop, Config: store + copy + drop>(
     request: &mut ActionRequest,
@@ -474,13 +533,15 @@ public fun approve_condition<Condition: drop, Config: store + copy + drop>(
     request.approved_conditions.insert(condition_name, witness.rule_id);
 }
 
-/// Aborts with `EInvalidConditionApproval` if the approved condition's rule id does not match the
-/// requested.
-/// Aborts with `std::vector::EKeyDoesNotExist` if the condition is not needed for the action
-/// request or
-/// it has already been approved.
-/// Aborts with `sui:vec_map::EMapEmpty` if one or multiple required conditions have not been
-/// approved.
+/// Approves an action request and returns the context.
+///
+/// Aborts with:
+/// - `EInvalidConditionApproval` if an approved condition's rule id does not
+///   match the requested rule id.
+/// - `std::vector::EKeyDoesNotExist` if a required condition is not present
+///   in the approved conditions or has already been approved.
+/// - `sui::vec_map::EMapEmpty` if one or more required conditions have not
+///   been approved.
 public fun approve_and_return_context(
     request: ActionRequest,
     entity: &Entity,
@@ -510,6 +571,7 @@ public fun approve_and_return_context(
     context
 }
 
+/// Approves an action request.
 /// Note: Drops the request context without checking if it's empty. This means that the
 /// storage rebate for these dynamic fields will not be returned to the caller.
 public fun approve_request(
@@ -523,6 +585,7 @@ public fun approve_request(
     context.force_drop();
 }
 
+/// Admin approves an action request and returns the context.
 /// Note: this will not work if the action type was added in an upgrade. Use
 /// `admin_approve_request_with_original_id_and_return_context` instead.
 public fun admin_approve_request_and_return_context(
@@ -540,6 +603,7 @@ public fun admin_approve_request_and_return_context(
     context
 }
 
+/// Admin approves an action request.
 /// Note: this will not work if the action type was added in an upgrade. Use
 /// `admin_approve_request_with_original_id` instead.
 /// Note: Drops the request context without checking if it's empty. This means that the
@@ -549,6 +613,7 @@ public fun admin_approve_request(request: ActionRequest, admin: &PackageAdmin) {
     context.force_drop();
 }
 
+/// Admin approves an action request with original ID and returns the context.
 public fun admin_approve_request_with_original_id_and_return_context<Action: drop>(
     request: ActionRequest,
     admin: &PackageAdmin,
@@ -566,6 +631,7 @@ public fun admin_approve_request_with_original_id_and_return_context<Action: dro
     context
 }
 
+/// Admin approves an action request with original ID.
 /// Note: Drops the request context without checking if it's empty. This means that the
 /// storage rebate for these dynamic fields will not be returned to the caller.
 public fun admin_approve_request_with_original_id<Action: drop>(
