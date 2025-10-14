@@ -244,8 +244,8 @@ public macro fun rebalance<$Setup>($setup: &mut $Setup): (u64, u64, u64, u128, u
         assert!(receipt.added_cy() == 0);
         assert!(receipt.stashed_amm_rewards().length() == 0);
 
-        let (exp_lp_fee_x, exp_lp_fee_y) = setup.get_lp_fee_amounts(position.lp_position());
-        let exp_lp_reward_sui = setup.get_lp_reward_amount<SUI>(position.lp_position());
+        let (exp_lp_fee_x, exp_lp_fee_y) = setup.get_lp_fee_amounts(&mut position);
+        let exp_lp_reward_sui = setup.get_lp_reward_amount<SUI>(&mut position);
         // sanity check our test setup
         assert!(exp_lp_fee_x > 1000);
         assert!(exp_lp_fee_y > 1000);
@@ -743,8 +743,8 @@ public macro fun close_position<$Setup>(
         core::destroy_reduction_ticket(ticket);
 
         // collect fees and rewards
-        let (exp_lp_fee_x, exp_lp_fee_y) = setup.get_lp_fee_amounts(position.lp_position());
-        let exp_lp_reward_sui = setup.get_lp_reward_amount<SUI>(position.lp_position());
+        let (exp_lp_fee_x, exp_lp_fee_y) = setup.get_lp_fee_amounts(&mut position);
+        let exp_lp_reward_sui = setup.get_lp_reward_amount<SUI>(&mut position);
         // sanity check our setup
         assert!(exp_lp_fee_x > 1000);
         assert!(exp_lp_fee_y > 1000);

@@ -330,17 +330,17 @@ public fun position_model(
     mock_dex_integration::validated_model_for_position(position, config, &self.debt_info(config))
 }
 
-public fun get_lp_fee_amounts(self: &mut Setup, lp: &PositionKey): (u64, u64) {
+public fun get_lp_fee_amounts(self: &mut Setup, position: &mut Position<SUI, USDC, PositionKey>): (u64, u64) {
     mock_dex::position_fees(
         &self.mock_dex_pool,
-        lp,
+        position.lp_position(),
     )
 }
 
-public fun get_lp_reward_amount<R>(self: &mut Setup, lp: &PositionKey): u64 {
+public fun get_lp_reward_amount<R>(self: &mut Setup, position: &mut Position<SUI, USDC, PositionKey>): u64 {
     mock_dex::position_rewards<_, _, R>(
         &self.mock_dex_pool,
-        lp,
+        position.lp_position(),
     )
 }
 

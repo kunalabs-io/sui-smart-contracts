@@ -402,19 +402,19 @@ public fun position_model(
     cetus::position_model(position, config, &self.debt_info(config))
 }
 
-public fun get_lp_fee_amounts(self: &mut Setup, lp: &CetusPosition): (u64, u64) {
+public fun get_lp_fee_amounts(self: &mut Setup, position: &mut Position<SUI, USDC, CetusPosition>): (u64, u64) {
     cetus_pool::calculate_and_update_fee(
         &self.cetus_global_config,
         &mut self.cetus_pool,
-        object::id(lp),
+        object::id(position.lp_position()),
     )
 }
 
-public fun get_lp_reward_amount<R>(self: &mut Setup, lp: &CetusPosition): u64 {
+public fun get_lp_reward_amount<R>(self: &mut Setup, position: &mut Position<SUI, USDC, CetusPosition>): u64 {
     cetus_pool::calculate_and_update_reward<_, _, R>(
         &self.cetus_global_config,
         &mut self.cetus_pool,
-        object::id(lp),
+        object::id(position.lp_position()),
         &self.clock,
     )
 }
