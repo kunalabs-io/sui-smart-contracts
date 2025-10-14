@@ -1,0 +1,6 @@
+*       @fireflyprotocol/eng-expansion
+# DO NOT MODIFY THIS FILE, it is controlled by platform pipelines in platform-github repository.
+/environment-stack/**   @fireflyprotocol/eng-platform
+/.github/**   @fireflyprotocol/eng-platform
+/CODEOWNERS  @fireflyprotocol/eng-platform
+

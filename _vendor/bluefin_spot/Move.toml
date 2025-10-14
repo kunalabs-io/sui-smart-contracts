@@ -1,0 +1,11 @@
+[package]
+name = "bluefin_spot"
+version = "1.0.0"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet", override=true }
+IntegerMate = { git = "https://github.com/CetusProtocol/integer-mate.git", subdir = "sui", rev = "sui-v1.1.2" }
+IntegerLibrary = { git = "https://github.com/fireflyprotocol/integer-library.git", rev =  "v1.0.1"}
+
+[addresses]
+bluefin_spot = "0x0"

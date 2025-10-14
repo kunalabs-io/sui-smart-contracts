@@ -1,0 +1,6 @@
+[submodule "library-sui"]
+	path = library-sui
+	url = https://github.com/fireflyprotocol/library-sui.git
+[submodule "integer-mate"]
+	path = integer-mate
+	url = https://github.com/CetusProtocol/integer-mate.git
