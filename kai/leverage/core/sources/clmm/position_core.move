@@ -117,20 +117,6 @@ public use fun ri_withdrawn_y as ReductionInfo.withdrawn_y;
 public use fun ri_x_repaid as ReductionInfo.x_repaid;
 public use fun ri_y_repaid as ReductionInfo.y_repaid;
 
-// turbos
-/*
-use fun turbos_clmm::pool::get_pool_sqrt_price as turbos_clmm::pool::Pool.current_sqrt_price_x64;
-use fun turbos_clmm::pool::get_pool_current_index as turbos_clmm::pool::Pool.current_tick_index;
-use fun turbos_clmm::math_tick::sqrt_price_from_tick_index as
-    turbos_clmm::i32::I32.as_sqrt_price_x64;
-use fun kai_leverage::turbos::calc_deposit_amounts_by_liquidity as
-    turbos_clmm::pool::Pool.calc_deposit_amounts_by_liquidity;
-use fun kai_leverage::turbos::wrapped_tick_range as
-    kai_leverage::turbos::TurbosWrappedPosition.tick_range;
-use fun kai_leverage::turbos::wrapped_liquidity as
-    kai_leverage::turbos::TurbosWrappedPosition.liquidity;
-*/
-
 // cetus
 use fun cetus_clmm::pool::current_sqrt_price as cetus_clmm::pool::Pool.current_sqrt_price_x64;
 use fun cetus_clmm::tick_math::get_sqrt_price_at_tick as integer_mate::i32::I32.as_sqrt_price_x64;
@@ -143,16 +129,6 @@ use fun kai_leverage::bluefin_spot::calc_deposit_amounts_by_liquidity as
     bluefin_spot::pool::Pool.calc_deposit_amounts_by_liquidity;
 use fun kai_leverage::bluefin_spot::position_tick_range as
     bluefin_spot::position::Position.tick_range;
-
-// flowx
-/*
-use fun flowx_clmm::pool::sqrt_price_current as flowx_clmm::pool::Pool.current_sqrt_price_x64;
-use fun flowx_clmm::pool::tick_index_current as flowx_clmm::pool::Pool.current_tick_index;
-use fun flowx_clmm::tick_math::get_sqrt_price_at_tick as flowx_clmm::i32::I32.as_sqrt_price_x64;
-use fun kai_leverage::flowx::calc_deposit_amounts_by_liquidity as
-    flowx_clmm::pool::Pool.calc_deposit_amounts_by_liquidity;
-use fun kai_leverage::flowx::position_tick_range as flowx_clmm::position::Position.tick_range;
-*/
 
 /* ================= constants ================= */
 
