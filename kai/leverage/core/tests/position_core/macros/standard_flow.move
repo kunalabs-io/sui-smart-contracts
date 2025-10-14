@@ -509,6 +509,59 @@ public macro fun owner_repay_debt_and_add_collateral<$Setup>(
         test_scenario::return_shared(position);
     };
 
+    // add liquidity
+    setup.next_tx(@0);
+    {
+        let mut position = setup.take_shared_position();
+        let mut config = setup.scenario().take_shared<PositionConfig>();
+
+        // add liquidity without receipt
+        let delta_l = 100000000000;
+        let (tick_a, tick_b) = position.lp_position().tick_range();
+        let (amt_x, amt_y) = setup.clmm_pool().calc_deposit_amounts_by_liquidity(
+            tick_a,
+            tick_b,
+            delta_l,
+        );
+        let debt_info = setup.debt_info(&config);
+        let price_info = setup.price_info();
+        setup.add_liquidity(
+            &mut position,
+            &mut config,
+            $position_cap,
+            &price_info,
+            &debt_info,
+            delta_l,
+            balance::create_for_testing(amt_x),
+            balance::create_for_testing(amt_y),
+        );
+
+        let initial_l = 663611732121;
+        let delta_l_rebalance = 111732121;
+
+        let expected_l = initial_l + delta_l_rebalance + delta_l;
+        assert!(config.current_global_l() == expected_l);
+        assert!(position.lp_position().liquidity() == expected_l);
+
+        // add liquidity with receipt
+        let delta_l_with_receipt = 50000000000;
+        let debt_info = setup.debt_info(&config);
+        let price_info = setup.price_info();
+        setup.add_liquidity_with_receipt(
+            &mut position,
+            &mut config,
+            $position_cap,
+            &price_info,
+            &debt_info,
+            delta_l_with_receipt,
+        );
+        assert!(config.current_global_l() == expected_l + delta_l_with_receipt);
+        assert!(position.lp_position().liquidity() == expected_l + delta_l_with_receipt);
+
+        test_scenario::return_shared(position);
+        test_scenario::return_shared(config);
+    };
+
     (position_sx_after_repay_debt, position_sy_after_repay_debt)
 }
 
@@ -523,6 +576,7 @@ public macro fun close_position<$Setup>(
     let position_sx_after_repay_debt = $position_sx_after_repay_debt;
     let position_sy_after_repay_debt = $position_sy_after_repay_debt;
 
+    setup.next_tx(@0);
     let (initial_dx_x64, initial_dy_x64) = {
         let config = setup.scenario().take_shared<PositionConfig>();
 
@@ -585,12 +639,13 @@ public macro fun close_position<$Setup>(
         );
         let exp_cx = 30000;
         let exp_cy = 40000;
+        let exp_l = 813723464242;
         let (exp_x, exp_y) = mock_dex_math::get_amount_by_liquidity(
             tick_a,
             tick_b,
             setup.clmm_pool().current_tick_index(),
             setup.clmm_pool().current_sqrt_price_x64(),
-            663723464242,
+            exp_l,
             false,
         );
 
@@ -618,14 +673,14 @@ public macro fun close_position<$Setup>(
         let model = info.model();
         assert!(model.sqrt_pa_x64() == mock_dex_math::get_sqrt_price_at_tick(tick_a));
         assert!(model.sqrt_pb_x64() == mock_dex_math::get_sqrt_price_at_tick(tick_b));
-        assert!(model.l() == 663723464242);
+        assert!(model.l() == exp_l);
         assert!(model.cx() == exp_cx);
         assert!(model.cy() == exp_cy);
         assert!(model.dx() == exp_dx);
         assert!(model.dy() == exp_dy);
         assert!(info.oracle_price_x128() == exp_oracle_price_x128);
         assert!(info.sqrt_pool_price_x64() == setup.clmm_pool().current_sqrt_price_x64());
-        assert!(info.delta_l() == 663723464242);
+        assert!(info.delta_l() == exp_l);
         assert!(info.delta_x() == exp_x);
         assert!(info.delta_y() == exp_y);
         assert!(info.withdrawn_x() == exp_x + exp_cx);
@@ -635,7 +690,8 @@ public macro fun close_position<$Setup>(
 
         // check rate limiter after position reduction
         let limiter = config.borrow_create_withdraw_limiter();
-        assert!(limiter.inflow_total() == 450_000000);
+        let inflow_from_creation = 450_000000;
+        assert!(limiter.inflow_total() == inflow_from_creation);
 
         let validated_price_info = core::validate_price_info(&config, &setup.price_info());
         let withdrawn_x_value = core::get_amount_ema_usd_value_6_decimals<SUI>(
@@ -662,8 +718,8 @@ public macro fun close_position<$Setup>(
             (withdrawn_x_value + withdrawn_y_value) - (repaid_x_value + repaid_y_value);
         assert!(limiter.outflow_total() == (expected_outflow as u256));
         let (net_amount, is_outflow) = limiter.net_value();
-        assert!(net_amount == 450_000000 - (expected_outflow as u256));
-        assert!(is_outflow == false);
+        assert!(net_amount == (expected_outflow as u256) - inflow_from_creation);
+        assert!(is_outflow == true);
 
         // repay ticket
         let repay_amt_x = setup.reduction_ticket_calc_repay_amt_x(

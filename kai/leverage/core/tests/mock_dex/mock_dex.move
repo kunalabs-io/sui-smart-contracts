@@ -17,6 +17,8 @@ public use fun position_key_idx as PositionKey.idx;
 public use fun liquidity_list_item_tick_end as LiquidityListItem.tick_end;
 public use fun liquidity_list_item_liquidity as LiquidityListItem.liquidity;
 
+public use fun add_liquidity_receipt_pay_amounts as AddLiquidityReceipt.pay_amounts;
+
 #[error]
 const ENotEnoughLiquidity: vector<u8> = b"Not enough liquidity in the pool for the swap";
 
@@ -43,6 +45,12 @@ public struct PositionKey has key, store {
     tick_a: I32,
     tick_b: I32,
     liquidity: u128,
+}
+
+public struct AddLiquidityReceipt<phantom X, phantom Y> {
+    pool_id: ID,
+    need_x: u64,
+    need_y: u64,
 }
 
 public struct LiquidityListItem has copy, drop, store {
@@ -232,18 +240,17 @@ public fun open_position<X, Y>(
 public fun add_liquidity<X, Y>(
     pool: &mut MockDexPool<X, Y>,
     key: &mut PositionKey,
+    delta_l: u128,
     balance_x: Balance<X>,
     balance_y: Balance<Y>,
-    delta_l: u128,
 ): (u64, u64) {
-    let (amt_x, amt_y) = mock_dex_math::get_amount_by_liquidity(
+    let (amt_x, amt_y) = calc_deposit_amounts_by_liquidity(
+        pool,
         key.tick_a,
         key.tick_b,
-        pool.current_tick_index(),
-        pool.current_sqrt_price_x64,
         delta_l,
-        true,
     );
+
     assert!(balance_x.value() == amt_x);
     assert!(balance_y.value() == amt_y);
 
@@ -255,6 +262,53 @@ public fun add_liquidity<X, Y>(
     key.liquidity = new_liquidity;
 
     (amt_x, amt_y)
+}
+
+public fun add_liquidity_with_receipt<X, Y>(
+    pool: &mut MockDexPool<X, Y>,
+    key: &mut PositionKey,
+    delta_l: u128,
+): (u128, u64, u64, AddLiquidityReceipt<X, Y>) {
+    let (need_x, need_y) = calc_deposit_amounts_by_liquidity(
+        pool,
+        key.tick_a,
+        key.tick_b,
+        delta_l,
+    );
+
+    let new_liquidity = pool.positions[key.idx].liquidity + delta_l;
+    pool.positions[key.idx].liquidity = new_liquidity;
+    key.liquidity = new_liquidity;
+
+    let receipt = AddLiquidityReceipt {
+        pool_id: object::id(pool),
+        need_x,
+        need_y,
+    };
+
+    (delta_l, need_x, need_y, receipt)
+}
+
+public fun add_liquidity_receipt_pay_amounts<X, Y>(
+    receipt: &AddLiquidityReceipt<X, Y>,
+): (u64, u64) {
+    (receipt.need_x, receipt.need_y)
+}
+
+public fun fulfill_add_liquidity_receipt<X, Y>(
+    pool: &mut MockDexPool<X, Y>,
+    receipt: AddLiquidityReceipt<X, Y>,
+    balance_x: Balance<X>,
+    balance_y: Balance<Y>,
+) {
+    let AddLiquidityReceipt { pool_id, need_x, need_y } = receipt;
+
+    assert!(pool_id == object::id(pool));
+    assert!(balance_x.value() == need_x);
+    assert!(balance_y.value() == need_y);
+
+    pool.balance_x.join(balance_x);
+    pool.balance_y.join(balance_y);
 }
 
 public fun remove_liquidity<X, Y>(

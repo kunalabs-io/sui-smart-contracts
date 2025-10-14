@@ -4,7 +4,7 @@ module kai_leverage::mock_dex_integration;
 use access_management::access::ActionRequest;
 use integer_mate::i32::I32;
 use kai_leverage::debt_info::DebtInfo;
-use kai_leverage::mock_dex::{Self, MockDexPool, PositionKey};
+use kai_leverage::mock_dex::{Self, MockDexPool, PositionKey, AddLiquidityReceipt};
 use kai_leverage::position_core_clmm::{
     Self as core,
     PositionConfig,
@@ -296,6 +296,62 @@ public fun reduce<X, Y, SX, SY>(
     )
 }
 
+public fun add_liquidity<X, Y>(
+    position: &mut Position<X, Y, PositionKey>,
+    config: &mut PositionConfig,
+    cap: &PositionCap,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+    mock_dex_pool: &mut MockDexPool<X, Y>,
+    delta_l: u128,
+    balance_x: Balance<X>,
+    balance_y: Balance<Y>,
+) {
+    core::add_liquidity!(
+        position,
+        config,
+        cap,
+        price_info,
+        debt_info,
+        mock_dex_pool,
+        |pool: &mut MockDexPool<X, Y>, lp_position: &mut PositionKey| {
+            let (delta_x, delta_y) = mock_dex::add_liquidity(
+                pool,
+                lp_position,
+                delta_l,
+                balance_x,
+                balance_y,
+            );
+            (delta_l, delta_x, delta_y)
+        },
+    )
+}
+
+public fun add_liquidity_with_receipt<X, Y>(
+    position: &mut Position<X, Y, PositionKey>,
+    config: &mut PositionConfig,
+    cap: &PositionCap,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+    mock_dex_pool: &mut MockDexPool<X, Y>,
+    delta_l: u128,
+): AddLiquidityReceipt<X, Y> {
+    core::add_liquidity_with_receipt!(
+        position,
+        config,
+        cap,
+        price_info,
+        debt_info,
+        mock_dex_pool,
+        |pool: &mut MockDexPool<X, Y>, lp_position: &mut PositionKey| {
+            pool.add_liquidity_with_receipt(
+                lp_position,
+                delta_l,
+            )
+        },
+    )
+}
+
 public fun owner_collect_fee<X, Y>(
     position: &mut Position<X, Y, PositionKey>,
     config: &PositionConfig,
@@ -428,9 +484,9 @@ public fun rebalance_add_liquidity<X, Y>(
             let (delta_x, delta_y) = mock_dex::add_liquidity(
                 pool,
                 lp_position,
+                delta_l,
                 balance_x,
                 balance_y,
-                delta_l,
             );
 
             (delta_l, delta_x, delta_y)

@@ -535,6 +535,57 @@ public fun reduction_ticket_repay_y(
     core::reduction_ticket_repay_y(ticket, &mut self.supply_pool_y, balance, &self.clock);
 }
 
+public fun add_liquidity(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, PositionKey>,
+    config: &mut PositionConfig,
+    cap: &PositionCap,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+    delta_l: u128,
+    balance_x: Balance<SUI>,
+    balance_y: Balance<USDC>,
+) {
+    mock_dex_integration::add_liquidity(
+        position,
+        config,
+        cap,
+        price_info,
+        debt_info,
+        &mut self.mock_dex_pool,
+        delta_l,
+        balance_x,
+        balance_y,
+    );
+}
+
+public fun add_liquidity_with_receipt(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, PositionKey>,
+    config: &mut PositionConfig,
+    cap: &PositionCap,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+    delta_l: u128,
+) {
+    let receipt = mock_dex_integration::add_liquidity_with_receipt(
+        position,
+        config,
+        cap,
+        price_info,
+        debt_info,
+        &mut self.mock_dex_pool,
+        delta_l,
+    );
+    let (amount_x, amount_y) = receipt.pay_amounts();
+    mock_dex::fulfill_add_liquidity_receipt(
+        &mut self.mock_dex_pool,
+        receipt,
+        balance::create_for_testing(amount_x),
+        balance::create_for_testing(amount_y),
+    );
+}
+
 public fun owner_collect_fee(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,

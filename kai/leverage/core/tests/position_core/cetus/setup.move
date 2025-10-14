@@ -622,6 +622,67 @@ public fun reduction_ticket_repay_y(
     core::reduction_ticket_repay_y(ticket, &mut self.supply_pool_y, balance, &self.clock);
 }
 
+public fun add_liquidity(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, CetusPosition>,
+    config: &mut PositionConfig,
+    cap: &PositionCap,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+    delta_l: u128,
+    balance_x: Balance<SUI>,
+    balance_y: Balance<USDC>,
+) {
+    let receipt = cetus::add_liquidity(
+        position,
+        config,
+        cap,
+        price_info,
+        debt_info,
+        &mut self.cetus_pool,
+        &self.cetus_global_config,
+        delta_l,
+        &self.clock,
+    );
+    cetus_pool::repay_add_liquidity(
+        &self.cetus_global_config,
+        &mut self.cetus_pool,
+        balance_x,
+        balance_y,
+        receipt,
+    );
+}
+
+public fun add_liquidity_with_receipt(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, CetusPosition>,
+    config: &mut PositionConfig,
+    cap: &PositionCap,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+    delta_l: u128,
+) {
+    let receipt = cetus::add_liquidity(
+        position,
+        config,
+        cap,
+        price_info,
+        debt_info,
+        &mut self.cetus_pool,
+        &self.cetus_global_config,
+        delta_l,
+        &self.clock,
+    );
+    let (amount_x, amount_y) = receipt.add_liquidity_pay_amount();
+    cetus_pool::repay_add_liquidity(
+        &self.cetus_global_config,
+        &mut self.cetus_pool,
+        balance::create_for_testing(amount_x),
+        balance::create_for_testing(amount_y),
+        receipt,
+    );
+}
+
 public fun owner_collect_fee(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, CetusPosition>,
