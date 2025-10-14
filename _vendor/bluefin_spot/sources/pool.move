@@ -2213,5 +2213,39 @@ module bluefin_spot::pool {
 
     } 
 
-    
+    #[test_only]
+    public fun get_accrued_fee_amount<CoinTypeA, CoinTypeB>(
+        clock: &Clock, pool: &mut Pool<CoinTypeA, CoinTypeB>, position: &mut Position
+    ): (u64, u64) {
+        if (position::liquidity(position) > 0) {
+            let (_, _) = update_data_for_delta_l(clock, pool, position, i128::zero());
+        };
+        // get user fee        
+        let (fee_a, fee_b) = position::get_accrued_fee(position);
+        
+        (fee_a, fee_b)
+    }
+
+    #[test_only]
+    public fun get_accrued_reward_amount<CoinTypeA, CoinTypeB, RewardCoinType>(
+        clock: &Clock, pool: &mut Pool<CoinTypeA, CoinTypeB>, position: &mut Position
+    ): u64 {
+                
+        if (position::liquidity(position) > 0) {
+            let (_, _) = update_data_for_delta_l(clock, pool, position, i128::zero());        
+        };
+
+
+        let pool_reward_infos_len = reward_infos_length(pool);
+        // this loop is to add missing reward info if applicable, inside position's vector when comparing to pool rewards vector
+        while(position::reward_infos_length(position) < pool_reward_infos_len)
+        {
+            position::add_reward_info(position)
+        };
+
+        let reward_index = find_reward_info_index<CoinTypeA, CoinTypeB, RewardCoinType>(pool);
+        let reward_amount = position::coins_owed_reward(position, reward_index);
+
+        reward_amount
+    }
 }

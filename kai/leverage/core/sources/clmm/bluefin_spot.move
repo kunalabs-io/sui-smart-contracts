@@ -714,3 +714,23 @@ public fun calc_liquidate_col_y<X, Y>(
 ): (u64, u64) {
     core::calc_liquidate_col_y!(position, config, price_info, debt_info, max_repayment_amt_x)
 }
+
+/* ================= test ================= */
+
+#[test_only]
+public fun get_accrued_fee<X, Y>(
+    position: &mut Position<X, Y, BluefinPosition>,
+    pool: &mut bluefin_pool::Pool<X, Y>,
+    clock: &Clock,
+): (u64, u64) {
+    bluefin_pool::get_accrued_fee_amount(clock, pool, position.lp_position_mut())
+}
+
+#[test_only]
+public fun get_accrued_rewards<X, Y, R>(
+    position: &mut Position<X, Y, BluefinPosition>,
+    pool: &mut bluefin_pool::Pool<X, Y>,
+    clock: &Clock,
+): u64 {
+    bluefin_pool:: get_accrued_reward_amount<_, _, R>(clock, pool, position.lp_position_mut())
+}
