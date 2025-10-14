@@ -21,18 +21,8 @@ dependencies = [
 ]
 
 [[move.package]]
-id = "BluefinSpot"
-source = { git = "https://github.com/fireflyprotocol/bluefin-spot-contract-interface.git", rev = "dddb0dd", subdir = "" }
-
-dependencies = [
-  { id = "IntegerLibrary", name = "IntegerLibrary" },
-  { id = "IntegerMate", name = "IntegerMate" },
-  { id = "Sui", name = "Sui" },
-]
-
-[[move.package]]
 id = "Bridge"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "2cde80b5766b0bc2073908e10f6e3c81c93fd691", subdir = "crates/sui-framework/packages/bridge" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "f63c9fc78e2171fa174dc43e757ded416c204558", subdir = "crates/sui-framework/packages/bridge" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -87,7 +77,6 @@ source = { local = "../../core" }
 
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
-  { id = "BluefinSpot", name = "BluefinSpot" },
   { id = "CetusClmm", name = "CetusClmm" },
   { id = "DEEP", name = "DEEP" },
   { id = "IntegerMate", name = "IntegerMate" },
@@ -100,6 +89,7 @@ dependencies = [
   { id = "WAL", name = "WAL" },
   { id = "WHUSDCE", name = "WHUSDCE" },
   { id = "WHUSDTE", name = "WHUSDTE" },
+  { id = "bluefin_spot", name = "bluefin_spot" },
   { id = "rate_limiter", name = "rate_limiter" },
   { id = "usdc", name = "usdc" },
   { id = "wBTC", name = "wBTC" },
@@ -150,7 +140,7 @@ dependencies = [
 
 [[move.package]]
 id = "SuiSystem"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "2cde80b5766b0bc2073908e10f6e3c81c93fd691", subdir = "crates/sui-framework/packages/sui-system" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "f63c9fc78e2171fa174dc43e757ded416c204558", subdir = "crates/sui-framework/packages/sui-system" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -225,6 +215,16 @@ dependencies = [
 ]
 
 [[move.package]]
+id = "bluefin_spot"
+source = { local = "../../../../_vendor/bluefin_spot" }
+
+dependencies = [
+  { id = "IntegerLibrary", name = "IntegerLibrary" },
+  { id = "IntegerMate", name = "IntegerMate" },
+  { id = "Sui", name = "Sui" },
+]
+
+[[move.package]]
 id = "rate_limiter"
 source = { local = "../../../../rate-limiter" }
 
@@ -281,7 +281,7 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.55.0"
+compiler-version = "1.57.3"
 edition = "2024.beta"
 flavor = "sui"
 
