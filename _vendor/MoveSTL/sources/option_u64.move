@@ -1,10 +1,7 @@
 module move_stl::option_u64 {
-    #[test_only]
-    use std::option;
-
     const EOptionU64IsNone: u64 = 0;
 
-    struct OptionU64 has copy, drop, store {
+    public struct OptionU64 has copy, drop, store {
         is_none: bool,
         v: u64
     }
@@ -52,25 +49,5 @@ module move_stl::option_u64 {
 
     public fun is_some_and_lte(opt: &OptionU64, v: u64): bool {
         (!opt.is_none) && (opt.v <= v)
-    }
-
-    #[test]
-    fun test_opt() {
-        let a = some(10000u64);
-        let n = 0;
-        while (n < 10000) {
-            _ = borrow(&a);
-            n = n + 1;
-        };
-    }
-
-    #[test]
-    fun test_option_contains() {
-        let a = option::some(100000);
-        let n = 0;
-        while (n < 10000) {
-            option::contains(&a, &100000);
-            n = n + 1;
-        }
     }
 }

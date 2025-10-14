@@ -1,0 +1,12 @@
+# mainnet
+# -------------------------------
+[package]
+name = "IntegerMate"
+version = "1.3.0"
+published-at = "0xdfaadf86be9af246900d1e3f3b996cf549e7948e662a9977bdd7646d8fa3a778"
+edition = "2024"
+
+[dependencies]
+
+[addresses]
+integer_mate = "0x714a63a0dba6da4f017b42d5d0fb78867f18bcde904868e51d951a5a6f5b7f57"
