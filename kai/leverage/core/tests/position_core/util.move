@@ -219,3 +219,16 @@ public fun initialize_config_for_testing(
 
     (sui_pio, usdc_pio, pool, supply_pool_x, supply_pool_y)
 }
+
+/* ================= tick utility functions ================= */
+
+public fun integer_mate_i32_tick_add_int(
+    tick: integer_mate::i32::I32,
+    increment: u32,
+): integer_mate::i32::I32 {
+    tick.add(integer_mate::i32::from(increment))
+}
+
+public fun tick_sub_int(tick: integer_mate::i32::I32, decrement: u32): integer_mate::i32::I32 {
+    tick.sub(integer_mate::i32::from(decrement))
+}

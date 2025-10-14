@@ -49,6 +49,7 @@ public struct Setup {
     supply_pool_x: SupplyPool<SUI, SSUI>,
     supply_pool_y: SupplyPool<USDC, SUSDC>,
     mock_dex_pool: MockDexPool<SUI, USDC>,
+    config_id: ID,
 }
 
 public fun scenario(setup: &Setup): &Scenario {
@@ -103,6 +104,10 @@ public fun clmm_pool(setup: &Setup): &MockDexPool<SUI, USDC> {
     &setup.mock_dex_pool
 }
 
+public fun config_id(setup: &Setup): ID {
+    setup.config_id
+}
+
 public fun ctx(self: &mut Setup): &mut TxContext {
     self.scenario.ctx()
 }
@@ -118,6 +123,7 @@ public fun new_setup(): Setup {
         mut pool,
         supply_pool_x,
         supply_pool_y,
+        config_id,
     ) = position_core_test_util_macros::initialize_config_for_testing!(
         &mut scenario,
         &package_admin,
@@ -162,6 +168,7 @@ public fun new_setup(): Setup {
         supply_pool_x,
         supply_pool_y,
         mock_dex_pool: pool,
+        config_id,
     }
 }
 
@@ -195,6 +202,40 @@ public fun create_position_ticket(
         &self.clock,
         self.scenario.ctx(),
     )
+}
+
+public fun create_position_ticket_with_different_pool(
+    self: &mut Setup,
+    config: &mut PositionConfig,
+    tick_a: I32,
+    tick_b: I32,
+    principal_x: Balance<SUI>,
+    principal_y: Balance<USDC>,
+    delta_l: u128,
+    price_info: &PythPriceInfo,
+): CreatePositionTicket<SUI, USDC, I32> {
+    let mut different_pool = mock_dex::create_mock_dex_pool(
+        self.mock_dex_pool.current_sqrt_price_x64(),
+        50_00,
+        self.scenario.ctx(),
+    );
+
+    // This should abort with e_invalid_pool
+    let ticket = mock_dex_integration::create_position_ticket(
+        &mut different_pool,
+        config,
+        tick_a,
+        tick_b,
+        principal_x,
+        principal_y,
+        delta_l,
+        price_info,
+        &self.clock,
+        self.scenario.ctx(),
+    );
+    destroy_(different_pool);
+
+    ticket
 }
 
 public fun borrow_for_position_x(
@@ -236,6 +277,31 @@ public fun create_position(
         creation_fee,
         self.scenario.ctx(),
     )
+}
+
+public fun create_position_with_different_pool(
+    self: &mut Setup,
+    config: &PositionConfig,
+    ticket: CreatePositionTicket<SUI, USDC, I32>,
+    creation_fee: Balance<SUI>,
+): PositionCap {
+    let mut different_pool = mock_dex::create_mock_dex_pool(
+        self.mock_dex_pool.current_sqrt_price_x64(),
+        50_00,
+        self.scenario.ctx(),
+    );
+
+    // This should abort with e_invalid_pool
+    let cap = mock_dex_integration::create_position(
+        config,
+        ticket,
+        &mut different_pool,
+        creation_fee,
+        self.scenario.ctx(),
+    );
+    destroy_(different_pool);
+
+    cap
 }
 
 public fun debt_info(self: &mut Setup, config: &PositionConfig): DebtInfo {
@@ -522,6 +588,7 @@ public fun destroy(setup: Setup) {
         supply_pool_x,
         supply_pool_y,
         mock_dex_pool,
+        config_id: _,
     } = setup;
     scenario.end();
     destroy_(package_admin);

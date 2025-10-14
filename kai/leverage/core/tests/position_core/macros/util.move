@@ -29,6 +29,7 @@ public macro fun initialize_config_for_testing<$Pool>(
     $Pool,
     SupplyPool<SUI, SSUI>,
     SupplyPool<USDC, SUSDC>,
+    ID,
 ) {
     let clock = $clock;
     let scenario = $scenario;
@@ -84,7 +85,7 @@ public macro fun initialize_config_for_testing<$Pool>(
 
     // configure config
     scenario.next_tx(@0);
-    {
+    let position_config_id = {
         let mut config = scenario.take_shared<PositionConfig>();
 
         config.set_allow_new_positions(true, scenario.ctx()).admin_approve_request(package_admin);
@@ -187,8 +188,10 @@ public macro fun initialize_config_for_testing<$Pool>(
         let request = config.add_create_withdraw_limiter(rate_limiter, scenario.ctx());
         request.admin_approve_request(package_admin);
 
+        let config_id = object::id(&config);
         test_scenario::return_shared(config);
+        config_id
     };
 
-    (sui_pio, usdc_pio, pool, supply_pool_x, supply_pool_y)
+    (sui_pio, usdc_pio, pool, supply_pool_x, supply_pool_y, position_config_id)
 }

@@ -54,6 +54,7 @@ public struct Setup {
     cetus_pool: CetusPool<SUI, USDC>,
     cetus_global_config: CetusGlobalConfig,
     cetus_vault: RewarderGlobalVault,
+    config_id: ID,
 }
 
 public fun scenario(setup: &Setup): &Scenario {
@@ -108,6 +109,10 @@ public fun clmm_pool(setup: &Setup): &CetusPool<SUI, USDC> {
     &setup.cetus_pool
 }
 
+public fun config_id(setup: &Setup): ID {
+    setup.config_id
+}
+
 public fun ctx(self: &mut Setup): &mut TxContext {
     self.scenario.ctx()
 }
@@ -153,6 +158,7 @@ public fun new_setup(): Setup {
         mut pool,
         supply_pool_x,
         supply_pool_y,
+        config_id,
     ) = position_core_test_util_macros::initialize_config_for_testing!(
         &mut scenario,
         &package_admin,
@@ -240,6 +246,7 @@ public fun new_setup(): Setup {
         cetus_pool: pool,
         cetus_global_config,
         cetus_vault,
+        config_id,
     }
 }
 
@@ -275,6 +282,40 @@ public fun create_position_ticket(
     )
 }
 
+public fun create_position_ticket_with_different_pool(
+    self: &mut Setup,
+    config: &mut PositionConfig,
+    tick_a: I32,
+    tick_b: I32,
+    principal_x: Balance<SUI>,
+    principal_y: Balance<USDC>,
+    delta_l: u128,
+    price_info: &PythPriceInfo,
+): CreatePositionTicket<SUI, USDC, I32> {
+    let mut different_pool = create_cetus_pool_for_testing(
+        self.cetus_pool.current_sqrt_price(),
+        &self.clock,
+        self.scenario.ctx(),
+    );
+
+    // This should abort with e_invalid_pool
+    let ticket = cetus::create_position_ticket_v2(
+        &mut different_pool,
+        config,
+        tick_a,
+        tick_b,
+        principal_x,
+        principal_y,
+        delta_l,
+        price_info,
+        &self.clock,
+        self.scenario.ctx(),
+    );
+    destroy_(different_pool);
+
+    ticket
+}
+
 public fun borrow_for_position_x(
     self: &mut Setup,
     ticket: &mut CreatePositionTicket<SUI, USDC, I32>,
@@ -306,6 +347,33 @@ public fun create_position(
         &self.clock,
         self.scenario.ctx(),
     )
+}
+
+public fun create_position_with_different_pool(
+    self: &mut Setup,
+    config: &PositionConfig,
+    ticket: CreatePositionTicket<SUI, USDC, I32>,
+    creation_fee: Balance<SUI>,
+): PositionCap {
+    let mut different_pool = create_cetus_pool_for_testing(
+        self.cetus_pool.current_sqrt_price(),
+        &self.clock,
+        self.scenario.ctx(),
+    );
+
+    // This should abort with e_invalid_pool
+    let cap = cetus::create_position(
+        config,
+        ticket,
+        &mut different_pool,
+        &self.cetus_global_config,
+        creation_fee,
+        &self.clock,
+        self.scenario.ctx(),
+    );
+    destroy_(different_pool);
+
+    cap
 }
 
 public fun debt_info(self: &mut Setup, config: &PositionConfig): DebtInfo {
@@ -614,6 +682,7 @@ public fun destroy(setup: Setup) {
         cetus_pool,
         cetus_global_config,
         cetus_vault,
+        config_id: _,
     } = setup;
     scenario.end();
     destroy_(package_admin);
