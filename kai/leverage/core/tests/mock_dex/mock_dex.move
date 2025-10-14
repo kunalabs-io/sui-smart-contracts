@@ -4,12 +4,21 @@ module kai_leverage::mock_dex;
 use integer_mate::i32::{Self, I32};
 use kai_leverage::balance_bag::{Self, BalanceBag};
 use kai_leverage::mock_dex_math;
+use kai_leverage::util;
+use std::type_name;
 use sui::balance::{Self, Balance};
+use sui::sui::SUI;
 use sui::vec_set;
 
 public use fun position_key_liquidity as PositionKey.liquidity;
 public use fun position_tick_range as PositionKey.tick_range;
 public use fun position_key_idx as PositionKey.idx;
+
+public use fun liquidity_list_item_tick_end as LiquidityListItem.tick_end;
+public use fun liquidity_list_item_liquidity as LiquidityListItem.liquidity;
+
+#[error]
+const ENotEnoughLiquidity: vector<u8> = b"Not enough liquidity in the pool for the swap";
 
 public struct MockDexPosition has store {
     tick_a: I32,
@@ -25,6 +34,7 @@ public struct MockDexPool<phantom X, phantom Y> has key {
     positions: vector<MockDexPosition>,
     balance_x: Balance<X>,
     balance_y: Balance<Y>,
+    swap_fee_bps: u64,
 }
 
 public struct PositionKey has key, store {
@@ -66,6 +76,18 @@ public fun current_tick_index<X, Y>(pool: &MockDexPool<X, Y>): I32 {
 
 public fun current_sqrt_price_x64<X, Y>(pool: &MockDexPool<X, Y>): u128 {
     pool.current_sqrt_price_x64
+}
+
+public fun swap_fee_bps<X, Y>(pool: &MockDexPool<X, Y>): u64 {
+    pool.swap_fee_bps
+}
+
+public fun liquidity_list_item_tick_end(liquidity_list_item: &LiquidityListItem): I32 {
+    liquidity_list_item.tick_end
+}
+
+public fun liquidity_list_item_liquidity(liquidity_list_item: &LiquidityListItem): u128 {
+    liquidity_list_item.liquidity
 }
 
 public fun calc_deposit_amounts_by_liquidity<X, Y>(
@@ -156,6 +178,7 @@ public fun get_liquidity_list_upwards<X, Y>(pool: &MockDexPool<X, Y>): vector<Li
 
 public fun create_mock_dex_pool<X, Y>(
     current_sqrt_price_x64: u128,
+    swap_fee_bps: u64,
     ctx: &mut TxContext,
 ): MockDexPool<X, Y> {
     MockDexPool {
@@ -164,6 +187,7 @@ public fun create_mock_dex_pool<X, Y>(
         positions: vector::empty(),
         balance_x: balance::zero(),
         balance_y: balance::zero(),
+        swap_fee_bps,
     }
 }
 
@@ -252,13 +276,41 @@ public fun remove_liquidity<X, Y>(
     (pool.balance_x.split(amt_x), pool.balance_y.split(amt_y))
 }
 
+fun fee_rate<X, Y>(pool: &MockDexPool<X, Y>): u64 {
+    (pool.swap_fee_bps * mock_dex_math::fee_rate_denominator!()) / 100_00
+}
+
+fun distribute_fee_to_positions_at_tick<X, Y, T>(
+    pool: &mut MockDexPool<X, Y>,
+    tick: I32,
+    mut fee: Balance<T>,
+) {
+    let total_liquidity = pool.liquidity_at_tick(tick);
+    assert!(total_liquidity > 0);
+
+    pool.positions.do_mut!(|position| {
+        if (position.tick_a.lte(tick) && position.tick_b.gt(tick)) {
+            let fee_amount =
+                util::muldiv_u128(
+                    fee.value() as u128,
+                    position.liquidity,
+                    total_liquidity,
+                ) as u64;
+            position.fees.add(fee.split(fee_amount));
+            position.rewards.add(balance::create_for_testing<SUI>(fee_amount / 10));
+        }
+    });
+    // There can be some remaining fee, add it to the first position.
+    pool.positions[0].fees.add(fee);
+}
+
 public fun swap_x_in<X, Y>(pool: &mut MockDexPool<X, Y>, mut balance_in: Balance<X>): Balance<Y> {
     let liquidity_list = pool.get_liquidity_list_downwards();
     assert!(liquidity_list.length() > 0);
 
     let a_to_b = true;
     let by_amount_in = true;
-    let fee_rate = 0;
+    let fee_rate = pool.fee_rate();
 
     let mut balance_out = balance::zero();
 
@@ -271,7 +323,7 @@ public fun swap_x_in<X, Y>(pool: &mut MockDexPool<X, Y>, mut balance_in: Balance
             amount_in,
             amount_out,
             sqrt_price_after_swap_x64,
-            _,
+            fee_amount,
         ) = mock_dex_math::compute_swap_step(
             pool.current_sqrt_price_x64,
             next_tick_sqrt_price_x64,
@@ -284,6 +336,10 @@ public fun swap_x_in<X, Y>(pool: &mut MockDexPool<X, Y>, mut balance_in: Balance
 
         pool.balance_x.join(balance_in.split(amount_in));
         balance_out.join(pool.balance_y.split(amount_out));
+        pool.distribute_fee_to_positions_at_tick(
+            liquidity_info.tick_end,
+            balance_in.split(fee_amount),
+        );
 
         pool.current_sqrt_price_x64 = sqrt_price_after_swap_x64;
 
@@ -294,7 +350,7 @@ public fun swap_x_in<X, Y>(pool: &mut MockDexPool<X, Y>, mut balance_in: Balance
         i = i + 1;
     };
 
-    assert!(balance_in.value() == 0);
+    assert!(balance_in.value() == 0, ENotEnoughLiquidity);
     balance_in.destroy_zero();
 
     balance_out
@@ -306,7 +362,7 @@ public fun swap_y_in<X, Y>(pool: &mut MockDexPool<X, Y>, mut balance_in: Balance
 
     let a_to_b = false;
     let by_amount_in = true;
-    let fee_rate = 0;
+    let fee_rate = pool.fee_rate();
 
     let mut balance_out = balance::zero();
 
@@ -319,7 +375,7 @@ public fun swap_y_in<X, Y>(pool: &mut MockDexPool<X, Y>, mut balance_in: Balance
             amount_in,
             amount_out,
             sqrt_price_after_swap_x64,
-            _,
+            fee_amount,
         ) = mock_dex_math::compute_swap_step(
             pool.current_sqrt_price_x64,
             next_tick_sqrt_price_x64,
@@ -332,6 +388,10 @@ public fun swap_y_in<X, Y>(pool: &mut MockDexPool<X, Y>, mut balance_in: Balance
 
         pool.balance_y.join(balance_in.split(amount_in));
         balance_out.join(pool.balance_x.split(amount_out));
+        pool.distribute_fee_to_positions_at_tick(
+            liquidity_info.tick_end.sub(i32::from(1)),
+            balance_in.split(fee_amount),
+        );
 
         pool.current_sqrt_price_x64 = sqrt_price_after_swap_x64;
 
@@ -342,7 +402,7 @@ public fun swap_y_in<X, Y>(pool: &mut MockDexPool<X, Y>, mut balance_in: Balance
         i = i + 1;
     };
 
-    assert!(balance_in.value() == 0);
+    assert!(balance_in.value() == 0, ENotEnoughLiquidity);
     balance_in.destroy_zero();
 
     balance_out
@@ -366,6 +426,13 @@ public fun add_reward_to_position<X, Y, T>(
     pool.positions[position_idx].rewards.add(rewards);
 }
 
+public fun position_fees<X, Y>(pool: &MockDexPool<X, Y>, position: &PositionKey): (u64, u64) {
+    (
+        pool.positions[position.idx].fees.amounts()[&type_name::with_defining_ids<X>()],
+        pool.positions[position.idx].fees.amounts()[&type_name::with_defining_ids<Y>()],
+    )
+}
+
 public fun collect_fees<X, Y>(
     pool: &mut MockDexPool<X, Y>,
     position_key: &PositionKey,
@@ -374,6 +441,10 @@ public fun collect_fees<X, Y>(
         pool.positions[position_key.idx].fees.take_all(),
         pool.positions[position_key.idx].fees.take_all(),
     )
+}
+
+public fun position_rewards<X, Y, T>(pool: &MockDexPool<X, Y>, position: &PositionKey): u64 {
+    pool.positions[position.idx].rewards.amounts()[&type_name::with_defining_ids<T>()]
 }
 
 public fun collect_reward<X, Y, T>(

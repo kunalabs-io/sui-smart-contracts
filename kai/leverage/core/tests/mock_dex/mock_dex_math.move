@@ -24,6 +24,10 @@ const MAX_SQRT_PRICE_X64: u128 = 79226673515401279992447579055;
 const MIN_SQRT_PRICE_X64: u128 = 4295048016;
 const FEE_RATE_DENOMINATOR: u64 = 1000000;
 
+public macro fun fee_rate_denominator(): u64 {
+    1000000
+}
+
 /* ================= tick math ================= */
 
 macro fun as_u8($b: bool): u8 {

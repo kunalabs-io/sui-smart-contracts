@@ -1,11 +1,10 @@
 #[test_only]
-module kai_leverage::position_core_test_util;
+module kai_leverage::position_core_test_util_macros;
 
-use access_management::access::{Self, PackageAdmin};
-use kai_leverage::mock_dex::{Self, MockDexPool};
+use access_management::access::PackageAdmin;
 use kai_leverage::piecewise;
 use kai_leverage::position_core_clmm::{Self as core, PositionConfig};
-use kai_leverage::pyth;
+use kai_leverage::position_core_test_util;
 use kai_leverage::pyth_test_util;
 use kai_leverage::supply_pool::SupplyPool;
 use kai_leverage::supply_pool_tests::{Self, SSUI, SUSDC};
@@ -19,51 +18,22 @@ use sui::sui::SUI;
 use sui::test_scenario::{Self, Scenario};
 use usdc::usdc::USDC;
 
-// Converts a price (multiplied by 100 in human format) to sqrt_price_x64 format.
-public fun price_mul_100_human_to_sqrt_x64<X, Y>(price: u64): u128 {
-    let decimals_x = pyth::decimals(type_name::with_defining_ids<X>());
-    let decimals_y = pyth::decimals(type_name::with_defining_ids<Y>());
-
-    let price_x64 = if (decimals_x > decimals_y) {
-        ((price as u128) << 64) / 10_u128.pow(decimals_x - decimals_y) / 100
-    } else {
-        ((price as u128) << 64) * 10_u128.pow(decimals_y - decimals_x) / 100
-    };
-
-    price_x64.sqrt() << 32
-}
-
-public fun sqrt_price_x64_to_price_human_mul_n<X, Y>(sqrt_price_x64: u128, n: u8): u64 {
-    let decimals_x = pyth::decimals(type_name::with_defining_ids<X>());
-    let decimals_y = pyth::decimals(type_name::with_defining_ids<Y>());
-
-    let price_x128 = (sqrt_price_x64 as u256) * (sqrt_price_x64 as u256);
-    let price = (if (decimals_x > decimals_y) {
-            (price_x128 * 10_u256.pow(decimals_x - decimals_y + n)) >> 128
-        } else if ((decimals_y - decimals_x) <= n) {
-            (price_x128 / 10_u256.pow(n - (decimals_y - decimals_x))) >> 128
-        } else {
-            (price_x128 / 10_u256.pow(decimals_y - decimals_x - n)) >> 128
-        }) as u64;
-
-    price
-}
-
-public fun create_admin_for_testing(ctx: &mut TxContext): PackageAdmin {
-    access::create_admin_for_testing<kai_leverage::access_init::ACCESS_INIT>(ctx)
-}
-
-public fun initialize_config_for_testing(
-    scenario: &mut Scenario,
-    package_admin: &PackageAdmin,
-    clock: &Clock,
+public macro fun initialize_config_for_testing<$Pool>(
+    $scenario: &mut Scenario,
+    $package_admin: &PackageAdmin,
+    $clock: &Clock,
+    $create_pool: |u128, &Clock, &mut TxContext| -> $Pool,
 ): (
     PriceInfoObject,
     PriceInfoObject,
-    MockDexPool<SUI, USDC>,
+    $Pool,
     SupplyPool<SUI, SSUI>,
     SupplyPool<USDC, SUSDC>,
 ) {
+    let clock = $clock;
+    let scenario = $scenario;
+    let package_admin = $package_admin;
+
     let (sui_pio, usdc_pio, pool, mut supply_pool_x, mut supply_pool_y) = {
         let sui_pio = pyth_test_util::create_pyth_pio_with_price_human_mul_100(
             3_50,
@@ -76,11 +46,14 @@ public fun initialize_config_for_testing(
             scenario.ctx(),
         );
 
-        let current_sqrt_price_x64 = price_mul_100_human_to_sqrt_x64<SUI, USDC>(3_50);
-        let swap_fee_bps = 0;
-        let pool = mock_dex::create_mock_dex_pool<SUI, USDC>(
+        let current_sqrt_price_x64 = position_core_test_util::price_mul_100_human_to_sqrt_x64<
+            SUI,
+            USDC,
+        >(3_50);
+
+        let pool = $create_pool(
             current_sqrt_price_x64,
-            swap_fee_bps,
+            clock,
             scenario.ctx(),
         );
 
