@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "D4642AA600AEF03CB2DD3D3FB99C067ACD599E6B05EA9C0DD293430FD4F8EF1C"
+manifest_digest = "4ABB82BF43C9D319A18AD00F6A1A8E3607610BE5781F6FD848B17A8E1516D88F"
 deps_digest = "5644D8F82FD4EE1CAA4A3A54F9B0AA05F59B03EA0BDB596C4AD151FF0689910B"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
@@ -59,9 +59,12 @@ id = "CetusClmm"
 source = { local = "../../../_vendor/CetusClmm" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
   { id = "IntegerMate", name = "IntegerMate" },
   { id = "MoveSTL", name = "MoveSTL" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -83,10 +86,13 @@ dependencies = [
 
 [[move.package]]
 id = "IntegerMate"
-source = { git = "https://github.com/CetusProtocol/integer-mate", rev = "c502cff", subdir = "sui" }
+source = { local = "../../../_vendor/IntegerMate" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -103,7 +109,10 @@ id = "MoveSTL"
 source = { local = "../../../_vendor/MoveSTL" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
