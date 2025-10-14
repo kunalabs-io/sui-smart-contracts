@@ -447,43 +447,20 @@ public fun add_liquidity<X, Y>(
     )
 }
 
-/// Add liquidity to the inner LP position with a fixed coin amount.
+#[deprecated(note = b"Use `add_liquidity` instead.")]
 public fun add_liquidity_fix_coin<X, Y>(
-    position: &mut Position<X, Y, CetusPosition>,
-    config: &mut PositionConfig,
-    cap: &PositionCap,
-    price_info: &PythPriceInfo,
-    debt_info: &DebtInfo,
-    cetus_pool: &mut cetus_pool::Pool<X, Y>,
-    cetus_config: &cetus_config::GlobalConfig,
-    amount: u64,
-    fix_amount_x: bool,
-    clock: &Clock,
+    _position: &mut Position<X, Y, CetusPosition>,
+    _config: &mut PositionConfig,
+    _cap: &PositionCap,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _cetus_pool: &mut cetus_pool::Pool<X, Y>,
+    _cetus_config: &cetus_config::GlobalConfig,
+    _amount: u64,
+    _fix_amount_x: bool,
+    _clock: &Clock,
 ): cetus_pool::AddLiquidityReceipt<X, Y> {
-    core::add_liquidity_with_receipt!(
-        position,
-        config,
-        cap,
-        price_info,
-        debt_info,
-        cetus_pool,
-        |pool: &mut cetus_pool::Pool<X, Y>, lp_position: &mut CetusPosition| {
-            let l_init = lp_position.liquidity();
-            let receipt = cetus_pool::add_liquidity_fix_coin(
-                cetus_config,
-                pool,
-                lp_position,
-                amount,
-                fix_amount_x,
-                clock,
-            );
-            let l_end = lp_position.liquidity();
-            let delta_l = l_end - l_init;
-            let (delta_x, delta_y) = receipt.add_liquidity_pay_amount();
-
-            (delta_l, delta_x, delta_y, receipt)
-        },
-    )
+    abort e_function_deprecated!()
 }
 
 /// Repay as much X token debt as possible using the available balance.
@@ -658,43 +635,20 @@ public fun rebalance_add_liquidity<X, Y>(
     )
 }
 
-/// Adds liquidity to a the underlying LP position during rebalancing with a fixed coin amount.
+#[deprecated(note = b"Use `rebalance_add_liquidity` instead.")]
 public fun rebalance_add_liquidity_by_fix_coin<X, Y>(
-    position: &mut Position<X, Y, CetusPosition>,
-    config: &mut PositionConfig,
-    receipt: &mut RebalanceReceipt,
-    price_info: &PythPriceInfo,
-    debt_info: &DebtInfo,
-    cetus_pool: &mut cetus_pool::Pool<X, Y>,
-    cetus_config: &cetus_config::GlobalConfig,
-    amount: u64,
-    fix_amount_x: bool,
-    clock: &Clock,
+    _position: &mut Position<X, Y, CetusPosition>,
+    _config: &mut PositionConfig,
+    _receipt: &mut RebalanceReceipt,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _cetus_pool: &mut cetus_pool::Pool<X, Y>,
+    _cetus_config: &cetus_config::GlobalConfig,
+    _amount: u64,
+    _fix_amount_x: bool,
+    _clock: &Clock,
 ): cetus_pool::AddLiquidityReceipt<X, Y> {
-    core::rebalance_add_liquidity_with_receipt!(
-        position,
-        config,
-        receipt,
-        price_info,
-        debt_info,
-        cetus_pool,
-        |pool: &mut cetus_pool::Pool<X, Y>, lp_position: &mut CetusPosition| {
-            let l_init = lp_position.liquidity();
-            let receipt = cetus_pool::add_liquidity_fix_coin(
-                cetus_config,
-                pool,
-                lp_position,
-                amount,
-                fix_amount_x,
-                clock,
-            );
-            let l_end = lp_position.liquidity();
-            let delta_l = l_end - l_init;
-            let (delta_x, delta_y) = receipt.add_liquidity_pay_amount();
-
-            (delta_l, delta_x, delta_y, receipt)
-        },
-    )
+    abort e_function_deprecated!()
 }
 
 /* ================= cetus incident recovery ================= */
