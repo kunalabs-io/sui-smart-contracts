@@ -29,6 +29,13 @@ use fun cetus_clmm::tick_math::get_sqrt_price_at_tick as integer_mate::i32::I32.
 use fun kai_leverage::cetus::calc_deposit_amounts_by_liquidity as
     cetus_clmm::pool::Pool.calc_deposit_amounts_by_liquidity;
 
+// bluefin
+use fun bluefin_spot::pool::current_sqrt_price as bluefin_spot::pool::Pool.current_sqrt_price_x64;
+use fun kai_leverage::bluefin_spot::calc_deposit_amounts_by_liquidity as
+    bluefin_spot::pool::Pool.calc_deposit_amounts_by_liquidity;
+use fun kai_leverage::bluefin_spot::position_tick_range as
+    bluefin_spot::position::Position.tick_range;
+
 public macro fun q64(): u128 {
     1 << 64
 }

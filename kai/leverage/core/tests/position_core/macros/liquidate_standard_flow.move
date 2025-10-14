@@ -21,6 +21,9 @@ use usdc::usdc::USDC;
 use fun cetus_clmm::pool::current_sqrt_price as cetus_clmm::pool::Pool.current_sqrt_price_x64;
 use fun cetus_clmm::pool::liquidity as cetus_clmm::pool::Pool.active_liquidity;
 
+// bluefin
+use fun bluefin_spot::pool::current_sqrt_price as bluefin_spot::pool::Pool.current_sqrt_price_x64;
+
 public macro fun liquidate_col_x_standard_flow<$Setup>($setup: &mut $Setup): PositionCap {
     let setup = $setup;
 

@@ -16,8 +16,13 @@ use sui::bcs;
 
 use fun integer_mate_i32_tick_add_int as integer_mate::i32::I32.add_int;
 
+// cetus
 use fun kai_leverage::cetus::calc_deposit_amounts_by_liquidity as
     cetus_clmm::pool::Pool.calc_deposit_amounts_by_liquidity;
+
+// bluefin
+use fun kai_leverage::bluefin_spot::calc_deposit_amounts_by_liquidity as
+    bluefin_spot::pool::Pool.calc_deposit_amounts_by_liquidity;
 
 public macro fun create_position_ticket_aborts_when_oracle_price_too_high<$Setup>(
     $setup: &mut $Setup,
