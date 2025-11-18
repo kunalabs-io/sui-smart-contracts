@@ -13,6 +13,9 @@ use usdc::usdc::USDC;
 public struct SSUI has drop {}
 public struct SUSDC has drop {}
 
+public struct WRONG_SSUI has drop {}
+public struct WRONG_SUSDC has drop {}
+
 public fun create_sui_supply_pool_for_testing(): SupplyPool<SUI, SSUI> {
     let mut test = test_scenario::begin(@0);
 
@@ -28,12 +31,42 @@ public fun create_sui_supply_pool_for_testing(): SupplyPool<SUI, SSUI> {
     pool
 }
 
+public fun create_wrong_sui_supply_pool_for_testing(): SupplyPool<SUI, WRONG_SSUI> {
+    let mut test = test_scenario::begin(@0);
+
+    let treasury = equity::create_treasury_for_testing<WRONG_SSUI>(test.ctx());
+
+    let request = supply_pool::create_pool<SUI, WRONG_SSUI>(treasury, test.ctx());
+    destroy(request);
+
+    test.next_tx(@0);
+    let pool = test.take_shared();
+    test.end();
+
+    pool
+}
+
 public fun create_usdc_supply_pool_for_testing(): SupplyPool<USDC, SUSDC> {
     let mut test = test_scenario::begin(@0);
 
     let treasury = equity::create_treasury_for_testing<SUSDC>(test.ctx());
 
     let request = supply_pool::create_pool<USDC, SUSDC>(treasury, test.ctx());
+    destroy(request);
+
+    test.next_tx(@0);
+    let pool = test.take_shared();
+    test.end();
+
+    pool
+}
+
+public fun create_wrong_usdc_supply_pool_for_testing(): SupplyPool<USDC, WRONG_SUSDC> {
+    let mut test = test_scenario::begin(@0);
+
+    let treasury = equity::create_treasury_for_testing<WRONG_SUSDC>(test.ctx());
+
+    let request = supply_pool::create_pool<USDC, WRONG_SUSDC>(treasury, test.ctx());
     destroy(request);
 
     test.next_tx(@0);

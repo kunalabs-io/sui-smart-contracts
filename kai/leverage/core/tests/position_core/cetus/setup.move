@@ -30,14 +30,14 @@ use kai_leverage::position_model_clmm::PositionModel;
 use kai_leverage::pyth::{Self, PythPriceInfo};
 use kai_leverage::pyth_test_util;
 use kai_leverage::supply_pool::SupplyPool;
-use kai_leverage::supply_pool_tests::{SSUI, SUSDC};
+use kai_leverage::supply_pool_tests::{Self, SSUI, SUSDC};
 use kai_leverage::util;
 use pyth::price_info::PriceInfoObject;
 use std::u128;
 use sui::balance::{Self, Balance};
 use sui::clock::{Self, Clock};
 use sui::sui::SUI;
-use sui::test_scenario::{Self, Scenario};
+use sui::test_scenario::{Self, Scenario, TransactionEffects};
 use sui::test_utils::destroy as destroy_;
 use usdc::usdc::USDC;
 
@@ -250,8 +250,8 @@ public fun new_setup(): Setup {
     }
 }
 
-public fun next_tx(self: &mut Setup, sender: address) {
-    self.scenario.next_tx(sender);
+public fun next_tx(self: &mut Setup, sender: address): TransactionEffects {
+    self.scenario.next_tx(sender)
 }
 
 public fun take_shared_position(self: &Setup): Position<SUI, USDC, CetusPosition> {
@@ -402,7 +402,10 @@ public fun position_model(
     cetus::position_model(position, config, &self.debt_info(config))
 }
 
-public fun get_lp_fee_amounts(self: &mut Setup, position: &mut Position<SUI, USDC, CetusPosition>): (u64, u64) {
+public fun get_lp_fee_amounts(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, CetusPosition>,
+): (u64, u64) {
     cetus_pool::calculate_and_update_fee(
         &self.cetus_global_config,
         &mut self.cetus_pool,
@@ -410,7 +413,10 @@ public fun get_lp_fee_amounts(self: &mut Setup, position: &mut Position<SUI, USD
     )
 }
 
-public fun get_lp_reward_amount<R>(self: &mut Setup, position: &mut Position<SUI, USDC, CetusPosition>): u64 {
+public fun get_lp_reward_amount<R>(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, CetusPosition>,
+): u64 {
     cetus_pool::calculate_and_update_reward<_, _, R>(
         &self.cetus_global_config,
         &mut self.cetus_pool,
@@ -1198,6 +1204,113 @@ public fun swap_to_sqrt_price_x64_is_correct() {
     };
 
     setup.destroy();
+}
+
+/* ================= deleverage helper functions ================= */
+
+public fun create_deleverage_ticket_with_different_pool(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, CetusPosition>,
+    config: &mut PositionConfig,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+    max_delta_l: u128,
+): (DeleverageTicket, ActionRequest) {
+    let mut different_pool = create_cetus_pool_for_testing(
+        self.cetus_pool.current_sqrt_price(),
+        &self.clock,
+        self.scenario.ctx(),
+    );
+
+    // This should abort with e_invalid_pool
+    let (ticket, request) = cetus::create_deleverage_ticket(
+        position,
+        config,
+        price_info,
+        debt_info,
+        &mut different_pool,
+        &self.cetus_global_config,
+        max_delta_l,
+        &self.clock,
+        self.scenario.ctx(),
+    );
+
+    destroy_(different_pool);
+    (ticket, request)
+}
+
+public fun create_deleverage_ticket_for_liquidation_with_different_pool(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, CetusPosition>,
+    config: &mut PositionConfig,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+): DeleverageTicket {
+    let mut different_pool = create_cetus_pool_for_testing(
+        self.cetus_pool.current_sqrt_price(),
+        &self.clock,
+        self.scenario.ctx(),
+    );
+
+    // This should abort with e_invalid_pool
+    let ticket = cetus::create_deleverage_ticket_for_liquidation(
+        position,
+        config,
+        price_info,
+        debt_info,
+        &mut different_pool,
+        &self.cetus_global_config,
+        &self.clock,
+    );
+
+    destroy_(different_pool);
+    ticket
+}
+
+public fun take_shared_position_by_cap(
+    self: &mut Setup,
+    position_cap: &PositionCap,
+): Position<SUI, USDC, CetusPosition> {
+    self.scenario.take_shared_by_id(position_cap.position_id())
+}
+
+public fun deleverage_ticket_repay_x_with_wrong_supply_pool(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, CetusPosition>,
+    config: &PositionConfig,
+    ticket: &mut DeleverageTicket,
+) {
+    // Create a wrong supply pool with a different ID
+    let mut wrong_supply_pool = supply_pool_tests::create_wrong_sui_supply_pool_for_testing();
+
+    core::deleverage_ticket_repay_x(
+        position,
+        config,
+        ticket,
+        &mut wrong_supply_pool,
+        &self.clock,
+    );
+    destroy_(wrong_supply_pool);
+}
+
+public fun deleverage_ticket_repay_y_with_wrong_supply_pool(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, CetusPosition>,
+    config: &PositionConfig,
+    ticket: &mut DeleverageTicket,
+) {
+    // Create a wrong supply pool with a different ID
+    let mut wrong_supply_pool = supply_pool_tests::create_wrong_usdc_supply_pool_for_testing();
+
+    core::deleverage_ticket_repay_y(
+        position,
+        config,
+        ticket,
+        &mut wrong_supply_pool,
+        &self.clock,
+    );
+
+    destroy_(wrong_supply_pool);
 }
 
 /* ================= bad debt functions ================= */
