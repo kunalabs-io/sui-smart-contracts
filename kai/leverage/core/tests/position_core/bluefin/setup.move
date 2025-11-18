@@ -1278,6 +1278,56 @@ public fun repay_bad_debt_y(
     )
 }
 
+public fun repay_bad_debt_x_with_wrong_supply_pool(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, BluefinPosition>,
+    config: &PositionConfig,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+    repayment: &mut Balance<SUI>,
+): ActionRequest {
+    let mut wrong_supply_pool = supply_pool_tests::create_wrong_sui_supply_pool_for_testing();
+
+    // This should abort with e_supply_pool_mismatch
+    let request = bluefin_spot::repay_bad_debt_x(
+        position,
+        config,
+        price_info,
+        debt_info,
+        &mut wrong_supply_pool,
+        repayment,
+        &self.clock,
+        self.scenario.ctx(),
+    );
+    destroy_(wrong_supply_pool);
+    request
+}
+
+public fun repay_bad_debt_y_with_wrong_supply_pool(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, BluefinPosition>,
+    config: &PositionConfig,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+    repayment: &mut Balance<USDC>,
+): ActionRequest {
+    let mut wrong_supply_pool = supply_pool_tests::create_wrong_usdc_supply_pool_for_testing();
+
+    // This should abort with e_supply_pool_mismatch
+    let request = bluefin_spot::repay_bad_debt_y(
+        position,
+        config,
+        price_info,
+        debt_info,
+        &mut wrong_supply_pool,
+        repayment,
+        &self.clock,
+        self.scenario.ctx(),
+    );
+    destroy_(wrong_supply_pool);
+    request
+}
+
 /* ================= tests ================= */
 
 #[test]

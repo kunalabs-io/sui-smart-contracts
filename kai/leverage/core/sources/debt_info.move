@@ -115,3 +115,9 @@ public fun calc_repay_by_amount(self: &ValidatedDebtInfo, `type`: TypeName, amou
 public fun testing_calc_repay_x64(self: &ValidatedDebtInfo, `type`: TypeName, share_value_x64: u128): u128 {
     calc_repay_x64(self, `type`, share_value_x64)
 }
+
+#[test_only]
+public fun supply_x64(self: &ValidatedDebtInfo, `type`: TypeName): u128 {
+    let entry = &self.map[&`type`];
+    entry.supply_x64
+}
