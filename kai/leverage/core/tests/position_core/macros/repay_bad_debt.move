@@ -508,7 +508,7 @@ public macro fun repay_bad_debt_x_aborts_when_supply_pool_mismatch<$Setup>($setu
     destroy(position_cap);
 }
 
-public macro fun repay_bad_debt_x_aborts_when_position_not_fully_deleveraged<$Setup>(
+public macro fun repay_bad_debt_x_aborts_when_position_not_fully_liquidated<$Setup>(
     $setup: &mut $Setup,
 ) {
     let setup = $setup;
@@ -532,7 +532,15 @@ public macro fun repay_bad_debt_x_aborts_when_position_not_fully_deleveraged<$Se
         let model = setup.position_model(&position, &config);
         assert!(!model.is_fully_deleveraged()); // Sanity check
 
-        // This should abort with e_position_not_fully_deleveraged
+        // Verify position is below bad debt threshold
+        let p_x128 = config.validate_price_info(&price_info).div_price_numeric_x128(
+            type_name::with_defining_ids<SUI>(),
+            type_name::with_defining_ids<USDC>(),
+        );
+        let crit_margin_bps = 10000 + config.liq_bonus_bps();
+        assert!(model.margin_below_threshold(p_x128, crit_margin_bps));
+
+        // This should abort with e_no_bad_debt_or_not_fully_liquidated
         let mut repayment_x = balance::create_for_testing(100_000000000);
         let request = setup.repay_bad_debt_x(
             &mut position,
@@ -592,6 +600,62 @@ public macro fun repay_bad_debt_x_aborts_when_position_not_below_bad_debt_thresh
         assert!(!model.margin_below_threshold(p_x128, crit_margin_bps));
 
         // This should abort with e_position_not_below_bad_debt_threshold
+        let mut repayment_x = balance::create_for_testing(100_000000000);
+        let request = setup.repay_bad_debt_x(
+            &mut position,
+            &config,
+            &price_info,
+            &debt_info,
+            &mut repayment_x,
+        );
+
+        request.admin_approve_request(setup.package_admin());
+
+        test_scenario::return_shared(position);
+        test_scenario::return_shared(config);
+        destroy(repayment_x);
+    };
+
+    destroy(position_cap);
+}
+
+public macro fun repay_bad_debt_x_aborts_when_fully_liquidated_but_no_bad_debt<$Setup>(
+    $setup: &mut $Setup,
+) {
+    let setup = $setup;
+
+    // Create position and trigger liquidation
+    let position_cap = create_position_for_repay_bad_debt_x_tests!(setup);
+    
+    // Move price to trigger liquidation, but not necessarily bad debt threshold
+    // After liquidation, all debt should be paid off (no bad debt)
+    setup.next_tx(@0);
+    {
+        setup.swap_to_sqrt_price_x64(price_mul_100_human_to_sqrt_x64<SUI, USDC>(5_54));
+        setup.sync_pyth_pio_price_x_to_pool();
+    };
+
+    deleverage_and_liquidate!(setup);
+
+    setup.next_tx(@0);
+    {
+        let mut position = setup.take_shared_position();
+        let config: PositionConfig = setup.scenario().take_shared();
+
+        // Verify position is fully liquidated, but has some collateral left
+        assert!(position.lp_position().liquidity() == 0);
+        assert!(position.col_x().value() == 0);
+        assert!(position.col_y().value() > 0);
+
+        // Verify no debt remaining
+        assert!(position.debt_bag().get_share_amount_by_asset_type<SUI>() == 0);
+        assert!(position.debt_bag().get_share_amount_by_asset_type<USDC>() == 0);
+        assert!(position_has_bad_debt!(&position) == false);
+
+        let debt_info = setup.debt_info(&config);
+        let price_info = setup.price_info();
+
+        // This should abort with e_no_bad_debt_or_not_fully_liquidated
         let mut repayment_x = balance::create_for_testing(100_000000000);
         let request = setup.repay_bad_debt_x(
             &mut position,
@@ -911,7 +975,7 @@ public macro fun repay_bad_debt_y_aborts_when_supply_pool_mismatch<$Setup>($setu
     destroy(position_cap);
 }
 
-public macro fun repay_bad_debt_y_aborts_when_position_not_fully_deleveraged<$Setup>(
+public macro fun repay_bad_debt_y_aborts_when_position_not_fully_liquidated<$Setup>(
     $setup: &mut $Setup,
 ) {
     let setup = $setup;
@@ -935,7 +999,15 @@ public macro fun repay_bad_debt_y_aborts_when_position_not_fully_deleveraged<$Se
         let model = setup.position_model(&position, &config);
         assert!(!model.is_fully_deleveraged()); // Sanity check
 
-        // This should abort with e_position_not_fully_deleveraged
+        // Verify position is below bad debt threshold
+        let p_x128 = config.validate_price_info(&price_info).div_price_numeric_x128(
+            type_name::with_defining_ids<SUI>(),
+            type_name::with_defining_ids<USDC>(),
+        );
+        let crit_margin_bps = 10000 + config.liq_bonus_bps();
+        assert!(model.margin_below_threshold(p_x128, crit_margin_bps));
+
+        // This should abort with e_no_bad_debt_or_not_fully_liquidated
         let mut repayment_y = balance::create_for_testing(100_000000);
         let request = setup.repay_bad_debt_y(
             &mut position,
@@ -995,6 +1067,62 @@ public macro fun repay_bad_debt_y_aborts_when_position_not_below_bad_debt_thresh
         assert!(!model.margin_below_threshold(p_x128, crit_margin_bps));
 
         // This should abort with e_position_not_below_bad_debt_threshold
+        let mut repayment_y = balance::create_for_testing(100_000000);
+        let request = setup.repay_bad_debt_y(
+            &mut position,
+            &config,
+            &price_info,
+            &debt_info,
+            &mut repayment_y,
+        );
+
+        request.admin_approve_request(setup.package_admin());
+
+        test_scenario::return_shared(position);
+        test_scenario::return_shared(config);
+        destroy(repayment_y);
+    };
+
+    destroy(position_cap);
+}
+
+public macro fun repay_bad_debt_y_aborts_when_fully_liquidated_but_no_bad_debt<$Setup>(
+    $setup: &mut $Setup,
+) {
+    let setup = $setup;
+
+    // Create position and trigger liquidation
+    let position_cap = create_position_for_repay_bad_debt_y_tests!(setup);
+    
+    // Move price to trigger liquidation, but not necessarily bad debt threshold
+    // After liquidation, all debt should be paid off (no bad debt)
+    setup.next_tx(@0);
+    {
+        setup.swap_to_sqrt_price_x64(price_mul_100_human_to_sqrt_x64<SUI, USDC>(2_00));
+        setup.sync_pyth_pio_price_x_to_pool();
+    };
+
+    deleverage_and_liquidate!(setup);
+
+    setup.next_tx(@0);
+    {
+        let mut position = setup.take_shared_position();
+        let config: PositionConfig = setup.scenario().take_shared();
+
+        // Verify position is fully liquidated, but has some collateral left
+        assert!(position.lp_position().liquidity() == 0);
+        assert!(position.col_x().value() > 0);
+        assert!(position.col_y().value() == 0);
+
+        // Verify no debt remaining
+        assert!(position.debt_bag().get_share_amount_by_asset_type<SUI>() == 0);
+        assert!(position.debt_bag().get_share_amount_by_asset_type<USDC>() == 0);
+        assert!(position_has_bad_debt!(&position) == false);
+
+        let debt_info = setup.debt_info(&config);
+        let price_info = setup.price_info();
+
+        // This should abort with e_no_bad_debt_or_not_fully_liquidated
         let mut repayment_y = balance::create_for_testing(100_000000);
         let request = setup.repay_bad_debt_y(
             &mut position,

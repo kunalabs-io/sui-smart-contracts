@@ -216,8 +216,8 @@ public(package) macro fun e_supply_pool_mismatch(): u64 {
 public(package) macro fun e_position_not_fully_deleveraged(): u64 {
     21
 }
-/// The position's margin is not sufficiently low to qualify as bad debt.
-public(package) macro fun e_position_not_below_bad_debt_threshold(): u64 {
+/// The position must have no bad debt or be fully liquidated before this operation can proceed.
+public(package) macro fun e_no_bad_debt_or_not_fully_liquidated(): u64 {
     22
 }
 /// Liquidation actions are currently disabled for this position.
@@ -2823,8 +2823,6 @@ public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
 public(package) macro fun repay_bad_debt<$X, $Y, $T, $ST, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &PositionConfig,
-    $price_info: &PythPriceInfo,
-    $debt_info: &DebtInfo,
     $supply_pool: &mut SupplyPool<$T, $ST>,
     $repayment: &mut Balance<$T>,
     $clock: &Clock,
@@ -2842,21 +2840,14 @@ public(package) macro fun repay_bad_debt<$X, $Y, $T, $ST, $LP>(
         e_supply_pool_mismatch!(),
     );
 
-    let price_info = validate_price_info(config, $price_info);
-    let debt_info = validate_debt_info(config, $debt_info);
-    let model = model_from_position!(position, &debt_info);
-
-    assert!(model.is_fully_deleveraged(), e_position_not_fully_deleveraged!());
-
-    let p_x128 = price_info.div_price_numeric_x128(
-        type_name::with_defining_ids<$X>(),
-        type_name::with_defining_ids<$Y>(),
-    );
-    let crit_margin_bps = 10000 + config.liq_bonus_bps();
-    assert!(
-        model.margin_below_threshold(p_x128, crit_margin_bps),
-        e_position_not_below_bad_debt_threshold!(),
-    );
+    let l = position.lp_position().liquidity();
+    let cx = position.col_x().value();
+    let cy = position.col_y().value();
+    let sx = position.debt_bag().get_share_amount_by_asset_type<$X>();
+    let sy = position.debt_bag().get_share_amount_by_asset_type<$Y>();
+    let has_assets = l > 0 || cx > 0 || cy > 0;
+    let has_debt = sx > 0 || sy > 0;
+    assert!(has_assets == false && has_debt == true, e_no_bad_debt_or_not_fully_liquidated!());
 
     let mut debt_shares = position.debt_bag_mut().take_all();
     if (debt_shares.value_x64() == 0) {

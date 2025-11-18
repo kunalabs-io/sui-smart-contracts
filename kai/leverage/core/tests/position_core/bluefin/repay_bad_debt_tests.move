@@ -44,11 +44,11 @@ fun repay_bad_debt_x_aborts_when_supply_pool_mismatch() {
     setup.destroy();
 }
 
-#[test, expected_failure(abort_code = 21, location = bluefin_spot)] // e_position_not_fully_deleveraged
-fun repay_bad_debt_x_aborts_when_position_not_fully_deleveraged() {
+#[test, expected_failure(abort_code = 22, location = bluefin_spot)] // e_no_bad_debt_or_not_fully_liquidated
+fun repay_bad_debt_x_aborts_when_position_not_fully_liquidated() {
     let mut setup = position_core_bluefin_test_setup::new_setup();
 
-    macros::repay_bad_debt_x_aborts_when_position_not_fully_deleveraged!(&mut setup);
+    macros::repay_bad_debt_x_aborts_when_position_not_fully_liquidated!(&mut setup);
 
     setup.destroy();
 }
@@ -58,6 +58,15 @@ fun repay_bad_debt_x_aborts_when_position_not_below_bad_debt_threshold() {
     let mut setup = position_core_bluefin_test_setup::new_setup();
 
     macros::repay_bad_debt_x_aborts_when_position_not_below_bad_debt_threshold!(&mut setup);
+
+    setup.destroy();
+}
+
+#[test, expected_failure(abort_code = 22, location = bluefin_spot)] // e_no_bad_debt_or_not_fully_liquidated
+fun repay_bad_debt_x_aborts_when_fully_liquidated_but_no_bad_debt() {
+    let mut setup = position_core_bluefin_test_setup::new_setup();
+
+    macros::repay_bad_debt_x_aborts_when_fully_liquidated_but_no_bad_debt!(&mut setup);
 
     setup.destroy();
 }
@@ -109,20 +118,20 @@ fun repay_bad_debt_y_aborts_when_supply_pool_mismatch() {
     setup.destroy();
 }
 
-#[test, expected_failure(abort_code = 21, location = bluefin_spot)] // e_position_not_fully_deleveraged
-fun repay_bad_debt_y_aborts_when_position_not_fully_deleveraged() {
-    let mut setup = position_core_bluefin_test_setup::new_setup();
-
-    macros::repay_bad_debt_y_aborts_when_position_not_fully_deleveraged!(&mut setup);
-
-    setup.destroy();
-}
-
 #[test, expected_failure(abort_code = 22, location = bluefin_spot)] // e_position_not_below_bad_debt_threshold
 fun repay_bad_debt_y_aborts_when_position_not_below_bad_debt_threshold() {
     let mut setup = position_core_bluefin_test_setup::new_setup();
 
     macros::repay_bad_debt_y_aborts_when_position_not_below_bad_debt_threshold!(&mut setup);
+
+    setup.destroy();
+}
+
+#[test, expected_failure(abort_code = 22, location = bluefin_spot)] // e_no_bad_debt_or_not_fully_liquidated
+fun repay_bad_debt_y_aborts_when_fully_liquidated_but_no_bad_debt() {
+    let mut setup = position_core_bluefin_test_setup::new_setup();
+
+    macros::repay_bad_debt_y_aborts_when_fully_liquidated_but_no_bad_debt!(&mut setup);
 
     setup.destroy();
 }
