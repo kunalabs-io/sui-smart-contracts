@@ -23,24 +23,11 @@ Pyth price feed integration for Kai Leverage.
 -  [Function `div_ema_price_numeric_x128`](#kai_leverage_pyth_div_ema_price_numeric_x128)
 
 
-<pre><code><b>use</b> <a href="../../dependencies/wal/wal.md#0x356A26EB9E012A68958082340D4C4116E7F55615CF27AFFCFF209CF0AE544F59_wal">0x356A26EB9E012A68958082340D4C4116E7F55615CF27AFFCFF209CF0AE544F59::wal</a>;
-<b>use</b> <a href="../../dependencies/suiusdt/usdt.md#0x375F70CF2AE4C00BF37117D0C85A2C71545E6EE05C4A5C7D282CD66A4504B068_usdt">0x375F70CF2AE4C00BF37117D0C85A2C71545E6EE05C4A5C7D282CD66A4504B068::usdt</a>;
-<b>use</b> <a href="../../dependencies/lbtc/lbtc.md#0x3E8E9423D80E1774A7CA128FCCD8BF5F1F7753BE658C5E645929037F7C819040_lbtc">0x3E8E9423D80E1774A7CA128FCCD8BF5F1F7753BE658C5E645929037F7C819040::lbtc</a>;
-<b>use</b> <a href="../../dependencies/whusdce/coin.md#0x5D4B302506645C37FF133B98C4B50A5AE14841659738D6D733D59D0D217A93BF_coin">0x5D4B302506645C37FF133B98C4B50A5AE14841659738D6D733D59D0D217A93BF::coin</a>;
-<b>use</b> <a href="../../dependencies/xbtc/xbtc.md#0x876A4B7BCE8AEAEF60464C11F4026903E9AFACAB79B9B142686158AA86560B50_xbtc">0x876A4B7BCE8AEAEF60464C11F4026903E9AFACAB79B9B142686158AA86560B50::xbtc</a>;
-<b>use</b> <a href="../../dependencies/usdy/usdy.md#0x960B531667636F39E85867775F52F6B1F220A058C4DE786905BDF761E06A56BB_usdy">0x960B531667636F39E85867775F52F6B1F220A058C4DE786905BDF761E06A56BB::usdy</a>;
-<b>use</b> <a href="../../dependencies/wbtc/btc.md#0xAAFB102DD0902F5055CADECD687FB5B71CA82EF0E0285D90AFDE828EC58CA96B_btc">0xAAFB102DD0902F5055CADECD687FB5B71CA82EF0E0285D90AFDE828EC58CA96B::btc</a>;
-<b>use</b> <a href="../../dependencies/whusdte/coin.md#0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C_coin">0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C::coin</a>;
-<b>use</b> <a href="../../dependencies/deep/deep.md#0xDEEB7A4662EEC9F2F3DEF03FB937A663DDDAA2E215B8078A284D026B7946C270_deep">0xDEEB7A4662EEC9F2F3DEF03FB937A663DDDAA2E215B8078A284D026B7946C270::deep</a>;
-<b>use</b> <a href="../../dependencies/pyth/i64.md#pyth_i64">pyth::i64</a>;
+<pre><code><b>use</b> <a href="../../dependencies/pyth/i64.md#pyth_i64">pyth::i64</a>;
 <b>use</b> <a href="../../dependencies/pyth/price.md#pyth_price">pyth::price</a>;
 <b>use</b> <a href="../../dependencies/pyth/price_feed.md#pyth_price_feed">pyth::price_feed</a>;
 <b>use</b> <a href="../../dependencies/pyth/price_identifier.md#pyth_price_identifier">pyth::price_identifier</a>;
 <b>use</b> <a href="../../dependencies/pyth/price_info.md#pyth_price_info">pyth::price_info</a>;
-<b>use</b> <a href="../../dependencies/stablecoin/mint_allowance.md#stablecoin_mint_allowance">stablecoin::mint_allowance</a>;
-<b>use</b> <a href="../../dependencies/stablecoin/roles.md#stablecoin_roles">stablecoin::roles</a>;
-<b>use</b> <a href="../../dependencies/stablecoin/treasury.md#stablecoin_treasury">stablecoin::treasury</a>;
-<b>use</b> <a href="../../dependencies/stablecoin/version_control.md#stablecoin_version_control">stablecoin::version_control</a>;
 <b>use</b> <a href="../../dependencies/std/address.md#std_address">std::address</a>;
 <b>use</b> <a href="../../dependencies/std/ascii.md#std_ascii">std::ascii</a>;
 <b>use</b> <a href="../../dependencies/std/bcs.md#std_bcs">std::bcs</a>;
@@ -62,7 +49,6 @@ Pyth price feed integration for Kai Leverage.
 <b>use</b> <a href="../../dependencies/sui/event.md#sui_event">sui::event</a>;
 <b>use</b> <a href="../../dependencies/sui/hex.md#sui_hex">sui::hex</a>;
 <b>use</b> <a href="../../dependencies/sui/object.md#sui_object">sui::object</a>;
-<b>use</b> <a href="../../dependencies/sui/package.md#sui_package">sui::package</a>;
 <b>use</b> <a href="../../dependencies/sui/party.md#sui_party">sui::party</a>;
 <b>use</b> <a href="../../dependencies/sui/sui.md#sui_sui">sui::sui</a>;
 <b>use</b> <a href="../../dependencies/sui/table.md#sui_table">sui::table</a>;
@@ -72,9 +58,6 @@ Pyth price feed integration for Kai Leverage.
 <b>use</b> <a href="../../dependencies/sui/url.md#sui_url">sui::url</a>;
 <b>use</b> <a href="../../dependencies/sui/vec_map.md#sui_vec_map">sui::vec_map</a>;
 <b>use</b> <a href="../../dependencies/sui/vec_set.md#sui_vec_set">sui::vec_set</a>;
-<b>use</b> <a href="../../dependencies/sui_extensions/two_step_role.md#sui_extensions_two_step_role">sui_extensions::two_step_role</a>;
-<b>use</b> <a href="../../dependencies/sui_extensions/upgrade_service.md#sui_extensions_upgrade_service">sui_extensions::upgrade_service</a>;
-<b>use</b> <a href="../../dependencies/usdc/usdc.md#usdc_usdc">usdc::usdc</a>;
 </code></pre>
 
 
@@ -158,11 +141,11 @@ Validated Pyth price information ready for calculations.
 ## Constants
 
 
-<a name="kai_leverage_pyth_EUnsupportedPriceFeed"></a>
+<a name="kai_leverage_pyth_EUnsupportedCoinType"></a>
 
 
 
-<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_EUnsupportedPriceFeed">EUnsupportedPriceFeed</a>: u64 = 0;
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_EUnsupportedCoinType">EUnsupportedCoinType</a>: u64 = 0;
 </code></pre>
 
 
@@ -181,6 +164,105 @@ Validated Pyth price information ready for calculations.
 
 
 <pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_EPriceUndefined">EPriceUndefined</a>: u64 = 2;
+</code></pre>
+
+
+
+<a name="kai_leverage_pyth_SUI_TYPE_NAME"></a>
+
+
+
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_SUI_TYPE_NAME">SUI_TYPE_NAME</a>: vector&lt;u8&gt; = vector[48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 50, 58, 58, 115, 117, 105, 58, 58, 83, 85, 73];
+</code></pre>
+
+
+
+<a name="kai_leverage_pyth_WHUSDCE_TYPE_NAME"></a>
+
+
+
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_WHUSDCE_TYPE_NAME">WHUSDCE_TYPE_NAME</a>: vector&lt;u8&gt; = vector[53, 100, 52, 98, 51, 48, 50, 53, 48, 54, 54, 52, 53, 99, 51, 55, 102, 102, 49, 51, 51, 98, 57, 56, 99, 52, 98, 53, 48, 97, 53, 97, 101, 49, 52, 56, 52, 49, 54, 53, 57, 55, 51, 56, 100, 54, 100, 55, 51, 51, 100, 53, 57, 100, 48, 100, 50, 49, 55, 97, 57, 51, 98, 102, 58, 58, 99, 111, 105, 110, 58, 58, 67, 79, 73, 78];
+</code></pre>
+
+
+
+<a name="kai_leverage_pyth_WHUSDTE_TYPE_NAME"></a>
+
+
+
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_WHUSDTE_TYPE_NAME">WHUSDTE_TYPE_NAME</a>: vector&lt;u8&gt; = vector[99, 48, 54, 48, 48, 48, 54, 49, 49, 49, 48, 49, 54, 98, 56, 97, 48, 50, 48, 97, 100, 53, 98, 51, 51, 56, 51, 52, 57, 56, 52, 97, 52, 51, 55, 97, 97, 97, 55, 100, 51, 99, 55, 52, 99, 49, 56, 101, 48, 57, 97, 57, 53, 100, 52, 56, 97, 99, 101, 97, 98, 48, 56, 99, 58, 58, 99, 111, 105, 110, 58, 58, 67, 79, 73, 78];
+</code></pre>
+
+
+
+<a name="kai_leverage_pyth_USDC_TYPE_NAME"></a>
+
+
+
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_USDC_TYPE_NAME">USDC_TYPE_NAME</a>: vector&lt;u8&gt; = vector[100, 98, 97, 51, 52, 54, 55, 50, 101, 51, 48, 99, 98, 48, 54, 53, 98, 49, 102, 57, 51, 101, 51, 97, 98, 53, 53, 51, 49, 56, 55, 54, 56, 102, 100, 54, 102, 101, 102, 54, 54, 99, 49, 53, 57, 52, 50, 99, 57, 102, 55, 99, 98, 56, 52, 54, 101, 50, 102, 57, 48, 48, 101, 55, 58, 58, 117, 115, 100, 99, 58, 58, 85, 83, 68, 67];
+</code></pre>
+
+
+
+<a name="kai_leverage_pyth_SUIUSDT_TYPE_NAME"></a>
+
+
+
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_SUIUSDT_TYPE_NAME">SUIUSDT_TYPE_NAME</a>: vector&lt;u8&gt; = vector[51, 55, 53, 102, 55, 48, 99, 102, 50, 97, 101, 52, 99, 48, 48, 98, 102, 51, 55, 49, 49, 55, 100, 48, 99, 56, 53, 97, 50, 99, 55, 49, 53, 52, 53, 101, 54, 101, 101, 48, 53, 99, 52, 97, 53, 99, 55, 100, 50, 56, 50, 99, 100, 54, 54, 97, 52, 53, 48, 52, 98, 48, 54, 56, 58, 58, 117, 115, 100, 116, 58, 58, 85, 83, 68, 84];
+</code></pre>
+
+
+
+<a name="kai_leverage_pyth_USDY_TYPE_NAME"></a>
+
+
+
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_USDY_TYPE_NAME">USDY_TYPE_NAME</a>: vector&lt;u8&gt; = vector[57, 54, 48, 98, 53, 51, 49, 54, 54, 55, 54, 51, 54, 102, 51, 57, 101, 56, 53, 56, 54, 55, 55, 55, 53, 102, 53, 50, 102, 54, 98, 49, 102, 50, 50, 48, 97, 48, 53, 56, 99, 52, 100, 101, 55, 56, 54, 57, 48, 53, 98, 100, 102, 55, 54, 49, 101, 48, 54, 97, 53, 54, 98, 98, 58, 58, 117, 115, 100, 121, 58, 58, 85, 83, 68, 89];
+</code></pre>
+
+
+
+<a name="kai_leverage_pyth_DEEP_TYPE_NAME"></a>
+
+
+
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_DEEP_TYPE_NAME">DEEP_TYPE_NAME</a>: vector&lt;u8&gt; = vector[100, 101, 101, 98, 55, 97, 52, 54, 54, 50, 101, 101, 99, 57, 102, 50, 102, 51, 100, 101, 102, 48, 51, 102, 98, 57, 51, 55, 97, 54, 54, 51, 100, 100, 100, 97, 97, 50, 101, 50, 49, 53, 98, 56, 48, 55, 56, 97, 50, 56, 52, 100, 48, 50, 54, 98, 55, 57, 52, 54, 99, 50, 55, 48, 58, 58, 100, 101, 101, 112, 58, 58, 68, 69, 69, 80];
+</code></pre>
+
+
+
+<a name="kai_leverage_pyth_WAL_TYPE_NAME"></a>
+
+
+
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_WAL_TYPE_NAME">WAL_TYPE_NAME</a>: vector&lt;u8&gt; = vector[51, 53, 54, 97, 50, 54, 101, 98, 57, 101, 48, 49, 50, 97, 54, 56, 57, 53, 56, 48, 56, 50, 51, 52, 48, 100, 52, 99, 52, 49, 49, 54, 101, 55, 102, 53, 53, 54, 49, 53, 99, 102, 50, 55, 97, 102, 102, 99, 102, 102, 50, 48, 57, 99, 102, 48, 97, 101, 53, 52, 52, 102, 53, 57, 58, 58, 119, 97, 108, 58, 58, 87, 65, 76];
+</code></pre>
+
+
+
+<a name="kai_leverage_pyth_LBTC_TYPE_NAME"></a>
+
+
+
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_LBTC_TYPE_NAME">LBTC_TYPE_NAME</a>: vector&lt;u8&gt; = vector[51, 101, 56, 101, 57, 52, 50, 51, 100, 56, 48, 101, 49, 55, 55, 52, 97, 55, 99, 97, 49, 50, 56, 102, 99, 99, 100, 56, 98, 102, 53, 102, 49, 102, 55, 55, 53, 51, 98, 101, 54, 53, 56, 99, 53, 101, 54, 52, 53, 57, 50, 57, 48, 51, 55, 102, 55, 99, 56, 49, 57, 48, 52, 48, 58, 58, 108, 98, 116, 99, 58, 58, 76, 66, 84, 67];
+</code></pre>
+
+
+
+<a name="kai_leverage_pyth_WBTC_TYPE_NAME"></a>
+
+
+
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_WBTC_TYPE_NAME">WBTC_TYPE_NAME</a>: vector&lt;u8&gt; = vector[97, 97, 102, 98, 49, 48, 50, 100, 100, 48, 57, 48, 50, 102, 53, 48, 53, 53, 99, 97, 100, 101, 99, 100, 54, 56, 55, 102, 98, 53, 98, 55, 49, 99, 97, 56, 50, 101, 102, 48, 101, 48, 50, 56, 53, 100, 57, 48, 97, 102, 100, 101, 56, 50, 56, 101, 99, 53, 56, 99, 97, 57, 54, 98, 58, 58, 98, 116, 99, 58, 58, 66, 84, 67];
+</code></pre>
+
+
+
+<a name="kai_leverage_pyth_XBTC_TYPE_NAME"></a>
+
+
+
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_XBTC_TYPE_NAME">XBTC_TYPE_NAME</a>: vector&lt;u8&gt; = vector[56, 55, 54, 97, 52, 98, 55, 98, 99, 101, 56, 97, 101, 97, 101, 102, 54, 48, 52, 54, 52, 99, 49, 49, 102, 52, 48, 50, 54, 57, 48, 51, 101, 57, 97, 102, 97, 99, 97, 98, 55, 57, 98, 57, 98, 49, 52, 50, 54, 56, 54, 49, 53, 56, 97, 97, 56, 54, 53, 54, 48, 98, 53, 48, 58, 58, 120, 98, 116, 99, 58, 58, 88, 66, 84, 67];
 </code></pre>
 
 
@@ -331,30 +413,31 @@ Get the decimal places for a supported token type.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_decimals">decimals</a>(`type`: TypeName): u8 {
-    <b>if</b> (`type` == type_name::with_defining_ids&lt;SUI&gt;()) {
+    <b>let</b> type_name = `type`.as_string().as_bytes();
+    <b>if</b> (type_name == &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_SUI_TYPE_NAME">SUI_TYPE_NAME</a>) {
         9
-    } <b>else</b> <b>if</b> (`type` == type_name::with_defining_ids&lt;WHUSDCE&gt;()) {
+    } <b>else</b> <b>if</b> (type_name == &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_WHUSDCE_TYPE_NAME">WHUSDCE_TYPE_NAME</a>) {
         6
-    } <b>else</b> <b>if</b> (`type` == type_name::with_defining_ids&lt;WHUSDTE&gt;()) {
+    } <b>else</b> <b>if</b> (type_name == &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_WHUSDTE_TYPE_NAME">WHUSDTE_TYPE_NAME</a>) {
         6
-    } <b>else</b> <b>if</b> (`type` == type_name::with_defining_ids&lt;USDC&gt;()) {
+    } <b>else</b> <b>if</b> (type_name == &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_USDC_TYPE_NAME">USDC_TYPE_NAME</a>) {
         6
-    } <b>else</b> <b>if</b> (`type` == type_name::with_defining_ids&lt;SUIUSDT&gt;()) {
+    } <b>else</b> <b>if</b> (type_name == &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_SUIUSDT_TYPE_NAME">SUIUSDT_TYPE_NAME</a>) {
         6
-    } <b>else</b> <b>if</b> (`type` == type_name::with_defining_ids&lt;USDY&gt;()) {
+    } <b>else</b> <b>if</b> (type_name == &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_USDY_TYPE_NAME">USDY_TYPE_NAME</a>) {
         6
-    } <b>else</b> <b>if</b> (`type` == type_name::with_defining_ids&lt;DEEP&gt;()) {
+    } <b>else</b> <b>if</b> (type_name == &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_DEEP_TYPE_NAME">DEEP_TYPE_NAME</a>) {
         6
-    } <b>else</b> <b>if</b> (`type` == type_name::with_defining_ids&lt;WAL&gt;()) {
+    } <b>else</b> <b>if</b> (type_name == &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_WAL_TYPE_NAME">WAL_TYPE_NAME</a>) {
         9
-    } <b>else</b> <b>if</b> (`type` == type_name::with_defining_ids&lt;LBTC&gt;()) {
+    } <b>else</b> <b>if</b> (type_name == &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_LBTC_TYPE_NAME">LBTC_TYPE_NAME</a>) {
         8
-    } <b>else</b> <b>if</b> (`type` == type_name::with_defining_ids&lt;WBTC&gt;()) {
+    } <b>else</b> <b>if</b> (type_name == &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_WBTC_TYPE_NAME">WBTC_TYPE_NAME</a>) {
         8
-    } <b>else</b> <b>if</b> (`type` == type_name::with_defining_ids&lt;XBTC&gt;()) {
+    } <b>else</b> <b>if</b> (type_name == &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_XBTC_TYPE_NAME">XBTC_TYPE_NAME</a>) {
         8
     } <b>else</b> {
-        <b>abort</b> (<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_EUnsupportedPriceFeed">EUnsupportedPriceFeed</a>)
+        <b>abort</b> (<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_EUnsupportedCoinType">EUnsupportedCoinType</a>)
     }
 }
 </code></pre>

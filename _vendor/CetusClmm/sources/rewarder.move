@@ -92,7 +92,7 @@ public struct EmergentWithdrawEvent has copy, drop, store {
     after_amount: u64,
 }
 
-/// init the `RewarderGlobalVault
+/// init the `RewarderGlobalVault`
 /// * `ctx` - The transaction context
 fun init(ctx: &mut TxContext) {
     let vault = RewarderGlobalVault {
@@ -207,7 +207,7 @@ public fun borrow_rewarder<CoinType>(manager: &RewarderManager): &Rewarder {
     abort ERewardNotExist
 }
 
-/// Borrow mutable `Rewarder` from `RewarderManager
+/// Borrow mutable `Rewarder` from `RewarderManager`
 /// * `manager` - The `RewarderManager`
 /// * Returns the mutable rewarder
 public(package) fun borrow_mut_rewarder<CoinType>(manager: &mut RewarderManager): &mut Rewarder {

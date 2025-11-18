@@ -2813,13 +2813,14 @@ public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
     reward
 }
 
-/// Handles repayment of "bad debt" for a position that has fallen below
-/// the critical margin threshold `(1 + liq_bonus)`.
-///
-/// In such cases, standard liquidations cannot restore the margin due to
-/// the guaranteed liquidation bonus. This macro allows an entity with the
-/// `ARepayBadDebt` permission to repay the debt and help restore the
-/// position's solvency.
+/// Handles the repayment of "bad debt" for a position that has no assets but retains outstanding debt.
+/// 
+/// This scenario can occur if a position's assets are fully liquidated but the debt remains.
+/// Standard liquidation is not possible here, typically due to the minimum liquidation bonus requirement,
+/// making the position under-collateralized and unable to be restored via normal means.
+/// 
+/// This macro enables an entity with the `ARepayBadDebt` permission to repay the residual debt,
+/// aiding in restoring the solvency of the position and allowing the protocol to manage or close it gracefully.
 public(package) macro fun repay_bad_debt<$X, $Y, $T, $ST, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &PositionConfig,

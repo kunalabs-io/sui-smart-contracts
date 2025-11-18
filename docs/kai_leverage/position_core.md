@@ -81,7 +81,7 @@ seamless integration with diverse AMM architectures.
 -  [Macro function `e_invalid_creation_fee_amount`](#kai_leverage_position_core_clmm_e_invalid_creation_fee_amount)
 -  [Macro function `e_supply_pool_mismatch`](#kai_leverage_position_core_clmm_e_supply_pool_mismatch)
 -  [Macro function `e_position_not_fully_deleveraged`](#kai_leverage_position_core_clmm_e_position_not_fully_deleveraged)
--  [Macro function `e_position_not_below_bad_debt_threshold`](#kai_leverage_position_core_clmm_e_position_not_below_bad_debt_threshold)
+-  [Macro function `e_no_bad_debt_or_not_fully_liquidated`](#kai_leverage_position_core_clmm_e_no_bad_debt_or_not_fully_liquidated)
 -  [Macro function `e_liquidation_disabled`](#kai_leverage_position_core_clmm_e_liquidation_disabled)
 -  [Macro function `e_reduction_disabled`](#kai_leverage_position_core_clmm_e_reduction_disabled)
 -  [Macro function `e_add_liquidity_disabled`](#kai_leverage_position_core_clmm_e_add_liquidity_disabled)
@@ -283,8 +283,6 @@ seamless integration with diverse AMM architectures.
 -  [Function `deleverage_ticket_repay_x`](#kai_leverage_position_core_clmm_deleverage_ticket_repay_x)
 -  [Function `deleverage_ticket_repay_y`](#kai_leverage_position_core_clmm_deleverage_ticket_repay_y)
 -  [Function `destroy_deleverage_ticket`](#kai_leverage_position_core_clmm_destroy_deleverage_ticket)
--  [Macro function `deleverage`](#kai_leverage_position_core_clmm_deleverage)
--  [Macro function `deleverage_for_liquidation`](#kai_leverage_position_core_clmm_deleverage_for_liquidation)
 -  [Function `calc_liq_fee_from_reward`](#kai_leverage_position_core_clmm_calc_liq_fee_from_reward)
 -  [Macro function `liquidate_col_x`](#kai_leverage_position_core_clmm_liquidate_col_x)
 -  [Macro function `liquidate_col_y`](#kai_leverage_position_core_clmm_liquidate_col_y)
@@ -325,16 +323,7 @@ seamless integration with diverse AMM architectures.
 -  [Macro function `calc_liquidate_col_y`](#kai_leverage_position_core_clmm_calc_liquidate_col_y)
 
 
-<pre><code><b>use</b> <a href="../../dependencies/wal/wal.md#0x356A26EB9E012A68958082340D4C4116E7F55615CF27AFFCFF209CF0AE544F59_wal">0x356A26EB9E012A68958082340D4C4116E7F55615CF27AFFCFF209CF0AE544F59::wal</a>;
-<b>use</b> <a href="../../dependencies/suiusdt/usdt.md#0x375F70CF2AE4C00BF37117D0C85A2C71545E6EE05C4A5C7D282CD66A4504B068_usdt">0x375F70CF2AE4C00BF37117D0C85A2C71545E6EE05C4A5C7D282CD66A4504B068::usdt</a>;
-<b>use</b> <a href="../../dependencies/lbtc/lbtc.md#0x3E8E9423D80E1774A7CA128FCCD8BF5F1F7753BE658C5E645929037F7C819040_lbtc">0x3E8E9423D80E1774A7CA128FCCD8BF5F1F7753BE658C5E645929037F7C819040::lbtc</a>;
-<b>use</b> <a href="../../dependencies/whusdce/coin.md#0x5D4B302506645C37FF133B98C4B50A5AE14841659738D6D733D59D0D217A93BF_coin">0x5D4B302506645C37FF133B98C4B50A5AE14841659738D6D733D59D0D217A93BF::coin</a>;
-<b>use</b> <a href="../../dependencies/xbtc/xbtc.md#0x876A4B7BCE8AEAEF60464C11F4026903E9AFACAB79B9B142686158AA86560B50_xbtc">0x876A4B7BCE8AEAEF60464C11F4026903E9AFACAB79B9B142686158AA86560B50::xbtc</a>;
-<b>use</b> <a href="../../dependencies/usdy/usdy.md#0x960B531667636F39E85867775F52F6B1F220A058C4DE786905BDF761E06A56BB_usdy">0x960B531667636F39E85867775F52F6B1F220A058C4DE786905BDF761E06A56BB::usdy</a>;
-<b>use</b> <a href="../../dependencies/wbtc/btc.md#0xAAFB102DD0902F5055CADECD687FB5B71CA82EF0E0285D90AFDE828EC58CA96B_btc">0xAAFB102DD0902F5055CADECD687FB5B71CA82EF0E0285D90AFDE828EC58CA96B::btc</a>;
-<b>use</b> <a href="../../dependencies/whusdte/coin.md#0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C_coin">0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C::coin</a>;
-<b>use</b> <a href="../../dependencies/deep/deep.md#0xDEEB7A4662EEC9F2F3DEF03FB937A663DDDAA2E215B8078A284D026B7946C270_deep">0xDEEB7A4662EEC9F2F3DEF03FB937A663DDDAA2E215B8078A284D026B7946C270::deep</a>;
-<b>use</b> <a href="../../dependencies/access_management/access.md#access_management_access">access_management::access</a>;
+<pre><code><b>use</b> <a href="../../dependencies/access_management/access.md#access_management_access">access_management::access</a>;
 <b>use</b> <a href="../../dependencies/access_management/dynamic_map.md#access_management_dynamic_map">access_management::dynamic_map</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/balance_bag.md#kai_leverage_balance_bag">kai_leverage::balance_bag</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt">kai_leverage::debt</a>;
@@ -354,10 +343,6 @@ seamless integration with diverse AMM architectures.
 <b>use</b> <a href="../../dependencies/rate_limiter/net_sliding_sum_limiter.md#rate_limiter_net_sliding_sum_limiter">rate_limiter::net_sliding_sum_limiter</a>;
 <b>use</b> <a href="../../dependencies/rate_limiter/ring_aggregator.md#rate_limiter_ring_aggregator">rate_limiter::ring_aggregator</a>;
 <b>use</b> <a href="../../dependencies/rate_limiter/sliding_sum_limiter.md#rate_limiter_sliding_sum_limiter">rate_limiter::sliding_sum_limiter</a>;
-<b>use</b> <a href="../../dependencies/stablecoin/mint_allowance.md#stablecoin_mint_allowance">stablecoin::mint_allowance</a>;
-<b>use</b> <a href="../../dependencies/stablecoin/roles.md#stablecoin_roles">stablecoin::roles</a>;
-<b>use</b> <a href="../../dependencies/stablecoin/treasury.md#stablecoin_treasury">stablecoin::treasury</a>;
-<b>use</b> <a href="../../dependencies/stablecoin/version_control.md#stablecoin_version_control">stablecoin::version_control</a>;
 <b>use</b> <a href="../../dependencies/std/address.md#std_address">std::address</a>;
 <b>use</b> <a href="../../dependencies/std/ascii.md#std_ascii">std::ascii</a>;
 <b>use</b> <a href="../../dependencies/std/bcs.md#std_bcs">std::bcs</a>;
@@ -380,7 +365,6 @@ seamless integration with diverse AMM architectures.
 <b>use</b> <a href="../../dependencies/sui/event.md#sui_event">sui::event</a>;
 <b>use</b> <a href="../../dependencies/sui/hex.md#sui_hex">sui::hex</a>;
 <b>use</b> <a href="../../dependencies/sui/object.md#sui_object">sui::object</a>;
-<b>use</b> <a href="../../dependencies/sui/package.md#sui_package">sui::package</a>;
 <b>use</b> <a href="../../dependencies/sui/party.md#sui_party">sui::party</a>;
 <b>use</b> <a href="../../dependencies/sui/sui.md#sui_sui">sui::sui</a>;
 <b>use</b> <a href="../../dependencies/sui/table.md#sui_table">sui::table</a>;
@@ -390,9 +374,6 @@ seamless integration with diverse AMM architectures.
 <b>use</b> <a href="../../dependencies/sui/url.md#sui_url">sui::url</a>;
 <b>use</b> <a href="../../dependencies/sui/vec_map.md#sui_vec_map">sui::vec_map</a>;
 <b>use</b> <a href="../../dependencies/sui/vec_set.md#sui_vec_set">sui::vec_set</a>;
-<b>use</b> <a href="../../dependencies/sui_extensions/two_step_role.md#sui_extensions_two_step_role">sui_extensions::two_step_role</a>;
-<b>use</b> <a href="../../dependencies/sui_extensions/upgrade_service.md#sui_extensions_upgrade_service">sui_extensions::upgrade_service</a>;
-<b>use</b> <a href="../../dependencies/usdc/usdc.md#usdc_usdc">usdc::usdc</a>;
 </code></pre>
 
 
@@ -2634,14 +2615,14 @@ The position must have zero outstanding debt before this operation can proceed.
 
 </details>
 
-<a name="kai_leverage_position_core_clmm_e_position_not_below_bad_debt_threshold"></a>
+<a name="kai_leverage_position_core_clmm_e_no_bad_debt_or_not_fully_liquidated"></a>
 
-## Macro function `e_position_not_below_bad_debt_threshold`
+## Macro function `e_no_bad_debt_or_not_fully_liquidated`
 
-The position's margin is not sufficiently low to qualify as bad debt.
+The position must have no bad debt or be fully liquidated before this operation can proceed.
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_position_not_below_bad_debt_threshold">e_position_not_below_bad_debt_threshold</a>(): u64
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_no_bad_debt_or_not_fully_liquidated">e_no_bad_debt_or_not_fully_liquidated</a>(): u64
 </code></pre>
 
 
@@ -2650,7 +2631,7 @@ The position's margin is not sufficiently low to qualify as bad debt.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_position_not_below_bad_debt_threshold">e_position_not_below_bad_debt_threshold</a>(): u64 {
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_no_bad_debt_or_not_fully_liquidated">e_no_bad_debt_or_not_fully_liquidated</a>(): u64 {
     22
 }
 </code></pre>
@@ -8561,133 +8542,6 @@ no event is emitted.
 
 </details>
 
-<a name="kai_leverage_position_core_clmm_deleverage"></a>
-
-## Macro function `deleverage`
-
-Helper macro that combines the creation of a deleverage ticket and the repayment of both X and Y debts
-in a single operation for a leveraged CLMM position.
-
-
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_deleverage">deleverage</a>&lt;$X, $Y, $SX, $SY, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $supply_pool_x: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;$X, $SX&gt;, $supply_pool_y: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;$Y, $SY&gt;, $pool_object: &<b>mut</b> $Pool, $max_delta_l: u128, $clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, $ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>, $remove_liquidity: |&<b>mut</b> $Pool, &<b>mut</b> $LP, u128| -&gt; (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;)): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_deleverage">deleverage</a>&lt;$X, $Y, $SX, $SY, $Pool, $LP&gt;(
-    $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
-    $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    $price_info: &PythPriceInfo,
-    $supply_pool_x: &<b>mut</b> SupplyPool&lt;$X, $SX&gt;,
-    $supply_pool_y: &<b>mut</b> SupplyPool&lt;$Y, $SY&gt;,
-    $pool_object: &<b>mut</b> $Pool,
-    $max_delta_l: u128,
-    $clock: &Clock,
-    $ctx: &<b>mut</b> TxContext,
-    $remove_liquidity: |&<b>mut</b> $Pool, &<b>mut</b> $LP, u128| -&gt; (Balance&lt;$X&gt;, Balance&lt;$Y&gt;),
-): ActionRequest {
-    <b>let</b> position = $position;
-    <b>let</b> config = $config;
-    <b>let</b> supply_pool_x = $supply_pool_x;
-    <b>let</b> supply_pool_y = $supply_pool_y;
-    <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_check_versions">check_versions</a>(position, config);
-    <b>assert</b>!(position.config_id() == object::id(config), <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_invalid_config">e_invalid_config</a>!());
-    <b>assert</b>!(
-        position.debt_bag().share_type_matches_asset_if_any_exists&lt;$X, $SX&gt;(),
-        <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_supply_pool_mismatch">e_supply_pool_mismatch</a>!(),
-    );
-    <b>assert</b>!(
-        position.debt_bag().share_type_matches_asset_if_any_exists&lt;$Y, $SY&gt;(),
-        <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_supply_pool_mismatch">e_supply_pool_mismatch</a>!(),
-    );
-    <b>let</b> <b>mut</b> debt_info = debt_info::empty(object::id(config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_lend_facil_cap">lend_facil_cap</a>()));
-    debt_info.add_from_supply_pool(supply_pool_x, $clock);
-    debt_info.add_from_supply_pool(supply_pool_y, $clock);
-    <b>let</b> (<b>mut</b> ticket, request) = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_create_deleverage_ticket">create_deleverage_ticket</a>!(
-        position,
-        config,
-        $price_info,
-        &debt_info,
-        $pool_object,
-        $max_delta_l,
-        $ctx,
-        $remove_liquidity,
-    );
-    <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_deleverage_ticket_repay_x">deleverage_ticket_repay_x</a>(position, config, &<b>mut</b> ticket, supply_pool_x, $clock);
-    <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_deleverage_ticket_repay_y">deleverage_ticket_repay_y</a>(position, config, &<b>mut</b> ticket, supply_pool_y, $clock);
-    <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_destroy_deleverage_ticket">destroy_deleverage_ticket</a>(position, ticket);
-    request
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="kai_leverage_position_core_clmm_deleverage_for_liquidation"></a>
-
-## Macro function `deleverage_for_liquidation`
-
-
-
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_deleverage_for_liquidation">deleverage_for_liquidation</a>&lt;$X, $Y, $SX, $SY, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $supply_pool_x: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;$X, $SX&gt;, $supply_pool_y: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;$Y, $SY&gt;, $pool_object: &<b>mut</b> $Pool, $clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, $remove_liquidity: |&<b>mut</b> $Pool, &<b>mut</b> $LP, u128| -&gt; (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;))
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_deleverage_for_liquidation">deleverage_for_liquidation</a>&lt;$X, $Y, $SX, $SY, $Pool, $LP&gt;(
-    $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
-    $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    $price_info: &PythPriceInfo,
-    $supply_pool_x: &<b>mut</b> SupplyPool&lt;$X, $SX&gt;,
-    $supply_pool_y: &<b>mut</b> SupplyPool&lt;$Y, $SY&gt;,
-    $pool_object: &<b>mut</b> $Pool,
-    $clock: &Clock,
-    $remove_liquidity: |&<b>mut</b> $Pool, &<b>mut</b> $LP, u128| -&gt; (Balance&lt;$X&gt;, Balance&lt;$Y&gt;),
-) {
-    <b>let</b> position = $position;
-    <b>let</b> config = $config;
-    <b>let</b> supply_pool_x = $supply_pool_x;
-    <b>let</b> supply_pool_y = $supply_pool_y;
-    <b>assert</b>!(position.config_id() == object::id(config), <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_invalid_config">e_invalid_config</a>!());
-    <b>assert</b>!(!config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liquidation_disabled">liquidation_disabled</a>(), <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_liquidation_disabled">e_liquidation_disabled</a>!());
-    <b>assert</b>!(
-        position.debt_bag().share_type_matches_asset_if_any_exists&lt;$X, $SX&gt;(),
-        <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_supply_pool_mismatch">e_supply_pool_mismatch</a>!(),
-    );
-    <b>assert</b>!(
-        position.debt_bag().share_type_matches_asset_if_any_exists&lt;$Y, $SY&gt;(),
-        <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_supply_pool_mismatch">e_supply_pool_mismatch</a>!(),
-    );
-    <b>let</b> <b>mut</b> debt_info = debt_info::empty(object::id(config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_lend_facil_cap">lend_facil_cap</a>()));
-    debt_info.add_from_supply_pool(supply_pool_x, $clock);
-    debt_info.add_from_supply_pool(supply_pool_y, $clock);
-    <b>let</b> <b>mut</b> ticket = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_create_deleverage_ticket_for_liquidation">create_deleverage_ticket_for_liquidation</a>!(
-        position,
-        config,
-        $price_info,
-        &debt_info,
-        $pool_object,
-        $remove_liquidity,
-    );
-    <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_deleverage_ticket_repay_x">deleverage_ticket_repay_x</a>(position, config, &<b>mut</b> ticket, supply_pool_x, $clock);
-    <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_deleverage_ticket_repay_y">deleverage_ticket_repay_y</a>(position, config, &<b>mut</b> ticket, supply_pool_y, $clock);
-    <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_destroy_deleverage_ticket">destroy_deleverage_ticket</a>(position, ticket);
-}
-</code></pre>
-
-
-
-</details>
-
 <a name="kai_leverage_position_core_clmm_calc_liq_fee_from_reward"></a>
 
 ## Function `calc_liq_fee_from_reward`
@@ -8908,16 +8762,17 @@ for helping restore position health by reducing debt obligations.
 
 ## Macro function `repay_bad_debt`
 
-Handles repayment of "bad debt" for a position that has fallen below
-the critical margin threshold <code>(1 + liq_bonus)</code>.
+Handles the repayment of "bad debt" for a position that has no assets but retains outstanding debt.
 
-In such cases, standard liquidations cannot restore the margin due to
-the guaranteed liquidation bonus. This macro allows an entity with the
-<code><a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ARepayBadDebt">ARepayBadDebt</a></code> permission to repay the debt and help restore the
-position's solvency.
+This scenario can occur if a position's assets are fully liquidated but the debt remains.
+Standard liquidation is not possible here, typically due to the minimum liquidation bonus requirement,
+making the position under-collateralized and unable to be restored via normal means.
+
+This macro enables an entity with the <code><a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ARepayBadDebt">ARepayBadDebt</a></code> permission to repay the residual debt,
+aiding in restoring the solvency of the position and allowing the protocol to manage or close it gracefully.
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_repay_bad_debt">repay_bad_debt</a>&lt;$X, $Y, $T, $ST, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;$T, $ST&gt;, $repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$T&gt;, $clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, $ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_repay_bad_debt">repay_bad_debt</a>&lt;$X, $Y, $T, $ST, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;$T, $ST&gt;, $repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$T&gt;, $clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, $ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
 </code></pre>
 
 
@@ -8929,8 +8784,6 @@ position's solvency.
 <pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_repay_bad_debt">repay_bad_debt</a>&lt;$X, $Y, $T, $ST, $LP&gt;(
     $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
     $config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    $price_info: &PythPriceInfo,
-    $debt_info: &DebtInfo,
     $supply_pool: &<b>mut</b> SupplyPool&lt;$T, $ST&gt;,
     $repayment: &<b>mut</b> Balance&lt;$T&gt;,
     $clock: &Clock,
@@ -8946,19 +8799,14 @@ position's solvency.
         position.debt_bag().share_type_matches_asset_if_any_exists&lt;$T, $ST&gt;(),
         <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_supply_pool_mismatch">e_supply_pool_mismatch</a>!(),
     );
-    <b>let</b> price_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_price_info">validate_price_info</a>(config, $price_info);
-    <b>let</b> debt_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_debt_info">validate_debt_info</a>(config, $debt_info);
-    <b>let</b> model = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_model_from_position">model_from_position</a>!(position, &debt_info);
-    <b>assert</b>!(model.is_fully_deleveraged(), <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_position_not_fully_deleveraged">e_position_not_fully_deleveraged</a>!());
-    <b>let</b> p_x128 = price_info.div_price_numeric_x128(
-        type_name::with_defining_ids&lt;$X&gt;(),
-        type_name::with_defining_ids&lt;$Y&gt;(),
-    );
-    <b>let</b> crit_margin_bps = 10000 + config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liq_bonus_bps">liq_bonus_bps</a>();
-    <b>assert</b>!(
-        model.margin_below_threshold(p_x128, crit_margin_bps),
-        <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_position_not_below_bad_debt_threshold">e_position_not_below_bad_debt_threshold</a>!(),
-    );
+    <b>let</b> l = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_lp_position">lp_position</a>().liquidity();
+    <b>let</b> cx = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_col_x">col_x</a>().value();
+    <b>let</b> cy = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_col_y">col_y</a>().value();
+    <b>let</b> sx = position.debt_bag().get_share_amount_by_asset_type&lt;$X&gt;();
+    <b>let</b> sy = position.debt_bag().get_share_amount_by_asset_type&lt;$Y&gt;();
+    <b>let</b> has_assets = l &gt; 0 || cx &gt; 0 || cy &gt; 0;
+    <b>let</b> has_debt = sx &gt; 0 || sy &gt; 0;
+    <b>assert</b>!(has_assets == <b>false</b> && has_debt == <b>true</b>, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_no_bad_debt_or_not_fully_liquidated">e_no_bad_debt_or_not_fully_liquidated</a>!());
     <b>let</b> <b>mut</b> debt_shares = position.debt_bag_mut().take_all();
     <b>if</b> (debt_shares.value_x64() == 0) {
         debt_shares.destroy_zero();
