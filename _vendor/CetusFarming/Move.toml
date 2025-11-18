@@ -1,0 +1,13 @@
+[package]
+name = "CetusFarming"
+published-at = "0x1829f473437d24456825662e5bba97924194b5008dcbb59f6b6a6eb2a5d1a2de"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.55.0", override = true }
+MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.55.0", override = true }
+IntegerMate = { local = "../IntegerMate" }
+CetusClmm = { local = "../CetusClmm" }
+MoveSTL = { local = "../MoveSTL" }
+
+[addresses]
+cetus_farming = "0x11ea791d82b5742cc8cab0bf7946035c97d9001d7c3803a93f119753da66f526"
