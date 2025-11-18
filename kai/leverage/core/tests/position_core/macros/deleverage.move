@@ -1888,6 +1888,11 @@ public macro fun deleverage_ticket_repay_x_with_partial_debt_repayment<$Setup>($
 
         let initial_sx = position.debt_bag().get_share_amount_by_asset_type<SUI>();
 
+        let supply_pool_initial_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SSUI>());
+        assert!(supply_pool_initial_st > 0);
+
         // Create ticket
         let (mut ticket, request) = setup.create_deleverage_ticket(
             &mut position,
@@ -1909,6 +1914,7 @@ public macro fun deleverage_ticket_repay_x_with_partial_debt_repayment<$Setup>($
             ticket.info().delta_x(),
         );
         let exp_x_repaid = ticket.info().delta_x();
+        assert!(exp_sx_repaid > 0);
 
         // Repay
         setup.deleverage_ticket_repay_x(&mut position, &config, &mut ticket);
@@ -1921,6 +1927,11 @@ public macro fun deleverage_ticket_repay_x_with_partial_debt_repayment<$Setup>($
         assert!(final_sx == initial_sx - exp_sx_repaid);
         // sanity check
         assert!(final_sx > 0);
+
+        let supply_pool_final_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SSUI>());
+        assert!(supply_pool_final_st == supply_pool_initial_st - exp_sx_repaid);
 
         setup.deleverage_ticket_repay_y(&mut position, &config, &mut ticket);
         position.destroy_deleverage_ticket(ticket);
@@ -2228,6 +2239,11 @@ public macro fun deleverage_ticket_repay_y_with_partial_debt_repayment<$Setup>($
 
         let initial_sy = position.debt_bag().get_share_amount_by_asset_type<USDC>();
 
+        let supply_pool_initial_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SUSDC>());
+        assert!(supply_pool_initial_st > 0);
+
         // Create ticket
         let (mut ticket, request) = setup.create_deleverage_ticket(
             &mut position,
@@ -2249,6 +2265,7 @@ public macro fun deleverage_ticket_repay_y_with_partial_debt_repayment<$Setup>($
             ticket.info().delta_y(),
         );
         let exp_y_repaid = ticket.info().delta_y();
+        assert!(exp_sy_repaid > 0);
 
         // Repay
         setup.deleverage_ticket_repay_y(&mut position, &config, &mut ticket);
@@ -2261,6 +2278,11 @@ public macro fun deleverage_ticket_repay_y_with_partial_debt_repayment<$Setup>($
         assert!(final_sy == initial_sy - exp_sy_repaid);
         // sanity check
         assert!(final_sy > 0);
+
+        let supply_pool_final_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SUSDC>());
+        assert!(supply_pool_final_st == supply_pool_initial_st - exp_sy_repaid);
 
         setup.deleverage_ticket_repay_x(&mut position, &config, &mut ticket);
         position.destroy_deleverage_ticket(ticket);

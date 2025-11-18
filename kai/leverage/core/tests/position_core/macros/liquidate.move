@@ -553,6 +553,9 @@ public macro fun liquidate_col_x_is_correct<$Setup>($setup: &mut $Setup) {
 
         let initial_sy = position.debt_bag().get_share_amount_by_asset_type<USDC>();
         let initial_cx = position.col_x().value();
+        let supply_pool_initial_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SUSDC>());
 
         let partial_repayment_amt_y = 14077732;
         let (exp_repayment_amt_y, exp_reward_amt_x) = model.calc_liquidate_col_x(
@@ -594,6 +597,11 @@ public macro fun liquidate_col_x_is_correct<$Setup>($setup: &mut $Setup) {
             position.collected_fees().amounts()[&type_name::with_defining_ids<SUI>()] == config.position_creation_fee_sui() + exp_liq_fee,
         );
         let collected_protocol_fees_x = config.position_creation_fee_sui() + exp_liq_fee;
+
+        let supply_pool_final_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SUSDC>());
+        assert!(supply_pool_final_st == supply_pool_initial_st - exp_sy_repaid);
 
         test_scenario::return_shared(position);
         test_scenario::return_shared(config);
@@ -642,6 +650,13 @@ public macro fun liquidate_col_x_is_correct<$Setup>($setup: &mut $Setup) {
         let initial_cx = position.col_x().value();
         assert!(initial_sy > 0);
 
+        let supply_pool_initial_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SUSDC>());
+        assert!(supply_pool_initial_st > 0);
+
+        let exp_sy_repaid = initial_sy;
+
         let repayment_amount_y = max_repayment_amt_y * 2;
         let (exp_repayment_amt_y, exp_reward_amt_x) = model.calc_liquidate_col_x(
             p_x128,
@@ -675,6 +690,11 @@ public macro fun liquidate_col_x_is_correct<$Setup>($setup: &mut $Setup) {
         assert!(
             position.collected_fees().amounts()[&type_name::with_defining_ids<SUI>()] == collected_protocol_fees_x + exp_liq_fee,
         );
+
+        let supply_pool_final_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SUSDC>());
+        assert!(supply_pool_final_st == supply_pool_initial_st - exp_sy_repaid);
 
         test_scenario::return_shared(position);
         test_scenario::return_shared(config);
@@ -1008,11 +1028,14 @@ public macro fun liquidate_col_y_is_correct<$Setup>($setup: &mut $Setup) {
         assert!(model.dx() == max_repayment_amt_x);
         assert!(position.col_y().value() > max_reward_amt_y);
         assert!(
-            position.collected_fees().amounts().contains(&type_name::with_defining_ids<USDC>()) == false
+            position.collected_fees().amounts().contains(&type_name::with_defining_ids<USDC>()) == false,
         );
 
         let initial_sx = position.debt_bag().get_share_amount_by_asset_type<SUI>();
         let initial_cy = position.col_y().value();
+        let supply_pool_initial_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SSUI>());
 
         let partial_repayment_amt_x = 3604566729;
         let (exp_repayment_amt_x, exp_reward_amt_y) = model.calc_liquidate_col_y(
@@ -1055,6 +1078,11 @@ public macro fun liquidate_col_y_is_correct<$Setup>($setup: &mut $Setup) {
         );
         let collected_protocol_fees_y = exp_liq_fee;
 
+        let supply_pool_final_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SSUI>());
+        assert!(supply_pool_final_st == supply_pool_initial_st - exp_sx_repaid);
+
         test_scenario::return_shared(position);
         test_scenario::return_shared(config);
         destroy(repayment_x);
@@ -1062,7 +1090,7 @@ public macro fun liquidate_col_y_is_correct<$Setup>($setup: &mut $Setup) {
 
         collected_protocol_fees_y
     };
-    
+
     // Full liquidation
     setup.next_tx(@0);
     {
@@ -1102,6 +1130,13 @@ public macro fun liquidate_col_y_is_correct<$Setup>($setup: &mut $Setup) {
         let initial_cy = position.col_y().value();
         assert!(initial_sx > 0);
 
+        let supply_pool_initial_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SSUI>());
+        assert!(supply_pool_initial_st > 0);
+
+        let exp_sx_repaid = initial_sx;
+
         let repayment_amount_x = max_repayment_amt_x * 2;
         let (exp_repayment_amt_x, exp_reward_amt_y) = model.calc_liquidate_col_y(
             p_x128,
@@ -1135,6 +1170,11 @@ public macro fun liquidate_col_y_is_correct<$Setup>($setup: &mut $Setup) {
         assert!(
             position.collected_fees().amounts()[&type_name::with_defining_ids<USDC>()] == collected_protocol_fees_y + exp_liq_fee,
         );
+
+        let supply_pool_final_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SSUI>());
+        assert!(supply_pool_final_st == supply_pool_initial_st - exp_sx_repaid);
 
         test_scenario::return_shared(position);
         test_scenario::return_shared(config);
