@@ -61,6 +61,15 @@ fun liquidate_col_x_is_correct() {
     setup.destroy();
 }
 
+#[test]
+fun liquidate_col_x_with_bad_debt_is_correct() {
+    let mut setup = position_core_mock_dex_test_setup::new_setup();
+
+    macros::liquidate_col_x_with_bad_debt_is_correct!(&mut setup);
+
+    setup.destroy();
+}
+
 /* ================= liquidate_col_y tests ================= */
 
 #[test, expected_failure(abort_code = 4, location = mock_dex_integration)] // e_invalid_config
@@ -113,6 +122,15 @@ fun liquidate_col_y_is_correct() {
     let mut setup = position_core_mock_dex_test_setup::new_setup();
 
     macros::liquidate_col_y_is_correct!(&mut setup);
+
+    setup.destroy();
+}
+
+#[test]
+fun liquidate_col_y_with_bad_debt_is_correct() {
+    let mut setup = position_core_mock_dex_test_setup::new_setup();
+
+    macros::liquidate_col_y_with_bad_debt_is_correct!(&mut setup);
 
     setup.destroy();
 }

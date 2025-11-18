@@ -705,6 +705,130 @@ public macro fun liquidate_col_x_is_correct<$Setup>($setup: &mut $Setup) {
     destroy(position_cap);
 }
 
+public macro fun liquidate_col_x_with_bad_debt_is_correct<$Setup>($setup: &mut $Setup) {
+    let setup = $setup;
+
+    // Create position and trigger bad debt threshold
+    let position_cap = create_position_for_liquidate_col_x_tests!(setup);
+    
+    // Move price to trigger bad debt threshold (more severe than normal liquidation)
+    setup.next_tx(@0);
+    {
+        setup.swap_to_sqrt_price_x64(price_mul_100_human_to_sqrt_x64<SUI, USDC>(1_77));
+        setup.sync_pyth_pio_price_x_to_pool();
+
+        let config: PositionConfig = setup.scenario().take_shared();
+        let position = setup.take_shared_position();
+
+        let price_info = config.validate_price_info(&setup.price_info());
+        let p_x128 = price_info.div_price_numeric_x128(
+            type_name::with_defining_ids<SUI>(),
+            type_name::with_defining_ids<USDC>(),
+        );
+
+        let model = setup.position_model(&position, &config);
+        let crit_margin_bps = 10000 + config.liq_bonus_bps();
+        assert!(model.margin_below_threshold(p_x128, crit_margin_bps));
+
+        test_scenario::return_shared(position);
+        test_scenario::return_shared(config);
+    };
+
+    // Deleverage first
+    deleverage_for_liquidation!(setup);
+
+    // Liquidate with bad debt
+    setup.next_tx(@0);
+    {
+        let mut position = setup.take_shared_position();
+        let config: PositionConfig = setup.scenario().take_shared();
+
+        // sanity check
+        assert!(position_is_liquidateable!(setup, &position, &config));
+
+        let debt_info = setup.debt_info(&config);
+        let price_info = setup.price_info();
+        let validated_debt_info = config.validate_debt_info(&debt_info);
+
+        let model = setup.position_model(&position, &config);
+        let p_x128 = config
+            .validate_price_info(&price_info)
+            .div_price_numeric_x128(
+                type_name::with_defining_ids<SUI>(),
+                type_name::with_defining_ids<USDC>(),
+            );
+        
+        // Verify position is below bad debt threshold
+        let crit_margin_bps = 10000 + config.liq_bonus_bps();
+        assert!(model.margin_below_threshold(p_x128, crit_margin_bps));
+
+        let (max_repayment_amt_y, max_reward_amt_x) = model.calc_liquidate_col_x(
+            p_x128,
+            u64::max_value!(),
+            config.liq_margin_bps(),
+            config.liq_bonus_bps(),
+            config.base_liq_factor_bps(),
+        );
+
+        assert!(max_repayment_amt_y > 0);
+        assert!(max_reward_amt_x > 0);
+        assert!(model.dy() > max_repayment_amt_y);
+        assert!(position.col_x().value() == max_reward_amt_x);
+        assert!(
+            position.collected_fees().amounts()[&type_name::with_defining_ids<SUI>()] == config.position_creation_fee_sui()
+        );
+
+        let initial_sy = position.debt_bag().get_share_amount_by_asset_type<USDC>();
+        let initial_cx = position.col_x().value();
+        let supply_pool_initial_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SUSDC>());
+
+        let exp_sy_repaid = validated_debt_info.calc_repay_by_amount(
+            type_name::with_defining_ids<SUSDC>(),
+            max_repayment_amt_y,
+        );
+        let exp_liq_fee = util::muldiv(
+            max_reward_amt_x,
+            (config.liq_bonus_bps() as u64) * (config.liq_fee_bps() as u64),
+            (10000 + (config.liq_bonus_bps() as u64)) * 10000,
+        );
+        assert!(exp_liq_fee > 0);
+        assert!(exp_sy_repaid > 0);
+
+        let mut repayment_y = balance::create_for_testing(max_repayment_amt_y * 2);
+        let reward_x = setup.liquidate_col_x(
+            &mut position,
+            &config,
+            &price_info,
+            &debt_info,
+            &mut repayment_y,
+        );
+
+        assert!(reward_x.value() == max_reward_amt_x - exp_liq_fee);
+        assert!(repayment_y.value() == max_repayment_amt_y);
+        assert!(
+            position.debt_bag().get_share_amount_by_asset_type<USDC>() == initial_sy - exp_sy_repaid,
+        );
+        assert!(position.col_x().value() == initial_cx - max_reward_amt_x);
+        assert!(
+            position.collected_fees().amounts()[&type_name::with_defining_ids<SUI>()] == config.position_creation_fee_sui() + exp_liq_fee,
+        );
+
+        let supply_pool_final_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SUSDC>());
+        assert!(supply_pool_final_st == supply_pool_initial_st - exp_sy_repaid);
+
+        test_scenario::return_shared(position);
+        test_scenario::return_shared(config);
+        destroy(repayment_y);
+        destroy(reward_x);
+    };
+
+    destroy(position_cap);
+}
+
 /* ================= liquidate_col_y tests ================= */
 
 public macro fun liquidate_col_y_aborts_when_invalid_config<$Setup>($setup: &mut $Setup) {
@@ -1169,6 +1293,130 @@ public macro fun liquidate_col_y_is_correct<$Setup>($setup: &mut $Setup) {
         assert!(position.col_y().value() > 0);
         assert!(
             position.collected_fees().amounts()[&type_name::with_defining_ids<USDC>()] == collected_protocol_fees_y + exp_liq_fee,
+        );
+
+        let supply_pool_final_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SSUI>());
+        assert!(supply_pool_final_st == supply_pool_initial_st - exp_sx_repaid);
+
+        test_scenario::return_shared(position);
+        test_scenario::return_shared(config);
+        destroy(repayment_x);
+        destroy(reward_y);
+    };
+
+    destroy(position_cap);
+}
+
+public macro fun liquidate_col_y_with_bad_debt_is_correct<$Setup>($setup: &mut $Setup) {
+    let setup = $setup;
+
+    // Create position and trigger bad debt threshold
+    let position_cap = create_position_for_liquidate_col_y_tests!(setup);
+    
+    // Move price to trigger bad debt threshold (more severe than normal liquidation)
+    setup.next_tx(@0);
+    {
+        setup.swap_to_sqrt_price_x64(price_mul_100_human_to_sqrt_x64<SUI, USDC>(7_97));
+        setup.sync_pyth_pio_price_x_to_pool();
+
+        let config: PositionConfig = setup.scenario().take_shared();
+        let position = setup.take_shared_position();
+
+        let price_info = config.validate_price_info(&setup.price_info());
+        let p_x128 = price_info.div_price_numeric_x128(
+            type_name::with_defining_ids<SUI>(),
+            type_name::with_defining_ids<USDC>(),
+        );
+
+        let model = setup.position_model(&position, &config);
+        let crit_margin_bps = 10000 + config.liq_bonus_bps();
+        assert!(model.margin_below_threshold(p_x128, crit_margin_bps));
+
+        test_scenario::return_shared(position);
+        test_scenario::return_shared(config);
+    };
+
+    // Deleverage first
+    deleverage_for_liquidation!(setup);
+
+    // Liquidate with bad debt
+    setup.next_tx(@0);
+    {
+        let mut position = setup.take_shared_position();
+        let config: PositionConfig = setup.scenario().take_shared();
+
+        // sanity check
+        assert!(position_is_liquidateable!(setup, &position, &config));
+
+        let debt_info = setup.debt_info(&config);
+        let price_info = setup.price_info();
+        let validated_debt_info = config.validate_debt_info(&debt_info);
+
+        let model = setup.position_model(&position, &config);
+        let p_x128 = config
+            .validate_price_info(&price_info)
+            .div_price_numeric_x128(
+                type_name::with_defining_ids<SUI>(),
+                type_name::with_defining_ids<USDC>(),
+            );
+        
+        // Verify position is below bad debt threshold
+        let crit_margin_bps = 10000 + config.liq_bonus_bps();
+        assert!(model.margin_below_threshold(p_x128, crit_margin_bps));
+
+        let (max_repayment_amt_x, max_reward_amt_y) = model.calc_liquidate_col_y(
+            p_x128,
+            u64::max_value!(),
+            config.liq_margin_bps(),
+            config.liq_bonus_bps(),
+            config.base_liq_factor_bps(),
+        );
+
+        assert!(max_repayment_amt_x > 0);
+        assert!(max_reward_amt_y > 0);
+        assert!(model.dx() > max_repayment_amt_x);
+        assert!(position.col_y().value() == max_reward_amt_y);
+        assert!(
+            position.collected_fees().amounts().contains(&type_name::with_defining_ids<USDC>()) == false,
+        );
+
+        let initial_sx = position.debt_bag().get_share_amount_by_asset_type<SUI>();
+        let initial_cy = position.col_y().value();
+        let supply_pool_initial_st = setup
+            .validated_debt_info(&config)
+            .supply_x64(type_name::with_original_ids<SSUI>());
+
+        let exp_sx_repaid = validated_debt_info.calc_repay_by_amount(
+            type_name::with_defining_ids<SSUI>(),
+            max_repayment_amt_x,
+        );
+        let exp_liq_fee = util::muldiv(
+            max_reward_amt_y,
+            (config.liq_bonus_bps() as u64) * (config.liq_fee_bps() as u64),
+            (10000 + (config.liq_bonus_bps() as u64)) * 10000,
+        );
+        assert!(exp_liq_fee > 0);
+        assert!(exp_sx_repaid > 0);
+
+        let mut repayment_x = balance::create_for_testing(max_repayment_amt_x * 2);
+        let reward_y = setup.liquidate_col_y(
+            &mut position,
+            &config,
+            &price_info,
+            &debt_info,
+            &mut repayment_x,
+        );
+
+        assert!(reward_y.value() == max_reward_amt_y - exp_liq_fee);
+        assert!(repayment_x.value() == max_repayment_amt_x);
+        assert!(
+            position.debt_bag().get_share_amount_by_asset_type<SUI>() == initial_sx - exp_sx_repaid,
+        );
+        assert!(position.col_y().value() == initial_cy - max_reward_amt_y);
+        assert!(
+            position.collected_fees().amounts()[&type_name::with_defining_ids<USDC>()] == exp_liq_fee,
         );
 
         let supply_pool_final_st = setup
