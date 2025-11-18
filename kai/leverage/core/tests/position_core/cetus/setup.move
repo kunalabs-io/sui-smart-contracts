@@ -1084,6 +1084,54 @@ public fun liquidate_col_y(
     )
 }
 
+public fun liquidate_col_x_with_wrong_supply_pool(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, CetusPosition>,
+    config: &PositionConfig,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+    repayment_y: &mut Balance<USDC>,
+): Balance<SUI> {
+    let mut wrong_supply_pool = supply_pool_tests::create_wrong_usdc_supply_pool_for_testing();
+
+    // This should abort with e_supply_pool_mismatch
+    let reward_x = cetus::liquidate_col_x(
+        position,
+        config,
+        price_info,
+        debt_info,
+        repayment_y,
+        &mut wrong_supply_pool,
+        &self.clock,
+    );
+    destroy_(wrong_supply_pool);
+    reward_x
+}
+
+public fun liquidate_col_y_with_wrong_supply_pool(
+    self: &mut Setup,
+    position: &mut Position<SUI, USDC, CetusPosition>,
+    config: &PositionConfig,
+    price_info: &PythPriceInfo,
+    debt_info: &DebtInfo,
+    repayment_x: &mut Balance<SUI>,
+): Balance<USDC> {
+    let mut wrong_supply_pool = supply_pool_tests::create_wrong_sui_supply_pool_for_testing();
+
+    // This should abort with e_supply_pool_mismatch
+    let reward_y = cetus::liquidate_col_y(
+        position,
+        config,
+        price_info,
+        debt_info,
+        repayment_x,
+        &mut wrong_supply_pool,
+        &self.clock,
+    );
+    destroy_(wrong_supply_pool);
+    reward_y
+}
+
 /* ================= tests ================= */
 
 #[test]
