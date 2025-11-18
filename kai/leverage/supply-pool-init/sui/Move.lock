@@ -22,7 +22,7 @@ dependencies = [
 
 [[move.package]]
 id = "Bridge"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "f63c9fc78e2171fa174dc43e757ded416c204558", subdir = "crates/sui-framework/packages/bridge" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "494fa6ede17f366f1cd850f01ccb9f42dc75c470", subdir = "crates/sui-framework/packages/bridge" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -78,19 +78,22 @@ source = { local = "../../core" }
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
   { id = "CetusClmm", name = "CetusClmm" },
-  { id = "DEEP", name = "DEEP" },
   { id = "IntegerMate", name = "IntegerMate" },
-  { id = "LBTC", name = "LBTC" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Pyth", name = "Pyth" },
   { id = "Sui", name = "Sui" },
+  { id = "bluefin_spot", name = "bluefin_spot" },
+  { id = "rate_limiter", name = "rate_limiter" },
+]
+
+dev-dependencies = [
+  { id = "DEEP", name = "DEEP" },
+  { id = "LBTC", name = "LBTC" },
   { id = "SuiUsdt", name = "SuiUsdt" },
   { id = "USDY", name = "USDY" },
   { id = "WAL", name = "WAL" },
   { id = "WHUSDCE", name = "WHUSDCE" },
   { id = "WHUSDTE", name = "WHUSDTE" },
-  { id = "bluefin_spot", name = "bluefin_spot" },
-  { id = "rate_limiter", name = "rate_limiter" },
   { id = "usdc", name = "usdc" },
   { id = "wBTC", name = "wBTC" },
   { id = "xBTC", name = "xBTC" },
@@ -151,7 +154,7 @@ dependencies = [
 
 [[move.package]]
 id = "SuiSystem"
-source = { git = "https://github.com/MystenLabs/sui.git", rev = "f63c9fc78e2171fa174dc43e757ded416c204558", subdir = "crates/sui-framework/packages/sui-system" }
+source = { git = "https://github.com/MystenLabs/sui.git", rev = "494fa6ede17f366f1cd850f01ccb9f42dc75c470", subdir = "crates/sui-framework/packages/sui-system" }
 
 dependencies = [
   { id = "MoveStdlib", name = "MoveStdlib" },
@@ -292,7 +295,7 @@ dependencies = [
 ]
 
 [move.toolchain-version]
-compiler-version = "1.57.3"
+compiler-version = "1.59.1"
 edition = "2024.beta"
 flavor = "sui"
 
