@@ -95,15 +95,15 @@ public fun remove_liquidity<X, Y>(
 
 #[deprecated(note = b"Use `create_position_ticket_v2` instead.")]
 public fun create_position_ticket<X, Y>(
-    _: &mut bluefin_pool::Pool<X, Y>,
-    _: &mut PositionConfig,
-    _: I32,
-    _: I32,
-    _: Balance<X>,
-    _: Balance<Y>,
-    _: u128,
-    _: &PythPriceInfo,
-    _: &mut TxContext,
+    _bluefin_pool: &mut bluefin_pool::Pool<X, Y>,
+    _config: &mut PositionConfig,
+    _tick_a: I32,
+    _tick_b: I32,
+    _principal_x: Balance<X>,
+    _principal_y: Balance<Y>,
+    _delta_l: u128,
+    _price_info: &PythPriceInfo,
+    _ctx: &mut TxContext,
 ): CreatePositionTicket<X, Y, I32> {
     abort e_function_deprecated!()
 }
