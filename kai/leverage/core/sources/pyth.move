@@ -7,25 +7,26 @@ module kai_leverage::pyth;
 use pyth::i64;
 use pyth::price::Price;
 use pyth::price_info::{Self, PriceInfoObject, PriceInfo};
-use std::type_name::{Self, TypeName};
+use std::type_name::{TypeName};
 use std::u64;
 use sui::clock::Clock;
-use sui::sui::SUI;
 use sui::vec_map::{Self, VecMap};
-use usdc::usdc::USDC;
-use whusdce::coin::COIN as WHUSDCE;
-use whusdte::coin::COIN as WHUSDTE;
-use suiusdt::usdt::USDT as SUIUSDT;
-use usdy::usdy::USDY;
-use deep::deep::DEEP;
-use wal::wal::WAL;
-use lbtc::lbtc::LBTC;
-use wbtc::btc::BTC as WBTC;
-use xbtc::xbtc::XBTC;
 
-const EUnsupportedPriceFeed: u64 = 0;
+const EUnsupportedCoinType: u64 = 0;
 const EStalePrice: u64 = 1;
 const EPriceUndefined: u64 = 2;
+
+const SUI_TYPE_NAME: vector<u8> = b"0000000000000000000000000000000000000000000000000000000000000002::sui::SUI";
+const WHUSDCE_TYPE_NAME: vector<u8> = b"5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN";
+const WHUSDTE_TYPE_NAME: vector<u8> = b"c060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c::coin::COIN";
+const USDC_TYPE_NAME: vector<u8> = b"dba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC";
+const SUIUSDT_TYPE_NAME: vector<u8> = b"375f70cf2ae4c00bf37117d0c85a2c71545e6ee05c4a5c7d282cd66a4504b068::usdt::USDT";
+const USDY_TYPE_NAME: vector<u8> = b"960b531667636f39e85867775f52f6b1f220a058c4de786905bdf761e06a56bb::usdy::USDY";
+const DEEP_TYPE_NAME: vector<u8> = b"deeb7a4662eec9f2f3def03fb937a663dddaa2e215b8078a284d026b7946c270::deep::DEEP";
+const WAL_TYPE_NAME: vector<u8> = b"356a26eb9e012a68958082340d4c4116e7f55615cf27affcff209cf0ae544f59::wal::WAL";
+const LBTC_TYPE_NAME: vector<u8> = b"3e8e9423d80e1774a7ca128fccd8bf5f1f7753be658c5e645929037f7c819040::lbtc::LBTC";
+const WBTC_TYPE_NAME: vector<u8> = b"aafb102dd0902f5055cadecd687fb5b71ca82ef0e0285d90afde828ec58ca96b::btc::BTC";
+const XBTC_TYPE_NAME: vector<u8> = b"876a4b7bce8aeaef60464c11f4026903e9afacab79b9b142686158aa86560b50::xbtc::XBTC";
 
 /// Collection of Pyth price information objects.
 public struct PythPriceInfo has copy, drop {
@@ -96,32 +97,35 @@ public fun max_age_secs(self: &ValidatedPythPriceInfo): u64 {
     self.max_age_secs
 }
 
+#[allow(implicit_const_copy)]
 /// Get the decimal places for a supported token type.
 public fun decimals(`type`: TypeName): u8 {
-    if (`type` == type_name::with_defining_ids<SUI>()) {
+    let type_name = `type`.as_string().as_bytes();
+
+    if (type_name == &SUI_TYPE_NAME) {
         9
-    } else if (`type` == type_name::with_defining_ids<WHUSDCE>()) {
+    } else if (type_name == &WHUSDCE_TYPE_NAME) {
         6
-    } else if (`type` == type_name::with_defining_ids<WHUSDTE>()) {
+    } else if (type_name == &WHUSDTE_TYPE_NAME) {
         6
-    } else if (`type` == type_name::with_defining_ids<USDC>()) {
+    } else if (type_name == &USDC_TYPE_NAME) {
         6
-    } else if (`type` == type_name::with_defining_ids<SUIUSDT>()) {
+    } else if (type_name == &SUIUSDT_TYPE_NAME) {
         6
-    } else if (`type` == type_name::with_defining_ids<USDY>()) {
+    } else if (type_name == &USDY_TYPE_NAME) {
         6
-    } else if (`type` == type_name::with_defining_ids<DEEP>()) {
+    } else if (type_name == &DEEP_TYPE_NAME) {
         6
-    } else if (`type` == type_name::with_defining_ids<WAL>()) {
+    } else if (type_name == &WAL_TYPE_NAME) {
         9
-    } else if (`type` == type_name::with_defining_ids<LBTC>()) {
+    } else if (type_name == &LBTC_TYPE_NAME) {
         8
-    } else if (`type` == type_name::with_defining_ids<WBTC>()) {
+    } else if (type_name == &WBTC_TYPE_NAME) {
         8
-    } else if (`type` == type_name::with_defining_ids<XBTC>()) {
+    } else if (type_name == &XBTC_TYPE_NAME) {
         8
     } else {
-        abort (EUnsupportedPriceFeed)
+        abort (EUnsupportedCoinType)
     }
 }
 

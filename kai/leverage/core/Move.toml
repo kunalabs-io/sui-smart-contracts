@@ -12,11 +12,13 @@ AccessManagement = { local = "../../../access-management" }
 CetusClmm = { local = "../../../_vendor/CetusClmm" }
 IntegerMate = { local = "../../../_vendor/IntegerMate", override = true }
 Pyth = { local = "../../../_vendor/Pyth" }
+bluefin_spot = { local = "../../../_vendor/bluefin_spot" }
+rate_limiter = { local = "../../../rate-limiter" }
+
+[dev-dependencies]
 WHUSDCE = { local = "../../../_vendor/whUSDCe" }
 WHUSDTE = { local = "../../../_vendor/whUSDTe" }
 usdc = { local = "../../../_vendor/USDC/usdc" }
-bluefin_spot = { local = "../../../_vendor/bluefin_spot" }
-rate_limiter = { local = "../../../rate-limiter" }
 SuiUsdt = { local = "../../../_vendor/SuiUsdt" }
 USDY = { local = "../../../_vendor/USDY" }
 DEEP = { local = "../../../_vendor/DEEP" }
