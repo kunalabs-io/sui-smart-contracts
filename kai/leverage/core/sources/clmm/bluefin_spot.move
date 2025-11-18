@@ -14,7 +14,7 @@ use bluefin_spot::config as bluefin_config;
 use bluefin_spot::pool as bluefin_pool;
 use bluefin_spot::position::Position as BluefinPosition;
 use integer_mate::i32::{Self, I32};
-use kai_leverage::debt_info::DebtInfo;
+use kai_leverage::debt_info::{Self, DebtInfo};
 use kai_leverage::position_core_clmm::{
     Self as core,
     e_invalid_balance_value,
@@ -266,22 +266,26 @@ public fun deleverage<X, Y, SX, SY>(
     clock: &Clock,
     ctx: &mut TxContext,
 ): ActionRequest {
-    core::deleverage!(
+    let mut debt_info = debt_info::empty(object::id(config.lend_facil_cap()));
+    debt_info.add_from_supply_pool(supply_pool_x, clock);
+    debt_info.add_from_supply_pool(supply_pool_y, clock);
+
+    let (mut ticket, request) = create_deleverage_ticket(
         position,
         config,
         price_info,
-        supply_pool_x,
-        supply_pool_y,
+        &debt_info,
         bluefin_pool,
+        bluefin_global_config,
         max_delta_l,
         clock,
         ctx,
-        |
-            pool: &mut bluefin_pool::Pool<X, Y>,
-            lp_position: &mut BluefinPosition,
-            delta_l: u128,
-        | remove_liquidity(bluefin_global_config, pool, lp_position, delta_l, clock),
-    )
+    );
+    core::deleverage_ticket_repay_x(position, config, &mut ticket, supply_pool_x, clock);
+    core::deleverage_ticket_repay_y(position, config, &mut ticket, supply_pool_y, clock);
+    core::destroy_deleverage_ticket(position, ticket);
+
+    request
 }
 
 /// Execute deleveraging for a position that has fallen below
@@ -296,20 +300,22 @@ public fun deleverage_for_liquidation<X, Y, SX, SY>(
     bluefin_global_config: &bluefin_config::GlobalConfig,
     clock: &Clock,
 ) {
-    core::deleverage_for_liquidation!(
+    let mut debt_info = debt_info::empty(object::id(config.lend_facil_cap()));
+    debt_info.add_from_supply_pool(supply_pool_x, clock);
+    debt_info.add_from_supply_pool(supply_pool_y, clock);
+
+    let mut ticket = create_deleverage_ticket_for_liquidation(
         position,
         config,
         price_info,
-        supply_pool_x,
-        supply_pool_y,
+        &debt_info,
         bluefin_pool,
+        bluefin_global_config,
         clock,
-        |
-            pool: &mut bluefin_pool::Pool<X, Y>,
-            lp_position: &mut BluefinPosition,
-            delta_l: u128,
-        | remove_liquidity(bluefin_global_config, pool, lp_position, delta_l, clock),
-    )
+    );
+    core::deleverage_ticket_repay_x(position, config, &mut ticket, supply_pool_x, clock);
+    core::deleverage_ticket_repay_y(position, config, &mut ticket, supply_pool_y, clock);
+    core::destroy_deleverage_ticket(position, ticket);
 }
 
 /// Liquidate X collateral by repaying Y debt. The position needs to be fully deleveraged and

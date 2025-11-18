@@ -3,7 +3,7 @@ module kai_leverage::mock_dex_integration;
 
 use access_management::access::ActionRequest;
 use integer_mate::i32::I32;
-use kai_leverage::debt_info::DebtInfo;
+use kai_leverage::debt_info::{Self, DebtInfo};
 use kai_leverage::mock_dex::{Self, MockDexPool, PositionKey, AddLiquidityReceipt};
 use kai_leverage::position_core_clmm::{
     Self as core,
@@ -154,22 +154,24 @@ public fun deleverage<X, Y, SX, SY>(
     clock: &Clock,
     ctx: &mut TxContext,
 ): ActionRequest {
-    core::deleverage!(
+    let mut debt_info = debt_info::empty(object::id(config.lend_facil_cap()));
+    debt_info.add_from_supply_pool(supply_pool_x, clock);
+    debt_info.add_from_supply_pool(supply_pool_y, clock);
+
+    let (mut ticket, request) = create_deleverage_ticket(
         position,
         config,
         price_info,
-        supply_pool_x,
-        supply_pool_y,
+        &debt_info,
         mock_dex_pool,
         max_delta_l,
-        clock,
         ctx,
-        |
-            pool: &mut MockDexPool<X, Y>,
-            lp_position: &mut PositionKey,
-            delta_l: u128,
-        | pool.remove_liquidity(lp_position, delta_l),
-    )
+    );
+    core::deleverage_ticket_repay_x(position, config, &mut ticket, supply_pool_x, clock);
+    core::deleverage_ticket_repay_y(position, config, &mut ticket, supply_pool_y, clock);
+    core::destroy_deleverage_ticket(position, ticket);
+
+    request
 }
 
 public fun deleverage_for_liquidation<X, Y, SX, SY>(
@@ -181,20 +183,20 @@ public fun deleverage_for_liquidation<X, Y, SX, SY>(
     mock_dex_pool: &mut MockDexPool<X, Y>,
     clock: &Clock,
 ) {
-    core::deleverage_for_liquidation!(
+    let mut debt_info = debt_info::empty(object::id(config.lend_facil_cap()));
+    debt_info.add_from_supply_pool(supply_pool_x, clock);
+    debt_info.add_from_supply_pool(supply_pool_y, clock);
+
+    let mut ticket = create_deleverage_ticket_for_liquidation(
         position,
         config,
         price_info,
-        supply_pool_x,
-        supply_pool_y,
+        &debt_info,
         mock_dex_pool,
-        clock,
-        |
-            pool: &mut MockDexPool<X, Y>,
-            lp_position: &mut PositionKey,
-            delta_l: u128,
-        | pool.remove_liquidity(lp_position, delta_l),
-    )
+    );
+    core::deleverage_ticket_repay_x(position, config, &mut ticket, supply_pool_x, clock);
+    core::deleverage_ticket_repay_y(position, config, &mut ticket, supply_pool_y, clock);
+    core::destroy_deleverage_ticket(position, ticket);
 }
 
 public fun liquidate_col_x<X, Y, SY>(
