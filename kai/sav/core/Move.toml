@@ -4,8 +4,6 @@ edition = "2024.beta"
 published-at = "0x909ad5f8badc34b49507dbd0cb9fb88cc816b531323659e3aefb992d4ab58474"
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "mainnet-v1.55.0", override = true }
-MoveStdlib = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "mainnet-v1.55.0", override = true }
 WHUSDCE = { local = "../../../_vendor/whUSDCe" }
 WHUSDTE = { local = "../../../_vendor/whUSDTe" }
 ScallopProtocol = { local = "../../../_vendor/ScallopProtocol" }
