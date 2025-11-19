@@ -2,7 +2,7 @@
 
 [move]
 version = 3
-manifest_digest = "D4B4BCDA0C065455B02BC48605667E9DE448C7FCC7C43FFADD5AA12FAE3E6D03"
+manifest_digest = "1C72D7B2031BE043C803FD3879ECDD075D4641F1820BE6FDA1B42290D77D5C3A"
 deps_digest = "CB99E3BEE139471F3765AE330F855F3B376156AA54F37DEDE11BBE5BB0D3BB74"
 dependencies = [
   { id = "AccessManagement", name = "AccessManagement" },
@@ -374,5 +374,5 @@ flavor = "sui"
 [env.mainnet]
 chain-id = "35834a8a"
 original-published-id = "0x01c389a85310b47e7630a9361d4e71025bc35e4999d3a645949b1b68b26f2273"
-latest-published-id = "0x98f1dd1699e817f965ffd7aa737ab40c4704ec9c204fe3967155cc4a0016ab39"
-published-version = "14"
+latest-published-id = "0x909ad5f8badc34b49507dbd0cb9fb88cc816b531323659e3aefb992d4ab58474"
+published-version = "15"
