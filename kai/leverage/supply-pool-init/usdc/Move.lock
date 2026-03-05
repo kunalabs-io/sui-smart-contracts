@@ -207,7 +207,10 @@ id = "WHUSDCE"
 source = { local = "../../../../_vendor/whUSDCe" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
   { id = "Wormhole1", name = "Wormhole1" },
 ]
 
@@ -216,7 +219,10 @@ id = "WHUSDTE"
 source = { local = "../../../../_vendor/whUSDTe" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -233,8 +239,10 @@ id = "Wormhole1"
 source = { local = "../../../../_vendor/Wormhole1" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
   { id = "Wormhole", name = "Wormhole" },
 ]
 

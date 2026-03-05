@@ -161,8 +161,10 @@ id = "ScallopCoinDecimalRegistry"
 source = { local = "../../../_vendor/ScallopCoinDecimalRegistry" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -170,7 +172,10 @@ id = "ScallopMath"
 source = { local = "../../../_vendor/ScallopMath" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -178,8 +183,10 @@ id = "ScallopPool"
 source = { local = "../../../_vendor/ScallopPool" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -187,6 +194,7 @@ id = "ScallopProtocol"
 source = { local = "../../../_vendor/ScallopProtocol" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "ScallopCoinDecimalRegistry", name = "ScallopCoinDecimalRegistry" },
   { id = "ScallopMath", name = "ScallopMath" },
@@ -194,6 +202,7 @@ dependencies = [
   { id = "ScallopX", name = "ScallopX" },
   { id = "ScallopXOracle", name = "ScallopXOracle" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -201,8 +210,10 @@ id = "ScallopWhitelist"
 source = { local = "../../../_vendor/ScallopWhitelist" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -210,8 +221,10 @@ id = "ScallopX"
 source = { local = "../../../_vendor/ScallopX" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -219,8 +232,10 @@ id = "ScallopXOracle"
 source = { local = "../../../_vendor/ScallopXOracle" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -276,7 +291,10 @@ id = "WHUSDCE"
 source = { local = "../../../_vendor/whUSDCe" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
   { id = "Wormhole1", name = "Wormhole1" },
 ]
 
@@ -285,7 +303,10 @@ id = "WHUSDTE"
 source = { local = "../../../_vendor/whUSDTe" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
 ]
 
 [[move.package]]
@@ -302,8 +323,10 @@ id = "Wormhole1"
 source = { local = "../../../_vendor/Wormhole1" }
 
 dependencies = [
+  { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
   { id = "Wormhole", name = "Wormhole" },
 ]
 
