@@ -1,6 +1,5 @@
 [package]
 name = "bluefin_spot"
-version = "1.0.0"
 published-at = "0xd075338d105482f1527cbfd363d6413558f184dec36d9138a70261e87f486e9c"
 
 [dependencies]

@@ -1,10 +1,10 @@
-module 0x11EA791D82B5742CC8CAB0BF7946035C97D9001D7C3803A93F119753DA66F526::config {
+module cetus_farming::config {
 
     use sui::object;
     use sui::table;
     use sui::tx_context;
-    use 0x11EA791D82B5742CC8CAB0BF7946035C97D9001D7C3803A93F119753DA66F526::acl;
-    use 0x11EA791D82B5742CC8CAB0BF7946035C97D9001D7C3803A93F119753DA66F526::config;
+    use cetus_farming::acl;
+    use cetus_farming::config;
 
     struct AdminCap has store, key {
         id: object::UID,

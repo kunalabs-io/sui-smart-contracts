@@ -1,10 +1,10 @@
-module 0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::balance_bag {
+module x::balance_bag {
 
     use sui::bag;
     use sui::balance;
     use sui::object;
     use sui::tx_context;
-    use 0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::balance_bag;
+    use x::balance_bag;
 
     struct BalanceBag has store {
         id: object::UID,

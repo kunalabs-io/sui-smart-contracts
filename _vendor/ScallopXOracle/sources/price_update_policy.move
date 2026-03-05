@@ -1,11 +1,11 @@
-module 0x1478A432123E4B3D61878B629F2C692969FDB375644F1251CD278A4B1E7D7CD6::price_update_policy {
+module x_oracle::price_update_policy {
 
     use 0x1::type_name;
     use sui::object;
     use sui::tx_context;
     use sui::vec_set;
-    use 0x1478A432123E4B3D61878B629F2C692969FDB375644F1251CD278A4B1E7D7CD6::price_feed;
-    use 0x1478A432123E4B3D61878B629F2C692969FDB375644F1251CD278A4B1E7D7CD6::price_update_policy;
+    use x_oracle::price_feed;
+    use x_oracle::price_update_policy;
 
     struct PriceUpdateRequest<phantom T0> {
         for: object::ID,

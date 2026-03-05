@@ -1,4 +1,4 @@
-module 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::price {
+module scallop_protocol::price {
 
     use 0x1::fixed_point32;
     use 0x1::type_name;

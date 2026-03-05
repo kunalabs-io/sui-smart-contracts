@@ -1,4 +1,4 @@
-module 0xAD013D5FDE39E15EABDA32B3DBDAFD67DAC32B798CE63237C27A8F73339B9B6F::fixed_point32_empower {
+module math::fixed_point32_empower {
 
     use 0x1::fixed_point32;
 

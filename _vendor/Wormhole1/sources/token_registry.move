@@ -1,4 +1,4 @@
-module 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::token_registry {
+module token_bridge::token_registry {
 
     use 0x1::ascii;
     use sui::coin;
@@ -6,15 +6,15 @@ module 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::token
     use sui::package;
     use sui::table;
     use sui::tx_context;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::asset_meta;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::attest_token;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::complete_transfer;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::create_wrapped;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::native_asset;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::state;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::token_registry;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::transfer_tokens;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::wrapped_asset;
+    use token_bridge::asset_meta;
+    use token_bridge::attest_token;
+    use token_bridge::complete_transfer;
+    use token_bridge::create_wrapped;
+    use token_bridge::native_asset;
+    use token_bridge::state;
+    use token_bridge::token_registry;
+    use token_bridge::transfer_tokens;
+    use token_bridge::wrapped_asset;
     use 0x5306F64E312B581766351C07AF79C72FCB1CD25147157FDC2F8AD76DE9A3FB6A::external_address;
 
     friend attest_token;

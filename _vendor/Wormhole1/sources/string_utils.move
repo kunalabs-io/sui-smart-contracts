@@ -1,4 +1,4 @@
-module 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::string_utils {
+module token_bridge::string_utils {
 
     use 0x1::ascii;
     use 0x1::string;

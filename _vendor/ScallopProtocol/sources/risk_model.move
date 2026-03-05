@@ -1,13 +1,13 @@
-module 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::risk_model {
+module scallop_protocol::risk_model {
 
     use 0x1::fixed_point32;
     use 0x1::type_name;
     use sui::tx_context;
     use 0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::ac_table;
     use 0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::one_time_lock_value;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::app;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::market;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::risk_model;
+    use scallop_protocol::app;
+    use scallop_protocol::market;
+    use scallop_protocol::risk_model;
 
     friend app;
     friend market;

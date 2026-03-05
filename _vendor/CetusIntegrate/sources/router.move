@@ -1,11 +1,11 @@
-module 0x996C4D9480708FB8B92AA7ACF819FB0497B5EC8E65BA06601CAE2FB6DB3312C3::router {
+module cetus_integrate::router {
 
     use sui::clock;
     use sui::coin;
     use sui::tx_context;
     use 0x1EABED72C53FEB3805120A081DC15963C204DC8D091542592ABAF7A35689B2FB::config;
     use 0x1EABED72C53FEB3805120A081DC15963C204DC8D091542592ABAF7A35689B2FB::pool;
-    use 0x996C4D9480708FB8B92AA7ACF819FB0497B5EC8E65BA06601CAE2FB6DB3312C3::router;
+    use cetus_integrate::router;
 
     struct CalculatedRouterSwapResult has copy, drop, store {
         amount_in: u64,

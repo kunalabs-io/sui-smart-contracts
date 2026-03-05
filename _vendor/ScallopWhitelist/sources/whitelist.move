@@ -1,4 +1,4 @@
-module 0x1318FDC90319EC9C24DF1456D960A447521B0A658316155895014A6E39B5482F::whitelist {
+module whitelist::whitelist {
 
     use sui::object;
 

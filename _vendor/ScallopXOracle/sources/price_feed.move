@@ -1,6 +1,6 @@
-module 0x1478A432123E4B3D61878B629F2C692969FDB375644F1251CD278A4B1E7D7CD6::price_feed {
+module x_oracle::price_feed {
 
-    use 0x1478A432123E4B3D61878B629F2C692969FDB375644F1251CD278A4B1E7D7CD6::price_feed;
+    use x_oracle::price_feed;
 
     struct PriceFeed has copy, drop, store {
         value: u64,

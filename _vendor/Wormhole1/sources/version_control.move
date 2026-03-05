@@ -1,7 +1,7 @@
-module 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::version_control {
+module token_bridge::version_control {
 
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::state;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::version_control;
+    use token_bridge::state;
+    use token_bridge::version_control;
 
     friend state;
 

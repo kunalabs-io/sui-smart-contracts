@@ -1,9 +1,9 @@
-module 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::accrue_interest {
+module scallop_protocol::accrue_interest {
 
     use sui::clock;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::market;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::obligation;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::version;
+    use scallop_protocol::market;
+    use scallop_protocol::obligation;
+    use scallop_protocol::version;
 
     // NOTE: Functions are 'native' for simplicity. They may or may not be native in actuality.
  #[native_interface]

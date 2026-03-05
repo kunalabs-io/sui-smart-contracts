@@ -1,11 +1,11 @@
-module 0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::wit_table {
+module x::wit_table {
 
     use 0x1::option;
     use sui::object;
     use sui::table;
     use sui::tx_context;
     use sui::vec_set;
-    use 0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::wit_table;
+    use x::wit_table;
 
     struct WitTable<phantom T0: drop, T1: copy+ drop+ store, phantom T2: store> has store, key {
         id: object::UID,

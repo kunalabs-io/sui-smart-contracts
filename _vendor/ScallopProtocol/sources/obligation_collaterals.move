@@ -1,10 +1,10 @@
-module 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::obligation_collaterals {
+module scallop_protocol::obligation_collaterals {
 
     use 0x1::type_name;
     use sui::tx_context;
     use 0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::wit_table;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::obligation;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::obligation_collaterals;
+    use scallop_protocol::obligation;
+    use scallop_protocol::obligation_collaterals;
 
     friend obligation;
 

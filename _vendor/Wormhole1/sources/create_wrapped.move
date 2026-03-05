@@ -1,12 +1,12 @@
-module 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::create_wrapped {
+module token_bridge::create_wrapped {
 
     use sui::coin;
     use sui::object;
     use sui::package;
     use sui::tx_context;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::create_wrapped;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::state;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::vaa;
+    use token_bridge::create_wrapped;
+    use token_bridge::state;
+    use token_bridge::vaa;
 
     struct WrappedAssetSetup<phantom T0, phantom T1> has store, key {
         id: object::UID,

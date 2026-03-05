@@ -1,12 +1,12 @@
-module 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::redeem {
+module scallop_protocol::redeem {
 
     use 0x1::type_name;
     use sui::clock;
     use sui::coin;
     use sui::tx_context;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::market;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::reserve;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::version;
+    use scallop_protocol::market;
+    use scallop_protocol::reserve;
+    use scallop_protocol::version;
 
     struct RedeemEvent has copy, drop {
         redeemer: address,

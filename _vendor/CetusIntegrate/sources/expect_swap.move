@@ -1,7 +1,7 @@
-module 0x996C4D9480708FB8B92AA7ACF819FB0497B5EC8E65BA06601CAE2FB6DB3312C3::expect_swap {
+module cetus_integrate::expect_swap {
 
     use 0x1EABED72C53FEB3805120A081DC15963C204DC8D091542592ABAF7A35689B2FB::pool;
-    use 0x996C4D9480708FB8B92AA7ACF819FB0497B5EC8E65BA06601CAE2FB6DB3312C3::expect_swap;
+    use cetus_integrate::expect_swap;
 
     struct ExpectSwapResult has copy, drop, store {
         amount_in: u256,

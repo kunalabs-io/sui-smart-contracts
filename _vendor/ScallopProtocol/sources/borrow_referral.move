@@ -1,13 +1,13 @@
-module 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::borrow_referral {
+module scallop_protocol::borrow_referral {
 
     use 0x1::type_name;
     use sui::balance;
     use sui::object;
     use sui::tx_context;
     use sui::vec_set;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::app;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::borrow;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::borrow_referral;
+    use scallop_protocol::app;
+    use scallop_protocol::borrow;
+    use scallop_protocol::borrow_referral;
 
     friend app;
     friend borrow;

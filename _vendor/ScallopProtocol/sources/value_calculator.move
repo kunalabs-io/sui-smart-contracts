@@ -1,4 +1,4 @@
-module 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::value_calculator {
+module scallop_protocol::value_calculator {
 
     use 0x1::fixed_point32;
 

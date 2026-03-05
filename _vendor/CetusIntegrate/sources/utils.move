@@ -1,4 +1,4 @@
-module 0x996C4D9480708FB8B92AA7ACF819FB0497B5EC8E65BA06601CAE2FB6DB3312C3::utils {
+module cetus_integrate::utils {
 
     use sui::coin;
     use sui::tx_context;

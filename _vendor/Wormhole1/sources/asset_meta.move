@@ -1,11 +1,11 @@
-module 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::asset_meta {
+module token_bridge::asset_meta {
 
     use 0x1::string;
     use sui::coin;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::asset_meta;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::attest_token;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::create_wrapped;
-    use 0x26EFEE2B51C911237888E5DC6702868ABCA3C7AC12C53F76EF8EBA0697695E3D::wrapped_asset;
+    use token_bridge::asset_meta;
+    use token_bridge::attest_token;
+    use token_bridge::create_wrapped;
+    use token_bridge::wrapped_asset;
     use 0x5306F64E312B581766351C07AF79C72FCB1CD25147157FDC2F8AD76DE9A3FB6A::external_address;
 
     friend attest_token;

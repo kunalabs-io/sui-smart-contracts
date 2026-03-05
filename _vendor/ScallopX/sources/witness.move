@@ -1,7 +1,7 @@
-module 0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::witness {
+module x::witness {
 
     use sui::package;
-    use 0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::witness;
+    use x::witness;
 
     struct WitnessGenerator<phantom T0> has store {
         dummy_field: bool,

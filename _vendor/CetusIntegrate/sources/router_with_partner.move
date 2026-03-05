@@ -1,4 +1,4 @@
-module 0x996C4D9480708FB8B92AA7ACF819FB0497B5EC8E65BA06601CAE2FB6DB3312C3::router_with_partner {
+module cetus_integrate::router_with_partner {
 
     use sui::clock;
     use sui::coin;

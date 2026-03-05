@@ -1,12 +1,12 @@
-module 0x1478A432123E4B3D61878B629F2C692969FDB375644F1251CD278A4B1E7D7CD6::x_oracle {
+module x_oracle::x_oracle {
 
     use 0x1::type_name;
     use sui::clock;
     use sui::object;
     use sui::table;
-    use 0x1478A432123E4B3D61878B629F2C692969FDB375644F1251CD278A4B1E7D7CD6::price_feed;
-    use 0x1478A432123E4B3D61878B629F2C692969FDB375644F1251CD278A4B1E7D7CD6::price_update_policy;
-    use 0x1478A432123E4B3D61878B629F2C692969FDB375644F1251CD278A4B1E7D7CD6::x_oracle;
+    use x_oracle::price_feed;
+    use x_oracle::price_update_policy;
+    use x_oracle::x_oracle;
 
     struct X_ORACLE has drop {
         dummy_field: bool,

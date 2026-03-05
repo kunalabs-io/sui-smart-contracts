@@ -1,8 +1,8 @@
-module 0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::one_time_lock_value {
+module x::one_time_lock_value {
 
     use sui::object;
     use sui::tx_context;
-    use 0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::one_time_lock_value;
+    use x::one_time_lock_value;
 
     struct OneTimeLockValue<T0: copy+ drop+ store> has store, key {
         id: object::UID,

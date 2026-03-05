@@ -1,12 +1,12 @@
-module 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::deposit_collateral {
+module scallop_protocol::deposit_collateral {
 
     use 0x1::type_name;
     use sui::coin;
     use sui::object;
     use sui::tx_context;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::market;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::obligation;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::version;
+    use scallop_protocol::market;
+    use scallop_protocol::obligation;
+    use scallop_protocol::version;
 
     struct CollateralDepositEvent has copy, drop {
         provider: address,

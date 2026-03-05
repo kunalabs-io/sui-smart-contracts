@@ -1,11 +1,11 @@
-module 0xCA5A5A62F01C79A104BF4D31669E29DAA387F325C241DE4EDBE30986A9BC8B0D::coin_decimals_registry {
+module coin_decimals_registry::coin_decimals_registry {
 
     use 0x1::ascii;
     use 0x1::type_name;
     use sui::coin;
     use sui::object;
     use sui::table;
-    use 0xCA5A5A62F01C79A104BF4D31669E29DAA387F325C241DE4EDBE30986A9BC8B0D::coin_decimals_registry;
+    use coin_decimals_registry::coin_decimals_registry;
 
     struct COIN_DECIMALS_REGISTRY has drop {
         dummy_field: bool,

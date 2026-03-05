@@ -1,8 +1,8 @@
-module 0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::ownership {
+module x::ownership {
 
     use sui::object;
     use sui::tx_context;
-    use 0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::ownership;
+    use x::ownership;
 
     struct Ownership<phantom T0: drop> has store, key {
         id: object::UID,

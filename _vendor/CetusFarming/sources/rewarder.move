@@ -1,4 +1,4 @@
-module 0x11EA791D82B5742CC8CAB0BF7946035C97D9001D7C3803A93F119753DA66F526::rewarder {
+module cetus_farming::rewarder {
 
     use 0x1::type_name;
     use sui::bag;
@@ -8,9 +8,9 @@ module 0x11EA791D82B5742CC8CAB0BF7946035C97D9001D7C3803A93F119753DA66F526::rewar
     use sui::object;
     use sui::tx_context;
     use sui::vec_map;
-    use 0x11EA791D82B5742CC8CAB0BF7946035C97D9001D7C3803A93F119753DA66F526::config;
-    use 0x11EA791D82B5742CC8CAB0BF7946035C97D9001D7C3803A93F119753DA66F526::pool;
-    use 0x11EA791D82B5742CC8CAB0BF7946035C97D9001D7C3803A93F119753DA66F526::rewarder;
+    use cetus_farming::config;
+    use cetus_farming::pool;
+    use cetus_farming::rewarder;
 
     friend pool;
 

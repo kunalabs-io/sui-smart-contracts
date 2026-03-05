@@ -1,4 +1,4 @@
-module 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::borrow {
+module scallop_protocol::borrow {
 
     use 0x1::type_name;
     use sui::clock;
@@ -7,10 +7,10 @@ module 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::borro
     use sui::tx_context;
     use 0x1478A432123E4B3D61878B629F2C692969FDB375644F1251CD278A4B1E7D7CD6::x_oracle;
     use 0xCA5A5A62F01C79A104BF4D31669E29DAA387F325C241DE4EDBE30986A9BC8B0D::coin_decimals_registry;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::borrow_referral;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::market;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::obligation;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::version;
+    use scallop_protocol::borrow_referral;
+    use scallop_protocol::market;
+    use scallop_protocol::obligation;
+    use scallop_protocol::version;
 
     struct BorrowEvent has copy, drop {
         borrower: address,

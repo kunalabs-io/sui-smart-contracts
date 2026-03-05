@@ -1,10 +1,10 @@
-module 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::obligation_access {
+module scallop_protocol::obligation_access {
 
     use 0x1::type_name;
     use sui::object;
     use sui::vec_set;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::app;
-    use 0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::obligation_access;
+    use scallop_protocol::app;
+    use scallop_protocol::obligation_access;
 
     friend app;
 

@@ -1,13 +1,13 @@
-module 0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A::admin {
+module scallop_pool::admin {
 
     use 0x1::type_name;
     use sui::clock;
     use sui::coin;
     use sui::object;
     use sui::tx_context;
-    use 0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A::admin;
-    use 0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A::rewards_pool;
-    use 0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A::spool;
+    use scallop_pool::admin;
+    use scallop_pool::rewards_pool;
+    use scallop_pool::spool;
 
     struct AdminCap has store, key {
         id: object::UID,
