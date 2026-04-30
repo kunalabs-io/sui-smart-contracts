@@ -19,17 +19,17 @@ deps = { MoveStdlib = "MoveStdlib" }
 [pinned.mainnet.cetus_clmm]
 source = { root = true }
 use_environment = "mainnet"
-manifest_digest = "93A053A028A397FB54D6E4366E8402311289A2F622BB9593774780D99AC88226"
+manifest_digest = "F7C63F1ECF575145EBED2E2DBEEDFDFA65654D819BFD3482A0E92BF63E87668A"
 deps = { integer_mate = "integer_mate", move_stl = "move_stl", std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.integer_mate]
-source = { local = "../IntegerMate" }
+source = { local = "../integer-mate-v7" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.move_stl]
-source = { local = "../MoveSTL" }
+source = { local = "../move-stl-v5" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }

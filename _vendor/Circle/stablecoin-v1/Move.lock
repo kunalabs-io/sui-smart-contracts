@@ -19,11 +19,11 @@ deps = { MoveStdlib = "MoveStdlib" }
 [pinned.mainnet.stablecoin]
 source = { root = true }
 use_environment = "mainnet"
-manifest_digest = "6B08AFABA09DC0D0216E97EB27C33CD7A3791E8DC3631C94FB08528F77C1E3AD"
+manifest_digest = "E35B0D76E836BA66C16A6E01AD029EA37B6F85AAAF845312E53D08280E5F3E32"
 deps = { std = "MoveStdlib", sui = "Sui", sui_extensions = "sui_extensions" }
 
 [pinned.mainnet.sui_extensions]
-source = { local = "../sui_extensions" }
+source = { local = "../sui-extensions-v1" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }

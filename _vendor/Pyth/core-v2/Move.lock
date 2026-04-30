@@ -19,11 +19,11 @@ deps = { MoveStdlib = "MoveStdlib" }
 [pinned.mainnet.pyth]
 source = { root = true }
 use_environment = "mainnet"
-manifest_digest = "0908ACE1CBE22057E7CC3A09616B8608C05F1D313489D1E9C29A356D381CC23A"
+manifest_digest = "D18B34940467015EBF096EC1C7CBBBD67BF5B04CC3C057DB2B0AD351272DACFE"
 deps = { std = "MoveStdlib", sui = "Sui", wormhole = "wormhole" }
 
 [pinned.mainnet.wormhole]
-source = { local = "../Wormhole" }
+source = { local = "../../Wormhole/core-v1" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }

@@ -23,37 +23,37 @@ manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5E
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.bluefin_spot]
-source = { local = "../../../../_vendor/bluefin_spot" }
+source = { local = "../../../../_vendor/Bluefin/spot-v17" }
 use_environment = "mainnet"
-manifest_digest = "F2F1176CBE6AC97263932C07BCD6B2414A4C1F68E49677A4CBE2DD27E0B16DF9"
+manifest_digest = "08E79D5F63D1821ACFEA53A572C5EB29D38828B06276E6DBC6EF1C7CFC3C92C7"
 deps = { integer_library = "integer_library", integer_mate = "integer_mate", std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.cetus_clmm]
-source = { local = "../../../../_vendor/CetusClmm" }
+source = { local = "../../../../_vendor/Cetus/clmm-v13" }
 use_environment = "mainnet"
-manifest_digest = "93A053A028A397FB54D6E4366E8402311289A2F622BB9593774780D99AC88226"
+manifest_digest = "F7C63F1ECF575145EBED2E2DBEEDFDFA65654D819BFD3482A0E92BF63E87668A"
 deps = { integer_mate = "integer_mate_1", move_stl = "move_stl", std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.deep]
-source = { local = "../../../../_vendor/DEEP" }
+source = { local = "../../../../_vendor/coins/DEEP" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.integer_library]
-source = { local = "../../../../_vendor/integer-library-v3" }
+source = { local = "../../../../_vendor/Bluefin/integer-library-v3" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.integer_mate]
-source = { local = "../../../../_vendor/integer-mate-v5" }
+source = { local = "../../../../_vendor/Cetus/integer-mate-v5" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.integer_mate_1]
-source = { local = "../../../../_vendor/IntegerMate" }
+source = { local = "../../../../_vendor/Cetus/integer-mate-v7" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
@@ -61,13 +61,13 @@ deps = { std = "MoveStdlib", sui = "Sui" }
 [pinned.mainnet.kai_leverage]
 source = { local = "../../core" }
 use_environment = "mainnet"
-manifest_digest = "0EA4A40B6CF382D809FCEBE4ED9F6B202A32C7D5B7B37CB5FC7216CCE8C21ABF"
+manifest_digest = "BFEC831406228189DAB6CD8C2AF79373789E74562A926A2EBF5BBAA9AD21A6BA"
 deps = { access_management = "access_management", bluefin_spot = "bluefin_spot", cetus_clmm = "cetus_clmm", deep = "deep", integer_mate = "integer_mate_1", lbtc = "lbtc", pyth = "pyth", rate_limiter = "rate_limiter", std = "MoveStdlib", sui = "Sui", suiusdt = "suiusdt", usdc = "usdc", usdy = "usdy", wal = "wal", wbtc = "wbtc", whusdce = "whusdce", whusdte = "whusdte", xbtc = "xbtc" }
 
 [pinned.mainnet.klsp_deep]
 source = { root = true }
 use_environment = "mainnet"
-manifest_digest = "D9F867331095F4939A126DD397623B85326564B1D1EBBED7F7EF25E3FDD9F292"
+manifest_digest = "9F29471B76727892EBC2AA845E837D576103D20DAA7F6CDCB14C7705F6F7AD2A"
 deps = { deep = "deep", kai_leverage = "kai_leverage", klsp_init = "klsp_init", std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.klsp_init]
@@ -77,21 +77,21 @@ manifest_digest = "6852EAC31AD6984AC15B438A459CEB1DAA1574124BCA56328B79E20710131
 deps = { access_management = "access_management", kai_leverage = "kai_leverage", std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.lbtc]
-source = { local = "../../../../_vendor/LBTC" }
+source = { local = "../../../../_vendor/coins/LBTC" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.move_stl]
-source = { local = "../../../../_vendor/MoveSTL" }
+source = { local = "../../../../_vendor/Cetus/move-stl-v5" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.pyth]
-source = { local = "../../../../_vendor/Pyth" }
+source = { local = "../../../../_vendor/Pyth/core-v2" }
 use_environment = "mainnet"
-manifest_digest = "0908ACE1CBE22057E7CC3A09616B8608C05F1D313489D1E9C29A356D381CC23A"
+manifest_digest = "D18B34940467015EBF096EC1C7CBBBD67BF5B04CC3C057DB2B0AD351272DACFE"
 deps = { std = "MoveStdlib", sui = "Sui", wormhole = "wormhole" }
 
 [pinned.mainnet.rate_limiter]
@@ -101,73 +101,73 @@ manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5E
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.stablecoin]
-source = { local = "../../../../_vendor/USDC/stablecoin" }
+source = { local = "../../../../_vendor/Circle/stablecoin-v1" }
 use_environment = "mainnet"
-manifest_digest = "6B08AFABA09DC0D0216E97EB27C33CD7A3791E8DC3631C94FB08528F77C1E3AD"
+manifest_digest = "E35B0D76E836BA66C16A6E01AD029EA37B6F85AAAF845312E53D08280E5F3E32"
 deps = { std = "MoveStdlib", sui = "Sui", sui_extensions = "sui_extensions" }
 
 [pinned.mainnet.sui_extensions]
-source = { local = "../../../../_vendor/USDC/sui_extensions" }
+source = { local = "../../../../_vendor/Circle/sui-extensions-v1" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.suiusdt]
-source = { local = "../../../../_vendor/SuiUsdt" }
+source = { local = "../../../../_vendor/coins/suiUSDT" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.token_bridge]
-source = { local = "../../../../_vendor/token-bridge" }
+source = { local = "../../../../_vendor/Wormhole/token-bridge-v1" }
 use_environment = "mainnet"
-manifest_digest = "0908ACE1CBE22057E7CC3A09616B8608C05F1D313489D1E9C29A356D381CC23A"
+manifest_digest = "838AA4998481011ED4777B7386260F8A05B647B4B7DF6621D35AAA6B4D420DF8"
 deps = { std = "MoveStdlib", sui = "Sui", wormhole = "wormhole" }
 
 [pinned.mainnet.usdc]
-source = { local = "../../../../_vendor/USDC/usdc" }
+source = { local = "../../../../_vendor/coins/USDC" }
 use_environment = "mainnet"
-manifest_digest = "788C6B27120436CD3E830FCCF96E10F05916A959631D98C03DF6F01EE4EACA6D"
+manifest_digest = "AEB379AEE1A925ED5C021ADE30219DD4456B0B776416B0F3BB7630346DCE7E1E"
 deps = { stablecoin = "stablecoin", std = "MoveStdlib", sui = "Sui", sui_extensions = "sui_extensions" }
 
 [pinned.mainnet.usdy]
-source = { local = "../../../../_vendor/USDY" }
+source = { local = "../../../../_vendor/coins/USDY" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.wal]
-source = { local = "../../../../_vendor/WAL" }
+source = { local = "../../../../_vendor/coins/WAL" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.wbtc]
-source = { local = "../../../../_vendor/wBTC" }
+source = { local = "../../../../_vendor/coins/wBTC" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.whusdce]
-source = { local = "../../../../_vendor/whUSDCe" }
+source = { local = "../../../../_vendor/coins/whUSDCe" }
 use_environment = "mainnet"
-manifest_digest = "DB559159B60587E5B1A0888F7FD5A26CD75754C2885A1C1F60AA4E0EDDA1BD22"
+manifest_digest = "675C45667D104AA87AEDFAB577FD88DF599C04BAF34D5C91B7B53B4EC1ABD656"
 deps = { std = "MoveStdlib", sui = "Sui", token_bridge = "token_bridge" }
 
 [pinned.mainnet.whusdte]
-source = { local = "../../../../_vendor/whUSDTe" }
+source = { local = "../../../../_vendor/coins/whUSDTe" }
 use_environment = "mainnet"
-manifest_digest = "DB559159B60587E5B1A0888F7FD5A26CD75754C2885A1C1F60AA4E0EDDA1BD22"
+manifest_digest = "675C45667D104AA87AEDFAB577FD88DF599C04BAF34D5C91B7B53B4EC1ABD656"
 deps = { std = "MoveStdlib", sui = "Sui", token_bridge = "token_bridge" }
 
 [pinned.mainnet.wormhole]
-source = { local = "../../../../_vendor/Wormhole" }
+source = { local = "../../../../_vendor/Wormhole/core-v1" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.xbtc]
-source = { local = "../../../../_vendor/xBTC" }
+source = { local = "../../../../_vendor/coins/xBTC" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
