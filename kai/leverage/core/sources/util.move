@@ -45,14 +45,20 @@ public fun saturating_muldiv_round_up_u128(a: u128, b: u128, c: u128): u128 {
     }
 }
 
+public(package) macro fun num_div_ceil<$T>($x: $T, $y: $T): $T {
+    let x = $x;
+    let y = $y;
+    if (x % y == 0) x / y else x / y + 1
+}
+
 /// Divide with rounding up for 128-bit values.
 public fun divide_and_round_up_u128(a: u128, b: u128): u128 {
-    std::macros::num_divide_and_round_up!(a, b)
+    num_div_ceil!(a, b)
 }
 
 /// Divide with rounding up for u256 values.
 public fun divide_and_round_up_u256(a: u256, b: u256): u256 {
-    std::macros::num_divide_and_round_up!(a, b)
+    num_div_ceil!(a, b)
 }
 
 /// Calculate absolute difference between two numbers.

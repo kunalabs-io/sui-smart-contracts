@@ -2108,7 +2108,7 @@ public(package) fun get_amount_ema_usd_value_6_decimals<T>(
     let num = p * (amount as u128);
     (if (expo + dec > 6) {
             if (round_up) {
-                std::macros::num_divide_and_round_up!(num, 10_u128.pow(expo + dec - 6))
+                util::num_div_ceil!(num, 10_u128.pow(expo + dec - 6))
             } else {
                 num / 10_u128.pow(expo + dec - 6)
             }
