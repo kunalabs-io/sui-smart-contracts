@@ -1,6 +1,2 @@
 [package]
-name = "ScallopWhitelist"
-published-at = "0x1318fdc90319ec9c24df1456d960a447521b0a658316155895014a6e39b5482f"
-
-[addresses]
-whitelist = "0x1318fdc90319ec9c24df1456d960a447521b0a658316155895014a6e39b5482f"
+name = "whitelist"

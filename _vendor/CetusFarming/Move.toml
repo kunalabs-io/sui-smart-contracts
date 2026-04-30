@@ -1,11 +1,7 @@
 [package]
-name = "CetusFarming"
-published-at = "0x1829f473437d24456825662e5bba97924194b5008dcbb59f6b6a6eb2a5d1a2de"
+name = "cetus_farming"
 
 [dependencies]
-IntegerMate = { local = "../IntegerMate" }
-CetusClmm = { local = "../CetusClmm" }
-MoveSTL = { local = "../MoveSTL" }
-
-[addresses]
-cetus_farming = "0x11ea791d82b5742cc8cab0bf7946035c97d9001d7c3803a93f119753da66f526"
+integer_mate = { local = "../IntegerMate" }
+cetus_clmm = { local = "../CetusClmm" }
+move_stl = { local = "../MoveSTL" }

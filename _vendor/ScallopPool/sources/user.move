@@ -1,72 +1,103 @@
-module scallop_pool::user {
-
-    use 0x1::type_name;
-    use sui::clock;
-    use sui::coin;
-    use sui::object;
-    use sui::tx_context;
-    use scallop_pool::rewards_pool;
-    use scallop_pool::spool;
-    use scallop_pool::spool_account;
+module spool::user {
+    use std::type_name::TypeName;
+    use sui::tx_context::TxContext;
+    use sui::coin::{Self, Coin};
+    use sui::clock::Clock;
+    use sui::object::ID;
+    use spool::spool::Spool;
+    use spool::rewards_pool::RewardsPool;
+    use spool::spool_account::{Self, SpoolAccount};
 
     struct CreateSpoolAccountEvent has copy, drop {
-        spool_account_id: object::ID,
-        spool_id: object::ID,
-        staking_type: type_name::TypeName,
+        spool_account_id: ID,
+        spool_id: ID,
+        staking_type: TypeName,
         created_at: u64,
     }
+
     struct SpoolAccountUnstakeEvent has copy, drop {
-        spool_account_id: object::ID,
-        spool_id: object::ID,
-        staking_type: type_name::TypeName,
+        spool_account_id: ID,
+        spool_id: ID,
+        staking_type: TypeName,
         unstake_amount: u64,
         remaining_amount: u64,
         timestamp: u64,
     }
+
     struct SpoolAccountStakeEvent has copy, drop {
         sender: address,
-        spool_account_id: object::ID,
-        spool_id: object::ID,
-        staking_type: type_name::TypeName,
+        spool_account_id: ID,
+        spool_id: ID,
+        staking_type: TypeName,
         stake_amount: u64,
         previous_amount: u64,
         timestamp: u64,
     }
+
     struct SpoolAccountRedeemRewardsEvent has copy, drop {
         sender: address,
-        spool_account_id: object::ID,
-        spool_id: object::ID,
-        rewards_pool_id: object::ID,
-        staking_type: type_name::TypeName,
-        rewards_type: type_name::TypeName,
+        spool_account_id: ID,
+        spool_id: ID,
+        rewards_pool_id: ID,
+        staking_type: TypeName,
+        rewards_type: TypeName,
         redeemed_points: u64,
         previous_points: u64,
         rewards: u64,
+        /// total claimed rewards in the pool
         total_claimed_rewards: u64,
-        total_user_points: u64,
-        timestamp: u64,
-    }
-    struct SpoolAccountRedeemRewardsEventV2 has copy, drop {
-        sender: address,
-        spool_account_id: object::ID,
-        spool_id: object::ID,
-        rewards_pool_id: object::ID,
-        staking_type: type_name::TypeName,
-        rewards_type: type_name::TypeName,
-        redeemed_points: u64,
-        previous_points: u64,
-        rewards_fee: u64,
-        rewards: u64,
-        total_claimed_rewards: u64,
+        /// total points of the user
         total_user_points: u64,
         timestamp: u64,
     }
 
-    // NOTE: Functions are 'native' for simplicity. They may or may not be native in actuality.
-    native public fun new_spool_account<T0>(a0: &mut spool::Spool, a1: &clock::Clock, a2: &mut tx_context::TxContext): spool_account::SpoolAccount<T0>;
-    native public entry fun update_points<T0>(a0: &mut spool::Spool, a1: &mut spool_account::SpoolAccount<T0>, a2: &clock::Clock);
-    native public entry fun stake<T0>(a0: &mut spool::Spool, a1: &mut spool_account::SpoolAccount<T0>, a2: coin::Coin<T0>, a3: &clock::Clock, a4: &tx_context::TxContext);
-    native public fun unstake<T0>(a0: &mut spool::Spool, a1: &mut spool_account::SpoolAccount<T0>, a2: u64, a3: &clock::Clock, a4: &mut tx_context::TxContext): coin::Coin<T0>;
-    native public fun redeem_rewards<T0, T1>(a0: &mut spool::Spool, a1: &mut rewards_pool::RewardsPool<T1>, a2: &mut spool_account::SpoolAccount<T0>, a3: &clock::Clock, a4: &mut tx_context::TxContext): coin::Coin<T1>;
+    const MaxStakesReachedErr: u64 = 0x0000010;
+    const InvalidStakeTypeErr: u64 = 0x0000011;
 
+    public fun new_spool_account<StakeType>(
+        spool: &mut Spool,
+        _clock: &Clock,
+        ctx: &mut TxContext,
+    ): SpoolAccount<StakeType> {
+        let spool_account = spool_account::new<StakeType>(spool, ctx);
+        spool_account
+    }
+
+    public entry fun update_points<StakeType>(
+        _spool: &mut Spool,
+        _spool_account: &mut SpoolAccount<StakeType>,
+        _clock: &Clock,
+    ) {
+        abort 0
+    }
+
+    public entry fun stake<StakeType>(
+        _spool: &mut Spool,
+        _spool_account: &mut SpoolAccount<StakeType>,
+        _stake_coin: Coin<StakeType>,
+        _clock: &Clock,
+        _ctx: &TxContext,
+    ) {
+        abort 0
+    }
+
+    public fun unstake<StakeType>(
+        _spool: &mut Spool,
+        _spool_account: &mut SpoolAccount<StakeType>,
+        _unstake_amount: u64,
+        _clock: &Clock,
+        ctx: &mut TxContext,
+    ): Coin<StakeType> {
+        coin::zero(ctx)
+    }
+
+    public fun redeem_rewards<StakeType, RewardType>(
+        _spool: &mut Spool,
+        _rewards_pool: &mut RewardsPool<RewardType>,
+        _spool_account: &mut SpoolAccount<StakeType>,
+        _clock: &Clock,
+        ctx: &mut TxContext,
+    ): Coin<RewardType> {
+        coin::zero(ctx)
+    }
 }

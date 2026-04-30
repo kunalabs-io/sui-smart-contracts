@@ -1,17 +1,9 @@
-module 0xDEEB7A4662EEC9F2F3DEF03FB937A663DDDAA2E215B8078A284D026B7946C270::deep {
+module deep::deep;
 
-    use sui::coin;
-    use sui::object;
-    use 0xDEEB7A4662EEC9F2F3DEF03FB937A663DDDAA2E215B8078A284D026B7946C270::deep;
+public struct DEEP has drop {}
 
-    struct DEEP has drop {
-        dummy_field: bool,
-    }
-    struct ProtectedTreasury has key {
-        id: object::UID,
-    }
-    struct TreasuryCapKey has copy, drop, store {
-        dummy_field: bool,
-    }
-
+public struct ProtectedTreasury has key {
+    id: object::UID,
 }
+
+public struct TreasuryCapKey has copy, drop, store {}

@@ -1,20 +1,37 @@
 module x::ownership {
-
-    use sui::object;
-    use sui::tx_context;
-    use x::ownership;
-
-    struct Ownership<phantom T0: drop> has store, key {
-        id: object::UID,
-        of: object::ID,
+  
+  use sui::object::{Self, UID, ID};
+  use sui::tx_context::TxContext;
+  
+  const ENotOwner: u64 = 0;
+  
+  struct Ownership<phantom T: drop> has key, store {
+    id: UID,
+    of: ID,
+  }
+  
+  public fun create_ownership<T: drop>(
+    _: T,
+    itemId: ID,
+    ctx: &mut TxContext
+  ): Ownership<T> {
+    Ownership {
+      id: object::new(ctx),
+      of: itemId
     }
-
-    // NOTE: Functions are 'native' for simplicity. They may or may not be native in actuality.
- #[native_interface]
-    native public fun create_ownership<T0: drop>(a0: T0, a1: object::ID, a2: &mut tx_context::TxContext): ownership::Ownership<T0>;
- #[native_interface]
-    native public fun is_owner<T0: drop, T1: key>(a0: &ownership::Ownership<T0>, a1: &T1): bool;
- #[native_interface]
-    native public fun assert_owner<T0: drop, T1: key>(a0: &ownership::Ownership<T0>, a1: &T1);
-
+  }
+  
+  public fun is_owner<T: drop, Item: key>(
+    ownership: &Ownership<T>,
+    item: &Item,
+  ): bool {
+    ownership.of == object::id(item)
+  }
+  
+  public fun assert_owner<T: drop, Item: key>(
+    ownership: &Ownership<T>,
+    item: &Item,
+  ) {
+    assert!(is_owner(ownership, item), ENotOwner);
+  }
 }

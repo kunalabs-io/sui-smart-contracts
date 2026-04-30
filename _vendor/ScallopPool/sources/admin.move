@@ -1,28 +1,28 @@
-module scallop_pool::admin {
+module spool::admin {
+    use sui::tx_context::TxContext;
+    use sui::object::{UID, ID};
+    use sui::coin::{Self, Coin};
+    use sui::clock::Clock;
+    use std::type_name::TypeName;
+    use spool::spool::Spool;
+    use spool::rewards_pool::RewardsPool;
 
-    use 0x1::type_name;
-    use sui::clock;
-    use sui::coin;
-    use sui::object;
-    use sui::tx_context;
-    use scallop_pool::admin;
-    use scallop_pool::rewards_pool;
-    use scallop_pool::spool;
-
-    struct AdminCap has store, key {
-        id: object::UID,
+    struct AdminCap has key, store {
+        id: UID,
     }
+
     struct CreateSpoolEvent has copy, drop {
-        spool_id: object::ID,
-        staking_type: type_name::TypeName,
+        spool_id: ID,
+        staking_type: TypeName,
         distributed_point_per_period: u64,
         point_distribution_time: u64,
         max_distributed_point: u64,
         max_stakes: u64,
         created_at: u64,
     }
+
     struct UpdateSpoolConfigEvent has copy, drop {
-        spool_id: object::ID,
+        spool_id: ID,
         distributed_point_per_period: u64,
         point_distribution_time: u64,
         max_distributed_point: u64,
@@ -30,13 +30,53 @@ module scallop_pool::admin {
         updated_at: u64,
     }
 
-    // NOTE: Functions are 'native' for simplicity. They may or may not be native in actuality.
-    native public entry fun create_spool<T0>(a0: &admin::AdminCap, a1: u64, a2: u64, a3: u64, a4: u64, a5: &clock::Clock, a6: &mut tx_context::TxContext);
-    native public entry fun update_spool_config(a0: &admin::AdminCap, a1: &mut spool::Spool, a2: u64, a3: u64, a4: u64, a5: u64, a6: &clock::Clock);
-    native public entry fun create_rewards_pool<T0>(a0: &admin::AdminCap, a1: &spool::Spool, a2: u64, a3: u64, a4: &mut tx_context::TxContext);
-    native public entry fun add_rewards<T0>(a0: &mut rewards_pool::RewardsPool<T0>, a1: coin::Coin<T0>);
-    native public fun take_rewards<T0>(a0: &admin::AdminCap, a1: &mut rewards_pool::RewardsPool<T0>, a2: u64, a3: &mut tx_context::TxContext): coin::Coin<T0>;
-    native public fun take_old_rewards<T0>(a0: &admin::AdminCap, a1: &mut rewards_pool::RewardsPool<T0>, a2: u64, a3: &mut tx_context::TxContext): coin::Coin<T0>;
-    native public entry fun update_reward_fee_config<T0>(a0: &admin::AdminCap, a1: &mut rewards_pool::RewardsPool<T0>, a2: u64, a3: u64, a4: address);
+    public entry fun create_spool<StakeType>(
+        _: &AdminCap,
+        _distributed_point_per_period: u64,
+        _point_distribution_time: u64,
+        _max_distributed_point: u64,
+        _max_stakes: u64,
+        _clock: &Clock,
+        _ctx: &mut TxContext,
+    ) {
+        abort 0
+    }
 
+    public entry fun update_spool_config(
+        _: &AdminCap,
+        _spool: &mut Spool,
+        _distributed_point_per_period: u64,
+        _point_distribution_time: u64,
+        _max_distributed_point: u64,
+        _max_stakes: u64,
+        _clock: &Clock,
+    ) {
+        abort 0
+    }
+
+    public entry fun create_rewards_pool<RewardType>(
+        _: &AdminCap,
+        _spool: &Spool,
+        _exchange_rate_numerator: u64,
+        _exchange_rate_denominator: u64,
+        _ctx: &mut TxContext,
+    ) {
+        abort 0
+    }
+
+    public entry fun add_rewards<RewardType>(
+        _rewards_pool: &mut RewardsPool<RewardType>,
+        _new_rewards: Coin<RewardType>,
+    ) {
+        abort 0
+    }
+
+    public fun take_rewards<RewardType>(
+        _: &AdminCap,
+        _rewards_pool: &mut RewardsPool<RewardType>,
+        _amount: u64,
+        ctx: &mut TxContext,
+    ): Coin<RewardType> {
+        coin::zero(ctx)
+    }
 }

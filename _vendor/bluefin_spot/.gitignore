@@ -131,7 +131,6 @@ dist
 
 
 build
-Move.lock
 bluefin-exchange-contracts-sui/*
 package-lock.json
 

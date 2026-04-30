@@ -1,32 +1,65 @@
+/**
+In some cases, the app need to manage balances for different tokens in one place.
+This module is created for this purpose.
+
+It supports:
+1. Put any type of balance into the bag
+2. Retrieve, update the balances in the bag
+*/
 module x::balance_bag {
-
-    use sui::bag;
-    use sui::balance;
-    use sui::object;
-    use sui::tx_context;
-    use x::balance_bag;
-
-    struct BalanceBag has store {
-        id: object::UID,
-        bag: bag::Bag,
+  use std::type_name::{Self, TypeName};
+  use sui::bag::{Self, Bag};
+  use sui::balance::{Self, Balance};
+  use sui::object::{Self, UID};
+  use sui::tx_context;
+  
+  struct BalanceBag has store {
+    id: UID,
+    bag: Bag,
+  }
+  
+  public fun new(ctx: &mut tx_context::TxContext): BalanceBag {
+    BalanceBag {
+      id: object::new(ctx),
+      bag: bag::new(ctx),
     }
-
-    // NOTE: Functions are 'native' for simplicity. They may or may not be native in actuality.
- #[native_interface]
-    native public fun new(a0: &mut tx_context::TxContext): balance_bag::BalanceBag;
- #[native_interface]
-    native public fun init_balance<T0>(a0: &mut balance_bag::BalanceBag);
- #[native_interface]
-    native public fun join<T0>(a0: &mut balance_bag::BalanceBag, a1: balance::Balance<T0>);
- #[native_interface]
-    native public fun split<T0>(a0: &mut balance_bag::BalanceBag, a1: u64): balance::Balance<T0>;
- #[native_interface]
-    native public fun value<T0>(a0: &balance_bag::BalanceBag): u64;
- #[native_interface]
-    native public fun contains<T0>(a0: &balance_bag::BalanceBag): bool;
- #[native_interface]
-    native public fun bag(a0: &balance_bag::BalanceBag): &bag::Bag;
- #[native_interface]
-    native public fun destroy_empty(a0: balance_bag::BalanceBag);
-
+  }
+  
+  public fun init_balance<T>(self: &mut BalanceBag) {
+    let typeName = type_name::get<T>();
+    bag::add(&mut self.bag, typeName, balance::zero<T>())
+  }
+  
+  public fun join<T>(self: &mut BalanceBag, balance: Balance<T>) {
+    let type_name = type_name::get<T>();
+    let in_bag_balance = bag::borrow_mut<TypeName, Balance<T>>(&mut self.bag, type_name);
+    balance::join(in_bag_balance, balance);
+  }
+  
+  public fun split<T>(self: &mut BalanceBag, amount: u64): Balance<T> {
+    let type_name = type_name::get<T>();
+    let in_bag_balance = bag::borrow_mut<TypeName, Balance<T>>(&mut self.bag, type_name);
+    balance::split(in_bag_balance, amount)
+  }
+  
+  public fun value<T>(self: &BalanceBag): u64 {
+    let type_name = type_name::get<T>();
+    let in_bag_balance = bag::borrow<TypeName, Balance<T>>(&self.bag, type_name);
+    balance::value(in_bag_balance)
+  }
+  
+  public fun contains<T>(self: &BalanceBag): bool {
+    let type_name = type_name::get<T>();
+    bag::contains_with_type<TypeName, Balance<T>>(&self.bag, type_name)
+  }
+  
+  public fun bag(self: &BalanceBag): &Bag {
+    &self.bag
+  }
+  
+  public fun destroy_empty(self: BalanceBag) {
+    let BalanceBag { id, bag } = self;
+    object::delete(id);
+    bag::destroy_empty(bag);
+  }
 }

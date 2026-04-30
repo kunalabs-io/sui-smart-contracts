@@ -1,6 +1,2 @@
 [package]
-name = "ScallopX"
-published-at = "0x779b5c547976899f5474f3a5bc0db36ddf4697ad7e5a901db0415c2281d28162"
-
-[addresses]
-x = "0x779b5c547976899f5474f3a5bc0db36ddf4697ad7e5a901db0415c2281d28162"
+name = "x"

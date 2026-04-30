@@ -1,6 +1,5 @@
 [package]
-name = "WHUSDTE"
-published-at = "0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c"
+name = "whusdte"
 
-[addresses]
-whusdte = "0xc060006111016b8a020ad5b33834984a437aaa7d3c74c18e09a95d48aceab08c"
+[dependencies]
+token_bridge = { local = "../token-bridge" }
