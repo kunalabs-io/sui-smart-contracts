@@ -1,15 +1,10 @@
 [package]
-name = "KaiLeverageSupplyPoolInitDeep"
-edition = "2024.beta"
+name = "klsp_deep"
+edition = "2024"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
-published-at = "0x8fc45d22b3fc276662811e0bada806a3a5f4cb63cd095c418b98df4e8b389f3f"
 
 [dependencies]
-KaiLeverage = { local = "../../core" }
-KaiLeverageSupplyPoolInit = { local = "../core" }
-AccessManagement = { local = "../../../../access-management", override = true }
-DEEP = { local = "../../../../_vendor/DEEP", override = true }
-
-[addresses]
-klsp_deep = "0x0"
+kai_leverage = { local = "../../core" }
+klsp_init = { local = "../core" }
+deep = { local = "../../../../_vendor/coins/DEEP" }

@@ -1,13 +1,9 @@
 [package]
-name = "KaiLeverageSupplyPoolInitSui"
+name = "klsp_sui"
 edition = "2024.beta"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
-published-at = "0x19163b40d52e67e20992f1b74c7376d30616ba966c8174e0990c58074d56eb8d"
 
 [dependencies]
-KaiLeverage = { local = "../../core" }
-KaiLeverageSupplyPoolInit = { local = "../core" }
-
-[addresses]
-klsp_sui = "0x19163b40d52e67e20992f1b74c7376d30616ba966c8174e0990c58074d56eb8d"
+kai_leverage = { local = "../../core" }
+klsp_init = { local = "../core" }

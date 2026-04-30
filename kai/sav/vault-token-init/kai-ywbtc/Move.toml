@@ -1,8 +1,3 @@
 [package]
-name = "KaiYWBTC"
-version = "0.0.1"
-edition = "2024.beta"
-published-at = "0xe4ff5fcc935fddaf808e27017c994b9cd75eaac81cec4bd2b4b8fdeb05a71e07"
- 
-[addresses]
-kai_ywbtc = "0xe4ff5fcc935fddaf808e27017c994b9cd75eaac81cec4bd2b4b8fdeb05a71e07"
+name = "kai_ywbtc"
+edition = "2024"

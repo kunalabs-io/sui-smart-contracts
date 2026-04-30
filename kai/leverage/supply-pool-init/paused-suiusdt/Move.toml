@@ -1,15 +1,8 @@
 [package]
-name = "Paused_KaiLeverageSupplyPoolInitSuiUsdt"
-edition = "2024.beta"
-license = "Apache 2.0"
-authors = ["Krešimir Klas (kklas@kunalabs.io)"]
-published-at = "0xfd3e54e465577273b7eb211212a01ca17418c667aec490eaf7fa5592bfd799f8"
+name = "paused_klsp_suiusdt"
+edition = "2024"
 
 [dependencies]
-KaiLeverage = { local = "../../core" }
-KaiLeverageSupplyPoolInit = { local = "../core" }
-AccessManagement = { local = "../../../../access-management", override = true }
-SuiUsdt = { local = "../../../../_vendor/SuiUsdt", override = true }
-
-[addresses]
-paused_klsp_suiusdt = "0xfd3e54e465577273b7eb211212a01ca17418c667aec490eaf7fa5592bfd799f8"
+kai_leverage = { local = "../../core" }
+klsp_init = { local = "../core" }
+suiusdt = { local = "../../../../_vendor/coins/suiUSDT" }

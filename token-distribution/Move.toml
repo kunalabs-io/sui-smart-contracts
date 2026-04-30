@@ -1,7 +1,5 @@
 [package]
-name = "TokenDistribution"
-version = "0.1.0"
+name = "token_distribution"
 edition = "2024"
-
-[addresses]
-token_distribution = "0x0"
+license = "Apache 2.0"
+authors = ["Krešimir Klas (kklas@kunalabs.io)"]

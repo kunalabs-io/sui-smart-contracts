@@ -1,7 +1,3 @@
 [package]
-name = "PausedKaiYSUIUSDT"
-edition = "2024.beta"
-published-at = "0xaa1365f35a163f785b2a660b97831298dc145a3bc71e993407a5991722974e70"
-
-[addresses]
-paused_kai_ysuiusdt = "0xaa1365f35a163f785b2a660b97831298dc145a3bc71e993407a5991722974e70"
+name = "paused_kai_ysuiusdt"
+edition = "2024"

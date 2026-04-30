@@ -1,29 +1,24 @@
 [package]
-name = "KaiLeverage"
+name = "kai_leverage"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
-edition = "2024.beta"
-published-at = "0xf259194ebadf4a68c7dd0103483aa6c6e0e058597c02c390a398092892192f6f"
+edition = "2024"
 
 [dependencies]
-AccessManagement = { local = "../../../access-management" }
-CetusClmm = { local = "../../../_vendor/CetusClmm" }
-IntegerMate = { local = "../../../_vendor/IntegerMate", override = true }
-Pyth = { local = "../../../_vendor/Pyth" }
-bluefin_spot = { local = "../../../_vendor/bluefin_spot" }
+access_management = { local = "../../../access-management" }
+cetus_clmm = { local = "../../../_vendor/Cetus/clmm-v13" }
+integer_mate = { local = "../../../_vendor/Cetus/integer-mate-v7", override = true }
+pyth = { local = "../../../_vendor/Pyth/core-v2" }
+bluefin_spot = { local = "../../../_vendor/Bluefin/spot-v17" }
 rate_limiter = { local = "../../../rate-limiter" }
 
-[dev-dependencies]
-WHUSDCE = { local = "../../../_vendor/whUSDCe" }
-WHUSDTE = { local = "../../../_vendor/whUSDTe" }
-usdc = { local = "../../../_vendor/USDC/usdc" }
-SuiUsdt = { local = "../../../_vendor/SuiUsdt" }
-USDY = { local = "../../../_vendor/USDY" }
-DEEP = { local = "../../../_vendor/DEEP" }
-WAL = { local = "../../../_vendor/WAL" }
-LBTC = { local = "../../../_vendor/LBTC" }
-wBTC = { local = "../../../_vendor/wBTC" }
-xBTC = { local = "../../../_vendor/xBTC" }
-
-[addresses]
-kai_leverage = "0x51e0ccce48f0763f98f1cb4856847c2e1531adacada99cdd7626ab999db57523"
+whusdce = { local = "../../../_vendor/coins/whUSDCe", modes = ["test"] }
+whusdte = { local = "../../../_vendor/coins/whUSDTe", modes = ["test"] }
+usdc = { local = "../../../_vendor/coins/USDC", modes = ["test"] }
+suiusdt = { local = "../../../_vendor/coins/suiUSDT", modes = ["test"] }
+usdy = { local = "../../../_vendor/coins/USDY", modes = ["test"] }
+deep = { local = "../../../_vendor/coins/DEEP", modes = ["test"] }
+wal = { local = "../../../_vendor/coins/WAL", modes = ["test"] }
+lbtc = { local = "../../../_vendor/coins/LBTC", modes = ["test"] }
+wbtc = { local = "../../../_vendor/coins/wBTC", modes = ["test"] }
+xbtc = { local = "../../../_vendor/coins/xBTC", modes = ["test"] }

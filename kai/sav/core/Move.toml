@@ -1,17 +1,13 @@
 [package]
-name = "KaiSingleAssetVault"
-edition = "2024.beta"
-published-at = "0x909ad5f8badc34b49507dbd0cb9fb88cc816b531323659e3aefb992d4ab58474"
+name = "kai_sav"
+edition = "2024"
 
 [dependencies]
-WHUSDCE = { local = "../../../_vendor/whUSDCe" }
-WHUSDTE = { local = "../../../_vendor/whUSDTe" }
-ScallopProtocol = { local = "../../../_vendor/ScallopProtocol" }
-ScallopPool = { local = "../../../_vendor/ScallopPool" }
-KaiYwhUSDTeYSUI = { local = "../vault-token-init/kai-ywhusdte-ysui" }
-AccessManagement = { local = "../../../access-management" }
-KaiLeverage = { local = "../../leverage/core" }
+whusdce = { local = "../../../_vendor/coins/whUSDCe" }
+whusdte = { local = "../../../_vendor/coins/whUSDTe" }
+scallop_protocol = { local = "../../../_vendor/Scallop/protocol-v10", rename-from = "protocol" }
+scallop_pool = { local = "../../../_vendor/Scallop/spool-v2", rename-from = "spool" }
+kai_ywhusdte_ysui = { local = "../vault-token-init/kai-ywhusdte-ysui" }
+access_management = { local = "../../../access-management" }
+kai_leverage = { local = "../../leverage/core" }
 rate_limiter = { local = "../../../rate-limiter" }
-
-[addresses]
-kai_sav = "0x01c389a85310b47e7630a9361d4e71025bc35e4999d3a645949b1b68b26f2273"

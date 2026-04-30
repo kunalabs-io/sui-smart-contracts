@@ -3,7 +3,3 @@ name = "rate_limiter"
 edition = "2024"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
-published-at = "0xe829c047cf805d54bde8ff2390883004d4557193d33bac516f3232105a2f2bb2"
-
-[addresses]
-rate_limiter = "0xe829c047cf805d54bde8ff2390883004d4557193d33bac516f3232105a2f2bb2"
