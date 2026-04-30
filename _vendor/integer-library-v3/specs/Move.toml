@@ -1,0 +1,11 @@
+# mainnet
+# -------------------------------
+[package]
+name = "IntegerLibrarySpecs"
+edition = "2024.beta"
+
+[dependencies]
+IntegerLibrary = { local = "../" }
+
+[addresses]
+integer_library_specs = "0x0"

@@ -1,6 +1,2 @@
 [package]
-name = "ScallopCoinDecimalRegistry"
-published-at = "0xca5a5a62f01c79a104bf4d31669e29daa387f325c241de4edbe30986a9bc8b0d"
-
-[addresses]
-coin_decimals_registry = "0xca5a5a62f01c79a104bf4d31669e29daa387f325c241de4edbe30986a9bc8b0d"
+name = "coin_decimals_registry"

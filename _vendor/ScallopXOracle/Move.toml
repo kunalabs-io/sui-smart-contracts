@@ -1,6 +1,2 @@
 [package]
-name = "ScallopXOracle"
-published-at = "0x1478a432123e4b3d61878b629f2c692969fdb375644f1251cd278a4b1e7d7cd6"
-
-[addresses]
-x_oracle = "0x1478a432123e4b3d61878b629f2c692969fdb375644f1251cd278a4b1e7d7cd6"
+name = "x_oracle"

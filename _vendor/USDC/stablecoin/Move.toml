@@ -16,21 +16,8 @@
 
 [package]
 name = "stablecoin"
-edition = "2024.beta"
+edition = "2024"
 license = "Apache 2.0"
-published-at = "0xecf47609d7da919ea98e7fd04f6e0648a0a79b337aaad373fa37aac8febf19c8"
 
-[dependencies.Sui]
-git = "https://github.com/MystenLabs/sui.git"
-subdir = "crates/sui-framework/packages/sui-framework"
-rev = "a4185da5659d8d299d34e1bb2515ff1f7e32a20a"
-
-[dependencies.sui_extensions]
-local = "../sui_extensions"
-
-[addresses]
-stablecoin = "0xecf47609d7da919ea98e7fd04f6e0648a0a79b337aaad373fa37aac8febf19c8"
-
-[dev-dependencies]
-
-[dev-addresses]
+[dependencies]
+sui_extensions = { local = "../sui_extensions" }

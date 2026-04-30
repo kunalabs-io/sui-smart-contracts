@@ -1,13 +1,9 @@
 [package]
-name = "ScallopProtocol"
-published-at = "0xc2596018248934aa86b3065390bf69ba5f7007e34df7e4032b736eb256f82f1c"
+name = "protocol"
 
 [dependencies]
-ScallopWhitelist = { local = "../ScallopWhitelist" }
-ScallopXOracle = { local = "../ScallopXOracle" }
-ScallopX = { local = "../ScallopX" }
-ScallopMath = { local = "../ScallopMath" }
-ScallopCoinDecimalRegistry = { local = "../ScallopCoinDecimalRegistry" }
-
-[addresses]
-scallop_protocol = "0xefe8b36d5b2e43728cc323298626b83177803521d195cfb11e15b910e892fddf"
+whitelist = { local = "../ScallopWhitelist" }
+x_oracle = { local = "../ScallopXOracle" }
+x = { local = "../ScallopX" }
+math = { local = "../ScallopMath" }
+coin_decimals_registry = { local = "../ScallopCoinDecimalRegistry" }

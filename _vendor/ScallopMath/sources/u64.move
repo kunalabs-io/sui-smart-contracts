@@ -1,7 +1,18 @@
 module math::u64 {
-
-    // NOTE: Functions are 'native' for simplicity. They may or may not be native in actuality.
- #[native_interface]
-    native public fun mul_div(a0: u64, a1: u64, a2: u64): u64;
-
+  
+  use math::u128;
+  
+  const U64_MAX: u128 = 18446744073709551615u128;
+  
+  const DIVIDE_BY_ZERO: u64 = 0;
+  const OVER_FLOW: u64 = 1;
+  
+  public fun mul_div(a: u64, b: u64, c: u64): u64 {
+    let a = (a as u128);
+    let b = (b as u128);
+    let c = (c as u128);
+    let res = u128::mul_div(a, b, c);
+    assert!(res <= U64_MAX, OVER_FLOW);
+    (res as u64)
+  }
 }

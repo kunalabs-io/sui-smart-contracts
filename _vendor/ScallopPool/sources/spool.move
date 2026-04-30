@@ -1,22 +1,21 @@
-module scallop_pool::spool {
+module spool::spool {
+    use sui::object::UID;
+    use std::type_name::TypeName;
+    // use std::fixed_point32;
 
-    use 0x1::type_name;
-    use sui::clock;
-    use sui::object;
-    use sui::tx_context;
-    use scallop_pool::admin;
-    use scallop_pool::spool;
-    use scallop_pool::user;
+    friend spool::admin;
+    friend spool::user;
 
-    friend admin;
-    friend user;
-
-    struct Spool has store, key {
-        id: object::UID,
-        stake_type: type_name::TypeName,
+    struct Spool has key, store {
+        id: UID,
+        stake_type: TypeName,
+        /// points that will be distribute on every period
         distributed_point_per_period: u64,
+        /// what is the duration before the point distribute for the next time
         point_distribution_time: u64,
+        /// distributed reward that is already belong to users
         distributed_point: u64,
+        /// maximum point that can be generated and distributed
         max_distributed_point: u64,
         max_stakes: u64,
         index: u64,
@@ -25,19 +24,13 @@ module scallop_pool::spool {
         created_at: u64,
     }
 
-    // NOTE: Functions are 'native' for simplicity. They may or may not be native in actuality.
-    native public fun base_index_rate(): u64;
-    native public fun index(a0: &spool::Spool): u64;
-    native public fun stakes(a0: &spool::Spool): u64;
-    native public fun max_stakes(a0: &spool::Spool): u64;
-    native public fun last_update(a0: &spool::Spool): u64;
-    native public fun point_distribution_time(a0: &spool::Spool): u64;
-    native public fun stake_type(a0: &spool::Spool): type_name::TypeName;
-    native public(friend) fun new<T0>(a0: u64, a1: u64, a2: u64, a3: u64, a4: &clock::Clock, a5: &mut tx_context::TxContext): spool::Spool;
-    native public(friend) fun update_config(a0: &mut spool::Spool, a1: u64, a2: u64, a3: u64, a4: u64);
-    native public(friend) fun stake(a0: &mut spool::Spool, a1: u64);
-    native public(friend) fun unstake(a0: &mut spool::Spool, a1: u64);
-    native public fun is_points_up_to_date(a0: &spool::Spool, a1: &clock::Clock): bool;
-    native public(friend) fun accrue_points(a0: &mut spool::Spool, a1: &clock::Clock);
+    const BaseIndexRate: u64 = 1_000_000_000;
+    public fun base_index_rate(): u64 { BaseIndexRate }
 
+    public fun index(spool: &Spool): u64 { spool.index }
+    public fun stakes(spool: &Spool): u64 { spool.stakes }
+    public fun max_stakes(spool: &Spool): u64 { spool.max_stakes }
+    public fun last_update(spool: &Spool): u64 { spool.last_update }
+    public fun point_distribution_time(spool: &Spool): u64 { spool.point_distribution_time }
+    public fun stake_type(spool: &Spool): TypeName { spool.stake_type }
 }

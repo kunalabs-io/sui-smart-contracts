@@ -1,32 +1,57 @@
 module x::supply_bag {
-
-    use sui::bag;
-    use sui::balance;
-    use sui::object;
-    use sui::tx_context;
-    use x::supply_bag;
-
-    struct SupplyBag has store {
-        id: object::UID,
-        bag: bag::Bag,
+  use std::type_name::{Self, TypeName};
+  use sui::tx_context::TxContext;
+  use sui::bag::{Self ,Bag};
+  use sui::balance::{Self, Balance, Supply};
+  use sui::object::{Self, UID};
+  
+  struct SupplyBag has store {
+    id: UID,
+    bag: Bag
+  }
+  
+  public fun new(ctx: &mut TxContext): SupplyBag {
+    SupplyBag {
+      id: object::new(ctx),
+      bag: bag::new(ctx)
     }
-
-    // NOTE: Functions are 'native' for simplicity. They may or may not be native in actuality.
- #[native_interface]
-    native public fun new(a0: &mut tx_context::TxContext): supply_bag::SupplyBag;
- #[native_interface]
-    native public fun init_supply<T0: drop>(a0: T0, a1: &mut supply_bag::SupplyBag);
- #[native_interface]
-    native public fun increase_supply<T0>(a0: &mut supply_bag::SupplyBag, a1: u64): balance::Balance<T0>;
- #[native_interface]
-    native public fun decrease_supply<T0>(a0: &mut supply_bag::SupplyBag, a1: balance::Balance<T0>): u64;
- #[native_interface]
-    native public fun supply_value<T0>(a0: &supply_bag::SupplyBag): u64;
- #[native_interface]
-    native public fun contains<T0>(a0: &supply_bag::SupplyBag): bool;
- #[native_interface]
-    native public fun bag(a0: &supply_bag::SupplyBag): &bag::Bag;
- #[native_interface]
-    native public fun destroy_empty(a0: supply_bag::SupplyBag);
-
+  }
+  
+  public fun init_supply<T: drop>(witness: T, self: &mut SupplyBag) {
+    let type_name = type_name::get<T>();
+    bag::add(&mut self.bag, type_name, balance::create_supply(witness))
+  }
+  
+  public fun increase_supply<T>(self: &mut SupplyBag, amount: u64): Balance<T> {
+    let type_name = type_name::get<T>();
+    let supply = bag::borrow_mut<TypeName, Supply<T>>(&mut self.bag, type_name);
+    balance::increase_supply(supply, amount)
+  }
+  
+  public fun decrease_supply<T>(self: &mut SupplyBag, balance: Balance<T>): u64 {
+    let type_name = type_name::get<T>();
+    let supply = bag::borrow_mut<TypeName, Supply<T>>(&mut self.bag, type_name);
+    balance::decrease_supply(supply, balance)
+  }
+  
+  public fun supply_value<T>(self: &SupplyBag): u64 {
+    let type_name = type_name::get<T>();
+    let supply = bag::borrow<TypeName, Supply<T>>(&self.bag, type_name);
+    balance::supply_value(supply)
+  }
+  
+  public fun contains<T>(self: &SupplyBag): bool {
+    let type_name = type_name::get<T>();
+    bag::contains(&self.bag, type_name)
+  }
+  
+  public fun bag(self: &SupplyBag): &Bag {
+    &self.bag
+  }
+  
+  public fun destroy_empty(self: SupplyBag) {
+    let SupplyBag {id, bag} = self;
+    object::delete(id);
+    bag::destroy_empty(bag);
+  }
 }

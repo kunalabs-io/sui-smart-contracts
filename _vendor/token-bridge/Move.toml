@@ -1,0 +1,5 @@
+[package]
+name = "token_bridge"
+
+[dependencies]
+wormhole = { local = "../Wormhole" }
