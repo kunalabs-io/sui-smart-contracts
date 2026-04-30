@@ -1,5 +1,0 @@
-[package]
-name = "whusdte"
-
-[dependencies]
-token_bridge = { local = "../token-bridge" }

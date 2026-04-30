@@ -1,0 +1,9 @@
+[package]
+name = "protocol"
+
+[dependencies]
+whitelist = { local = "../whitelist-v1" }
+x_oracle = { local = "../x-oracle-v1" }
+x = { local = "../x-v1" }
+math = { local = "../math-v1" }
+coin_decimals_registry = { local = "../coin-decimals-registry-v1" }

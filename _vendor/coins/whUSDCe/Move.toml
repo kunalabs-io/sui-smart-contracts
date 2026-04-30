@@ -1,0 +1,5 @@
+[package]
+name = "whusdce"
+
+[dependencies]
+token_bridge = { local = "../../Wormhole/token-bridge-v1" }

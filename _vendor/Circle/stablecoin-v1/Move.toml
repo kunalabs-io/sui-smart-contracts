@@ -20,4 +20,4 @@ edition = "2024"
 license = "Apache 2.0"
 
 [dependencies]
-sui_extensions = { local = "../sui_extensions" }
+sui_extensions = { local = "../sui-extensions-v1" }

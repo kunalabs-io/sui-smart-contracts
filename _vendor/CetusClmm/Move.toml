@@ -1,7 +1,0 @@
-[package]
-name = "cetus_clmm"
-edition = "2024"
-
-[dependencies]
-move_stl = { local = "../MoveSTL" }
-integer_mate = { local = "../IntegerMate" }
