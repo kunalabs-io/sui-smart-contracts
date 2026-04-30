@@ -17,37 +17,37 @@ manifest_digest = "CD547CB1ACCE0880C835DAED2D8FFCB91D56C833AE5240D3AA5B918398263
 deps = { MoveStdlib = "MoveStdlib" }
 
 [pinned.mainnet.coin_decimals_registry]
-source = { local = "../ScallopCoinDecimalRegistry" }
+source = { local = "../coin-decimals-registry-v1" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.math]
-source = { local = "../ScallopMath" }
+source = { local = "../math-v1" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
-[pinned.mainnet.scallop_protocol]
+[pinned.mainnet.protocol]
 source = { root = true }
 use_environment = "mainnet"
-manifest_digest = "B4D36889F38684E49217DD42347A6C84201F898089C14E4D81ECB7B809CC286B"
+manifest_digest = "4EE5BC4823892B73595CD0FFC5F8171067FA3AAB0EB2FCF131E51B38457B525E"
 deps = { coin_decimals_registry = "coin_decimals_registry", math = "math", std = "MoveStdlib", sui = "Sui", whitelist = "whitelist", x = "x", x_oracle = "x_oracle" }
 
 [pinned.mainnet.whitelist]
-source = { local = "../ScallopWhitelist" }
+source = { local = "../whitelist-v1" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.x]
-source = { local = "../ScallopX" }
+source = { local = "../x-v1" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.x_oracle]
-source = { local = "../ScallopXOracle" }
+source = { local = "../x-oracle-v1" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }

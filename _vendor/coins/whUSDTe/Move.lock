@@ -17,19 +17,19 @@ manifest_digest = "CD547CB1ACCE0880C835DAED2D8FFCB91D56C833AE5240D3AA5B918398263
 deps = { MoveStdlib = "MoveStdlib" }
 
 [pinned.mainnet.token_bridge]
-source = { local = "../token-bridge" }
+source = { local = "../../Wormhole/token-bridge-v1" }
 use_environment = "mainnet"
-manifest_digest = "0908ACE1CBE22057E7CC3A09616B8608C05F1D313489D1E9C29A356D381CC23A"
+manifest_digest = "838AA4998481011ED4777B7386260F8A05B647B4B7DF6621D35AAA6B4D420DF8"
 deps = { std = "MoveStdlib", sui = "Sui", wormhole = "wormhole" }
 
 [pinned.mainnet.whusdte]
 source = { root = true }
 use_environment = "mainnet"
-manifest_digest = "DB559159B60587E5B1A0888F7FD5A26CD75754C2885A1C1F60AA4E0EDDA1BD22"
+manifest_digest = "675C45667D104AA87AEDFAB577FD88DF599C04BAF34D5C91B7B53B4EC1ABD656"
 deps = { std = "MoveStdlib", sui = "Sui", token_bridge = "token_bridge" }
 
 [pinned.mainnet.wormhole]
-source = { local = "../Wormhole" }
+source = { local = "../../Wormhole/core-v1" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }

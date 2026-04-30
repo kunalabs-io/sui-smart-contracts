@@ -19,7 +19,7 @@ deps = { MoveStdlib = "MoveStdlib" }
 [pinned.mainnet.bluefin_spot]
 source = { root = true }
 use_environment = "mainnet"
-manifest_digest = "F2F1176CBE6AC97263932C07BCD6B2414A4C1F68E49677A4CBE2DD27E0B16DF9"
+manifest_digest = "08E79D5F63D1821ACFEA53A572C5EB29D38828B06276E6DBC6EF1C7CFC3C92C7"
 deps = { integer_library = "integer_library", integer_mate = "integer_mate", std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.integer_library]
@@ -29,7 +29,7 @@ manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5E
 deps = { std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.integer_mate]
-source = { local = "../integer-mate-v5" }
+source = { local = "../../Cetus/integer-mate-v5" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
