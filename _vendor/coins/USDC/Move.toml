@@ -20,5 +20,5 @@ edition = "2024.beta"
 license = "Apache 2.0"
 
 [dependencies]
-stablecoin = { local = "../stablecoin" }
-sui_extensions = { local = "../sui_extensions" }
+stablecoin = { local = "../../Circle/stablecoin-v1" }
+sui_extensions = { local = "../../Circle/sui-extensions-v1" }

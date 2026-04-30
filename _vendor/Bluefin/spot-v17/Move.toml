@@ -2,5 +2,5 @@
 name = "bluefin_spot"
 
 [dependencies]
-integer_mate = { local = "../integer-mate-v5" }
+integer_mate = { local = "../../Cetus/integer-mate-v5" }
 integer_library = { local = "../integer-library-v3" }

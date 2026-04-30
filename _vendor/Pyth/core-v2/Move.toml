@@ -1,0 +1,5 @@
+[package]
+name = "pyth"
+
+[dependencies]
+wormhole = { local = "../../Wormhole/core-v1" }

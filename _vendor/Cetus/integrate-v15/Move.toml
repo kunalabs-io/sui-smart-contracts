@@ -1,0 +1,8 @@
+[package]
+name = "cetus_integrate"
+
+[dependencies]
+integer_mate = { local = "../integer-mate-v7" }
+cetus_clmm = { local = "../clmm-v13" }
+move_stl = { local = "../move-stl-v5" }
+cetus_farming = { local = "../farming-v9" }

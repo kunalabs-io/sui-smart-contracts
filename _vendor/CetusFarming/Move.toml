@@ -1,7 +1,0 @@
-[package]
-name = "cetus_farming"
-
-[dependencies]
-integer_mate = { local = "../IntegerMate" }
-cetus_clmm = { local = "../CetusClmm" }
-move_stl = { local = "../MoveSTL" }

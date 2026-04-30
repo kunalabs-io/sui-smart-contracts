@@ -2,4 +2,4 @@
 name = "token_bridge"
 
 [dependencies]
-wormhole = { local = "../Wormhole" }
+wormhole = { local = "../core-v1" }

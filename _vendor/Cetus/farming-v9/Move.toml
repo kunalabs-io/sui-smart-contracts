@@ -1,0 +1,7 @@
+[package]
+name = "cetus_farming"
+
+[dependencies]
+integer_mate = { local = "../integer-mate-v7" }
+cetus_clmm = { local = "../clmm-v13" }
+move_stl = { local = "../move-stl-v5" }

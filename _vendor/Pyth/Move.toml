@@ -1,5 +1,0 @@
-[package]
-name = "pyth"
-
-[dependencies]
-wormhole = { local = "../Wormhole" }
