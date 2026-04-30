@@ -1,8 +1,3 @@
 [package]
-name = "KaiYwhUSDTeYSUI"
-version = "0.0.1"
-edition = "2024.beta"
-published-at = "0xb8dc843a816b51992ee10d2ddc6d28aab4f0a1d651cd7289a7897902eb631613"
-
-[addresses]
-kai_ywhusdte_ysui = "0xb8dc843a816b51992ee10d2ddc6d28aab4f0a1d651cd7289a7897902eb631613"
+name = "kai_ywhusdte_ysui"
+edition = "2024"

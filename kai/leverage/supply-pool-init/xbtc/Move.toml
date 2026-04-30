@@ -1,15 +1,10 @@
 [package]
-name = "KaiLeverageSupplyPoolInitWbtc"
-edition = "2024.beta"
+name = "klsp_xbtc"
+edition = "2024"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
-published-at = "0x439536b0ed9ffa4ead507ec35ae2bdc759a8bb7abe30fafea68a06af54476d75"
 
 [dependencies]
-KaiLeverage = { local = "../../core" }
-KaiLeverageSupplyPoolInit = { local = "../core" }
-AccessManagement = { local = "../../../../access-management" }
-xBTC = { local = "../../../../_vendor/xBTC" }
-
-[addresses]
-klsp_xbtc = "0x439536b0ed9ffa4ead507ec35ae2bdc759a8bb7abe30fafea68a06af54476d75"
+kai_leverage = { local = "../../core" }
+klsp_init = { local = "../core" }
+xbtc = { local = "../../../../_vendor/coins/xBTC" }

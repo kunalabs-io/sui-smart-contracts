@@ -1,15 +1,10 @@
 [package]
-name = "Paused_KaiLeverageSupplyPoolInitUsdc"
-edition = "2024.beta"
+name = "paused_klsp_usdc"
+edition = "2024"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
-published-at = "0xa47906ee2160b8d1d89591a2bb37ed71053bfb3ed1b39581f03358950a91ca79"
 
 [dependencies]
-KaiLeverage = { local = "../../core" }
-KaiLeverageSupplyPoolInit = { local = "../core" }
-AccessManagement = { local = "../../../../access-management", override = true }
-usdc = { local = "../../../../_vendor/USDC/usdc", override = true }
-
-[addresses]
-paused_klsp_usdc = "0xa47906ee2160b8d1d89591a2bb37ed71053bfb3ed1b39581f03358950a91ca79"
+kai_leverage = { local = "../../core" }
+klsp_init = { local = "../core" }
+usdc = { local = "../../../../_vendor/coins/USDC" }

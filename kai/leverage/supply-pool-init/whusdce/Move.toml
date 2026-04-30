@@ -1,14 +1,10 @@
 [package]
-name = "KaiLeverageSupplyPoolInitWhusdce"
-edition = "2024.beta"
+name = "klsp_whusdce"
+edition = "2024"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
-published-at = "0x27fc520bfa9a98ca098b8f484c445f865fcb0efd79c8e4c5274cd6515282fd14"
 
 [dependencies]
-KaiLeverage = { local = "../../core" }
-KaiLeverageSupplyPoolInit = { local = "../core" }
-WHUSDCE = { local = "../../../../_vendor/whUSDCe" }
-
-[addresses]
-klsp_whusdce = "0x27fc520bfa9a98ca098b8f484c445f865fcb0efd79c8e4c5274cd6515282fd14"
+kai_leverage = { local = "../../core" }
+klsp_init = { local = "../core" }
+whusdce = { local = "../../../../_vendor/coins/whUSDCe" }

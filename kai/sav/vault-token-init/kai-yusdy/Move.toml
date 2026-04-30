@@ -1,7 +1,3 @@
 [package]
-name = "KaiYUSDY"
-edition = "2024.beta"
-published-at = "0xdd7108db1a209d23d8a25dda78bdca4547b755094305971ed4064dfe5cdfa026"
-
-[addresses]
-kai_yusdy = "0xdd7108db1a209d23d8a25dda78bdca4547b755094305971ed4064dfe5cdfa026"
+name = "kai_yusdy"
+edition = "2024"

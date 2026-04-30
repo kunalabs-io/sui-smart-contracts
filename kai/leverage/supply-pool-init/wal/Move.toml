@@ -1,15 +1,10 @@
 [package]
-name = "KaiLeverageSupplyPoolInitWal"
-edition = "2024.beta"
+name = "klsp_wal"
+edition = "2024"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
-published-at = "0x059b208a81be1ed6f1d596d971abf358401304dfbacce30c8ffc637ba5b68f13"
 
 [dependencies]
-KaiLeverage = { local = "../../core" }
-KaiLeverageSupplyPoolInit = { local = "../core" }
-AccessManagement = { local = "../../../../access-management" }
-WAL = { local = "../../../../_vendor/WAL" }
-
-[addresses]
-klsp_wal = "0x059b208a81be1ed6f1d596d971abf358401304dfbacce30c8ffc637ba5b68f13"
+kai_leverage = { local = "../../core" }
+klsp_init = { local = "../core" }
+wal = { local = "../../../../_vendor/coins/WAL" }

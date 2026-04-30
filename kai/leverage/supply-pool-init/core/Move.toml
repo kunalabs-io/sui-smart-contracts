@@ -1,13 +1,9 @@
 [package]
-name = "KaiLeverageSupplyPoolInit"
-edition = "2024.beta"
+name = "klsp_init"
+edition = "2024"
 license = "Apache 2.0"
 authors = ["Krešimir Klas (kklas@kunalabs.io)"]
-published-at = "0x4bb9836b2b5fbba281b97c49adcf5fd14e965f57232acd8028e87190c1a0f63f"
 
 [dependencies]
-KaiLeverage = { local = "../../core" }
-AccessManagement = { local = "../../../../access-management", override = true }
-
-[addresses]
-klsp_init = "0x826f6e045f5b19fb883f5997fa344cbff2c78f0f9fc70115a09cffb8f338e456"
+kai_leverage = { local = "../../core" }
+access_management = { local = "../../../../access-management" }
