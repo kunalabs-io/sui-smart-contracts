@@ -33,3 +33,33 @@ source = { local = "../../Wormhole/core-v1" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
+
+[pinned.testnet.MoveStdlib]
+source = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "c2428b3aaf9c24270b609001e56d96cb10c76d28" }
+use_environment = "testnet"
+manifest_digest = "C4FE4C91DE74CBF223B2E380AE40F592177D21870DC2D7EB6227D2D694E05363"
+deps = {}
+
+[pinned.testnet.Sui]
+source = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "c2428b3aaf9c24270b609001e56d96cb10c76d28" }
+use_environment = "testnet"
+manifest_digest = "7AFB66695545775FBFBB2D3078ADFD084244D5002392E837FDE21D9EA1C6D01C"
+deps = { MoveStdlib = "MoveStdlib" }
+
+[pinned.testnet.token_bridge]
+source = { local = "../../Wormhole/token-bridge-v1" }
+use_environment = "testnet"
+manifest_digest = "AA2D39CB1A57092AEC7CB2C08E4C7F53826DF1DE967BF797D0277B173D620792"
+deps = { std = "MoveStdlib", sui = "Sui", wormhole = "wormhole" }
+
+[pinned.testnet.whusdce]
+source = { root = true }
+use_environment = "testnet"
+manifest_digest = "77E20FC3960FA97B96D2B8D204F82C6B7E329F4446AA640015D58820D5397652"
+deps = { std = "MoveStdlib", sui = "Sui", token_bridge = "token_bridge" }
+
+[pinned.testnet.wormhole]
+source = { local = "../../Wormhole/core-v1" }
+use_environment = "testnet"
+manifest_digest = "5745706258F61D6CE210904B3E6AE87A73CE9D31A6F93BE4718C442529332A87"
+deps = { std = "MoveStdlib", sui = "Sui" }
