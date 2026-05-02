@@ -57,9 +57,20 @@ public fun ring_aggregator(self: &SlidingSumLimiter): &RingAggregator {
     &self.ring_aggregator
 }
 
-/// Return the total sum of all values currently in the sliding window.
+/// Return the cached total sum from the underlying ring aggregator.
+///
+/// **Caution:** this is a cached value from the last `consume` or `advance`
+/// call. Buckets that should have rolled out since then are still counted.
+/// For an accurate current-clock read, use `total_sum_at(clock)`.
 public fun total_sum(self: &SlidingSumLimiter): u256 {
     self.ring_aggregator.total_sum()
+}
+
+/// Compute the total sum that would be in the sliding window at the
+/// current clock time, without mutating the limiter. Read-only and
+/// always fresh.
+public fun total_sum_at(self: &SlidingSumLimiter, clock: &Clock): u256 {
+    self.ring_aggregator.total_sum_at(clock.timestamp_ms() as u256)
 }
 
 /// Return the current maximum sum limit.

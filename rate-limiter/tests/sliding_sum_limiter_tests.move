@@ -87,3 +87,30 @@ fun consume_aborts_on_max_sum_limit_exceeded() {
 
     destroy(clock);
 }
+
+#[test]
+fun total_sum_at_returns_fresh_value_after_window_roll() {
+    let mut ctx = tx_context::dummy();
+    let mut clock = clock::create_for_testing(&mut ctx);
+
+    clock.set_for_testing(10_000_000);
+
+    // 5-minute buckets, 12 buckets = 1-hour window. No cap.
+    let mut limiter = sliding_sum_limiter::new(5 * 60 * 1000, 12, option::none(), &clock);
+
+    limiter.consume(1000, &clock);
+    assert!(limiter.total_sum() == 1000);
+    // Read at the same clock time matches the cached value.
+    assert!(limiter.total_sum_at(&clock) == 1000);
+
+    // Advance the clock past the full window, but do NOT consume. The cached
+    // total_sum is stale; total_sum_at must report the fresh value.
+    clock.set_for_testing(10_000_000 + 65 * 60 * 1000);
+    assert!(limiter.total_sum() == 1000);            // cached, stale
+    assert!(limiter.total_sum_at(&clock) == 0);      // fresh
+
+    // Read-only invariant: cached value unchanged after total_sum_at calls.
+    assert!(limiter.total_sum() == 1000);
+
+    destroy(clock);
+}

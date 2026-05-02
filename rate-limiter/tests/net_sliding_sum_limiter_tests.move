@@ -541,3 +541,63 @@ fun consume_outflow_aborts_when_stale_inflow_would_otherwise_bypass_net_outflow_
 
     destroy(clock);
 }
+
+// Verifies the read-only `*_at` getters report fresh windowed values without
+// requiring a consume/advance, while the cached getters retain their
+// last-advance snapshots until the next consume.
+#[test]
+fun at_getters_report_fresh_values_while_cached_getters_remain_stale() {
+    let mut ctx = tx_context::dummy();
+    let mut clock = clock::create_for_testing(&mut ctx);
+
+    clock.set_for_testing(10_000_000);
+
+    let mut net_limiter = net_sliding_sum_limiter::new(
+        5 * 60 * 1000,
+        12,
+        option::none(),
+        option::none(),
+        option::none(),
+        option::none(),
+        &clock,
+    );
+
+    // t=0: inflow lands in the window.
+    net_limiter.consume_inflow(1500, &clock);
+
+    // Same clock — cached and _at agree.
+    assert!(net_limiter.inflow_total() == 1500);
+    assert!(net_limiter.inflow_total_at(&clock) == 1500);
+    assert!(net_limiter.outflow_total() == 0);
+    assert!(net_limiter.outflow_total_at(&clock) == 0);
+    let (net, is_outflow) = net_limiter.net_value();
+    assert!(net == 1500);
+    assert!(is_outflow == false);
+    let (net_at, is_outflow_at) = net_limiter.net_value_at(&clock);
+    assert!(net_at == 1500);
+    assert!(is_outflow_at == false);
+
+    // t=65min: full window has rolled. No consume happens — cached values
+    // remain frozen at their last-advance state.
+    clock.set_for_testing(10_000_000 + 65 * 60 * 1000);
+
+    assert!(net_limiter.inflow_total() == 1500);          // cached, stale
+    assert!(net_limiter.outflow_total() == 0);            // cached
+    let (net_cached, is_outflow_cached) = net_limiter.net_value();
+    assert!(net_cached == 1500);                          // cached, stale
+    assert!(is_outflow_cached == false);
+
+    // _at variants reflect the actual rolled-out window.
+    assert!(net_limiter.inflow_total_at(&clock) == 0);    // fresh
+    assert!(net_limiter.outflow_total_at(&clock) == 0);   // fresh
+    let (net_at2, is_outflow_at2) = net_limiter.net_value_at(&clock);
+    assert!(net_at2 == 0);
+    assert!(is_outflow_at2 == false);
+
+    // Read-only invariant: the _at calls did not mutate the cached state.
+    assert!(net_limiter.inflow_total() == 1500);
+    let (net_cached2, _) = net_limiter.net_value();
+    assert!(net_cached2 == 1500);
+
+    destroy(clock);
+}
