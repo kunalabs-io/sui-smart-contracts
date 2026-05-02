@@ -697,8 +697,9 @@ public macro fun close_position<$Setup>(
 
         // check rate limiter after position reduction
         let limiter = config.borrow_create_withdraw_limiter();
-        let inflow_from_creation = 450_000000;
-        assert!(limiter.inflow_total() == inflow_from_creation);
+        // The inflow from position creation has rolled out of the 1-hour
+        // sliding window after the ~2.8-hour clock advance above.
+        assert!(limiter.inflow_total() == 0);
 
         let validated_price_info = core::validate_price_info(&config, &setup.price_info());
         let withdrawn_x_value = core::get_amount_ema_usd_value_6_decimals<SUI>(
@@ -725,7 +726,7 @@ public macro fun close_position<$Setup>(
             (withdrawn_x_value + withdrawn_y_value) - (repaid_x_value + repaid_y_value);
         assert!(limiter.outflow_total() == (expected_outflow as u256));
         let (net_amount, is_outflow) = limiter.net_value();
-        assert!(net_amount == (expected_outflow as u256) - inflow_from_creation);
+        assert!(net_amount == (expected_outflow as u256));
         assert!(is_outflow == true);
 
         // repay ticket
