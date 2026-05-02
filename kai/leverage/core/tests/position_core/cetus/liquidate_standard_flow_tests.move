@@ -3,7 +3,7 @@ module kai_leverage::position_core_cetus_liquidate_standard_flow_tests;
 
 use kai_leverage::position_core_cetus_test_setup;
 use kai_leverage::position_core_liquidate_standard_flow_test_macros as macros;
-use sui::test_utils::destroy;
+use std::unit_test::destroy;
 
 #[test]
 fun liquidate_col_x_standard_flow_is_correct() {

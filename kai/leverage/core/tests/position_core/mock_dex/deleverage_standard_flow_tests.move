@@ -3,7 +3,7 @@ module kai_leverage::position_core_mock_dex_deleverage_standard_flow_tests;
 
 use kai_leverage::position_core_deleverage_standard_flow_test_macros as macros;
 use kai_leverage::position_core_mock_dex_test_setup;
-use sui::test_utils::destroy;
+use std::unit_test::destroy;
 
 #[test]
 fun deleverage_with_ticket_standard_flow_is_correct() {

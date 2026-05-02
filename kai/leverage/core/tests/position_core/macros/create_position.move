@@ -10,7 +10,7 @@ use kai_leverage::position_core_test_util::{
 use sui::balance;
 use sui::sui::SUI;
 use sui::test_scenario;
-use sui::test_utils::destroy;
+use std::unit_test::destroy;
 use usdc::usdc::USDC;
 use sui::bcs;
 

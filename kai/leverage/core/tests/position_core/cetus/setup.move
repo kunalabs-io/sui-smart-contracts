@@ -38,7 +38,7 @@ use sui::balance::{Self, Balance};
 use sui::clock::{Self, Clock};
 use sui::sui::SUI;
 use sui::test_scenario::{Self, Scenario, TransactionEffects};
-use sui::test_utils::destroy as destroy_;
+use std::unit_test::destroy as destroy_;
 use usdc::usdc::USDC;
 
 const INITIAL_CLOCK_TIMESTAMP_MS: u64 = 1755000000000;
