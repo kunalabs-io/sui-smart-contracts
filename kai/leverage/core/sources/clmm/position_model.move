@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// Mathematical model for leveraged CLMM position analysis implementing formal theoretical guarantees.
-/// 
-/// This module implements the mathematical framework from "Concentrated Liquidity with Leverage" 
+///
+/// This module implements the mathematical framework from "Concentrated Liquidity with Leverage"
 /// ([arXiv:2409.12803](https://arxiv.org/pdf/2409.12803)), providing analytical functions for position
 /// valuation, risk assessment, and safety validation with formal mathematical proofs.
-/// 
+///
 /// ## Theoretical Foundation
-/// 
+///
 /// The module implements key mathematical concepts from the paper:
 /// - **Position Value**: V_pos(P) = L·f(P, p_a, p_b) where f varies by price range
 /// - **Asset Value**: A(P) = V_pos(P) + x_C·P + y_C (total position assets)
@@ -168,7 +168,7 @@ public fun assets_x128(self: &PositionModel, p_x128: u256): u256 {
     let y_x64 = (y_x64(self, sqrt_p_x64) as u256);
     let x_x64 = (x_x64(self, sqrt_p_x64) as u256);
 
-    (x_x64 + cx_x64) * p_x64 + (y_x64 + cy_x64) << 64
+    (x_x64 + cx_x64) * p_x64 + ((y_x64 + cy_x64) << 64)
 }
 
 /// Calculate the value of debt for the position for a given price, expressed in Y.
@@ -616,6 +616,68 @@ public fun calc_liquidate_col_y(
         ) as u64;
 
     (repayment_amt_x, reward_amt_y)
+}
+
+#[test]
+fun test_assets_x128() {
+    let sqrt_pa_x64: u128 = 17499818628114608849; // ~0.9
+    let sqrt_pb_x64: u128 = 26086568254500584001; // ~2
+
+    // l = 0, cx-only at p = 2.0 → assets = 200, in Q.128.
+    let position = PositionModel {
+        sqrt_pa_x64,
+        sqrt_pb_x64,
+        l: 0,
+        cx: 100,
+        cy: 0,
+        dx: 0,
+        dy: 0,
+    };
+    assert!(assets_x128(&position, 2u256 << 128) == 200u256 << 128);
+
+    // l = 0, cx + cy at p = 2.0 → assets = 250, in Q.128.
+    let position = PositionModel {
+        sqrt_pa_x64,
+        sqrt_pb_x64,
+        l: 0,
+        cx: 100,
+        cy: 50,
+        dx: 0,
+        dy: 0,
+    };
+    assert!(assets_x128(&position, 2u256 << 128) == 250u256 << 128);
+
+    // Non-trivial l with no collateral, p = 1.5 (test_margin setup).
+    // Expected pre-computed offline.
+    let position = PositionModel {
+        sqrt_pa_x64,
+        sqrt_pb_x64,
+        l: 3902203900,
+        cx: 0,
+        cy: 0,
+        dx: 0,
+        dy: 0,
+    };
+    let p_x128: u256 = (15u256 << 128) / 10;
+    assert!(
+        assets_x128(&position, p_x128) ==
+            584412669613635029870188263695711999023516745728,
+    );
+
+    // Non-trivial l + cx + cy at p = 1.5. Expected pre-computed offline.
+    let position = PositionModel {
+        sqrt_pa_x64,
+        sqrt_pb_x64,
+        l: 3902203900,
+        cx: 100,
+        cy: 50,
+        dx: 0,
+        dy: 0,
+    };
+    assert!(
+        assets_x128(&position, p_x128) ==
+            584412737670108414057880956370633485377159036928,
+    );
 }
 
 #[test]
