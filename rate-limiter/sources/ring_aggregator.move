@@ -102,12 +102,21 @@ fun get_current_bucket_index(self: &RingAggregator): u64 {
     get_bucket_index(self, self.current_position)
 }
 
-/// Advance the aggregator to the specified position and add a value to the corresponding bucket.
-public fun advance_and_add(self: &mut RingAggregator, position: u256, value: u64) {
+/// Advance the aggregator to the specified position, zeroing any buckets that
+/// fall outside the sliding window. Does not add a value.
+///
+/// Useful for refreshing `total_sum` (and the underlying bucket vector) without
+/// recording new activity — for example, to keep two parallel aggregators on
+/// the same `current_position` so that a downstream comparison sees fresh
+/// totals on both sides.
+///
+/// Cap-safe: bucket roll-out can only decrease `total_sum` (or leave it
+/// unchanged when `position` is within the current bucket), so callers can
+/// invoke `advance` without a cap-exceedance check.
+public fun advance(self: &mut RingAggregator, position: u256) {
     assert!(position >= self.current_position, EInvalidPosition);
 
     let bucket_count = self.buckets.length();
-
     let bucket_width_u256 = self.bucket_width as u256;
     let steps = (position / bucket_width_u256) - (self.current_position / bucket_width_u256);
     if (steps >= bucket_count as u256) {
@@ -124,10 +133,16 @@ public fun advance_and_add(self: &mut RingAggregator, position: u256, value: u64
         });
     };
 
+    self.current_position = position;
+}
+
+/// Advance the aggregator to the specified position and add a value to the corresponding bucket.
+public fun advance_and_add(self: &mut RingAggregator, position: u256, value: u64) {
+    self.advance(position);
+
     let bucket_index = self.get_bucket_index(position);
     let bucket_value = &mut self.buckets[bucket_index];
     *bucket_value = *bucket_value + (value as u128);
 
     self.total_sum = self.total_sum + (value as u256);
-    self.current_position = position;
 }
