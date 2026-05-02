@@ -165,24 +165,9 @@ public struct AdminCap has key, store {
 
 /* ================= math ================= */
 
-/// Calculates (a * b) / c. Errors if result doesn't fit into u64.
-fun muldiv(a: u64, b: u64, c: u64): u64 {
-    (((a as u128) * (b as u128)) / (c as u128)) as u64
-}
-
-/// Calculates ceil_div((a * b), c). Errors if result doesn't fit into u64.
-fun ceil_muldiv(a: u64, b: u64, c: u64): u64 {
-    u128::divide_and_round_up((a as u128) * (b as u128), c as u128) as u64
-}
-
 /// Calculates sqrt(a * b).
-fun mulsqrt(a: u64, b: u64): u64 {
-    u128::sqrt((a as u128) * (b as u128)) as u64
-}
-
-/// Calculates (a * b) / c for u128. Errors if result doesn't fit into u128.
-fun muldiv_u128(a: u128, b: u128, c: u128): u128 {
-    (((a as u256) * (b as u256)) / (c as u256)) as u128
+macro fun mul_sqrt($a: u64, $b: u64): u64 {
+    (($a as u128) * ($b as u128)).sqrt() as u64
 }
 
 /* ================= main logic ================= */
@@ -226,7 +211,7 @@ public fun create<A, B>(
     };
 
     // mint initial lp tokens
-    let lp_amt = mulsqrt(pool.balance_a.value(), pool.balance_b.value());
+    let lp_amt = mul_sqrt!(pool.balance_a.value(), pool.balance_b.value());
     let lp_balance = pool.lp_supply.increase_supply(lp_amt);
 
     event::emit(PoolCreationEvent { pool_id: object::id(&pool) });
@@ -266,26 +251,18 @@ public fun deposit<A, B>(
     let lp_to_issue: u64;
     if (dab > dba) {
         deposit_b = input_b.value();
-        deposit_a =
-            u128::divide_and_round_up(
-                dba,
-                pool.balance_b.value() as u128,
-            ) as u64;
+        deposit_a = dba.div_ceil(pool.balance_b.value() as u128) as u64;
         lp_to_issue =
-            muldiv(
+            u64::mul_div(
                 deposit_b,
                 pool.lp_supply.supply_value(),
                 pool.balance_b.value(),
             );
     } else if (dab < dba) {
         deposit_a = input_a.value();
-        deposit_b =
-            u128::divide_and_round_up(
-                dab,
-                pool.balance_a.value() as u128,
-            ) as u64;
+        deposit_b = dab.div_ceil(pool.balance_a.value() as u128) as u64;
         lp_to_issue =
-            muldiv(
+            u64::mul_div(
                 deposit_a,
                 pool.lp_supply.supply_value(),
                 pool.balance_a.value(),
@@ -295,11 +272,11 @@ public fun deposit<A, B>(
         deposit_b = input_b.value();
         if (pool.lp_supply.supply_value() == 0) {
             // in this case both pool balances are 0 and lp supply is 0
-            lp_to_issue = mulsqrt(deposit_a, deposit_b);
+            lp_to_issue = mul_sqrt!(deposit_a, deposit_b);
         } else {
             // the ratio of input a and b matches the ratio of pool balances
             lp_to_issue =
-                muldiv(
+                u64::mul_div(
                     deposit_a,
                     pool.lp_supply.supply_value(),
                     pool.balance_a.value(),
@@ -340,8 +317,8 @@ public fun withdraw<A, B>(
     let pool_b_value = pool.balance_b.value();
     let pool_lp_value = pool.lp_supply.supply_value();
 
-    let a_out = muldiv(lp_in_value, pool_a_value, pool_lp_value);
-    let b_out = muldiv(lp_in_value, pool_b_value, pool_lp_value);
+    let a_out = u64::mul_div(lp_in_value, pool_a_value, pool_lp_value);
+    let b_out = u64::mul_div(lp_in_value, pool_b_value, pool_lp_value);
     assert!(a_out >= min_a_out, EExcessiveSlippage);
     assert!(b_out >= min_b_out, EExcessiveSlippage);
 
@@ -362,21 +339,21 @@ fun calc_swap_result(
     admin_fee_pct: u64,
 ): (u64, u64) {
     // calc out value
-    let lp_fee_value = ceil_muldiv(i_value, lp_fee_bps, BPS_IN_100_PCT);
+    let lp_fee_value = u64::mul_div_ceil(i_value, lp_fee_bps, BPS_IN_100_PCT);
     let in_after_lp_fee = i_value - lp_fee_value;
-    let out_value = muldiv(
+    let out_value = u64::mul_div(
         in_after_lp_fee,
         o_pool_value,
         i_pool_value + in_after_lp_fee,
     );
 
     // calc admin fee
-    let admin_fee_value = muldiv(lp_fee_value, admin_fee_pct, 100);
+    let admin_fee_value = u64::mul_div(lp_fee_value, admin_fee_pct, 100);
     // dL = L * sqrt((A + dA) / A) - L = sqrt(L^2(A + dA) / A) - L
     let admin_fee_in_lp =
         (
         u128::sqrt(
-            muldiv_u128(
+            u128::mul_div(
                 (pool_lp_value as u128) * (pool_lp_value as u128),
                 ((i_pool_value + i_value) as u128),
                 ((i_pool_value + i_value - admin_fee_value) as u128),
