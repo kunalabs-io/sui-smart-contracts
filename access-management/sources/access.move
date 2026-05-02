@@ -37,6 +37,8 @@ const EInvalidPolicyVersion: u64 = 8;
 const ENotUpgrade: u64 = 9;
 /// The action does not match the action in the request.
 const EActionMismatch: u64 = 10;
+/// The function is deprecated and disabled.
+const EDeprecated: u64 = 11;
 
 /* ================= constants ================= */
 
@@ -422,19 +424,16 @@ public fun new_request<Action: drop>(_: Action, ctx: &mut TxContext): ActionRequ
     }
 }
 
-/// Populates the context with the `resource_id` and `resource_type_name` fields
-/// for the provided resource.
+/// Deprecated: aborts. The `action: String` was discarded by the inner
+/// `new_request<Action: drop>` (inferred `Action = String`), so the
+/// resulting request was always unapproveable.
+#[deprecated(note = b"Aborts; action argument is discarded.")]
 public fun new_request_for_resource<T: key>(
-    action: String,
-    resource: &T,
-    ctx: &mut TxContext,
+    _: String,
+    _: &T,
+    _: &mut TxContext,
 ): ActionRequest {
-    let mut request = new_request(action, ctx);
-
-    request.context.insert(ascii::string(b"resource_id"), object::id(resource));
-    request.context.insert(ascii::string(b"resource_type_name"), type_name::get<T>());
-
-    request
+    abort EDeprecated
 }
 
 /// Creates a new action request with pre-populated context.
