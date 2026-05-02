@@ -4,7 +4,7 @@ module rate_limiter::net_sliding_sum_limiter_tests;
 use rate_limiter::net_sliding_sum_limiter;
 use rate_limiter::sliding_sum_limiter;
 use sui::clock;
-use sui::test_utils::destroy;
+use std::unit_test::destroy;
 
 #[test]
 fun consume_inflow_outflow_is_correct() {
