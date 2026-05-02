@@ -106,8 +106,8 @@ fun new_registry(ctx: &mut TxContext): PoolRegistry {
 //    1 if a == b,
 //    2 if a > b
 public fun cmp_type_names(a: &TypeName, b: &TypeName): u8 {
-    let bytes_a = a.borrow_string().as_bytes();
-    let bytes_b = b.borrow_string().as_bytes();
+    let bytes_a = a.as_string().as_bytes();
+    let bytes_b = b.as_string().as_bytes();
 
     let len_a = bytes_a.length();
     let len_b = bytes_b.length();
@@ -144,8 +144,8 @@ public fun cmp_type_names(a: &TypeName, b: &TypeName): u8 {
 /// Aborts when coin types are not in order (type `A` must come before `B` alphabetically).
 /// Aborts when coin type tuple is already in the registry.
 fun registry_add<A, B>(self: &mut PoolRegistry) {
-    let a = type_name::get<A>();
-    let b = type_name::get<B>();
+    let a = type_name::with_defining_ids<A>();
+    let b = type_name::with_defining_ids<B>();
     assert!(cmp_type_names(&a, &b) == 0, EInvalidPair);
 
     let item = PoolRegistryItem { a, b };
@@ -484,15 +484,29 @@ public struct FOOd has drop {}
 
 #[test]
 fun test_cmp_type() {
-    assert!(cmp_type_names(&type_name::get<BAR>(), &type_name::get<FOO>()) == 0);
-    assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<FOO>()) == 1);
-    assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<BAR>()) == 2);
+    assert!(
+        cmp_type_names(&type_name::with_defining_ids<BAR>(), &type_name::with_defining_ids<FOO>()) == 0,
+    );
+    assert!(
+        cmp_type_names(&type_name::with_defining_ids<FOO>(), &type_name::with_defining_ids<FOO>()) == 1,
+    );
+    assert!(
+        cmp_type_names(&type_name::with_defining_ids<FOO>(), &type_name::with_defining_ids<BAR>()) == 2,
+    );
 
-    assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<FOOd>()) == 0);
-    assert!(cmp_type_names(&type_name::get<FOOd>(), &type_name::get<FOO>()) == 2);
+    assert!(
+        cmp_type_names(&type_name::with_defining_ids<FOO>(), &type_name::with_defining_ids<FOOd>()) == 0,
+    );
+    assert!(
+        cmp_type_names(&type_name::with_defining_ids<FOOd>(), &type_name::with_defining_ids<FOO>()) == 2,
+    );
 
-    assert!(cmp_type_names(&type_name::get<FOOD>(), &type_name::get<FOOd>()) == 0);
-    assert!(cmp_type_names(&type_name::get<FOOd>(), &type_name::get<FOOD>()) == 2);
+    assert!(
+        cmp_type_names(&type_name::with_defining_ids<FOOD>(), &type_name::with_defining_ids<FOOd>()) == 0,
+    );
+    assert!(
+        cmp_type_names(&type_name::with_defining_ids<FOOd>(), &type_name::with_defining_ids<FOOD>()) == 2,
+    );
 }
 
 #[test_only]
@@ -504,8 +518,8 @@ fun destroy_empty_registry_for_testing(registry: PoolRegistry) {
 
 #[test_only]
 fun remove_for_testing<A, B>(registry: &mut PoolRegistry) {
-    let a = type_name::get<A>();
-    let b = type_name::get<B>();
+    let a = type_name::with_defining_ids<A>();
+    let b = type_name::with_defining_ids<B>();
     registry.table.remove(PoolRegistryItem { a, b });
 }
 
