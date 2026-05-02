@@ -135,13 +135,13 @@ public fun migrate_policy_version(policy: &mut Policy, admin: &PackageAdmin) {
 public fun claim_package<OTW: drop>(otw: OTW, ctx: &mut TxContext): PackageAdmin {
     assert!(types::is_one_time_witness(&otw), ENotOneTimeWitness);
 
-    let `type` = type_name::get_with_original_ids<OTW>();
-    let module_name = `type`.get_module();
+    let `type` = type_name::with_original_ids<OTW>();
+    let module_name = `type`.module_string();
     assert!(module_name == ascii::string(b"access_init"), EClaimFromInvalidModule);
 
     PackageAdmin {
         id: object::new(ctx),
-        package: `type`.get_address(),
+        package: `type`.address_string(),
     }
 }
 
@@ -278,11 +278,11 @@ public fun add_action_to_rule<Action: drop>(
     check_version(policy);
     assert!(policy.package == admin.package, ENotPolicyAdmin);
 
-    let orig_package = type_name::get_with_original_ids<Action>().get_address();
+    let orig_package = type_name::with_original_ids<Action>().address_string();
     assert!(orig_package == admin.package, ENotActionAdmin);
 
     let rule = &mut policy.rules[&rule_id];
-    let action_name = type_name::get<Action>();
+    let action_name = type_name::with_defining_ids<Action>();
     rule.actions.insert(action_name);
 }
 
@@ -296,7 +296,7 @@ public fun remove_action_from_rule<Action: drop>(
     assert!(policy.package == admin.package, ENotPolicyAdmin);
 
     let rule = vec_map::get_mut(&mut policy.rules, &rule_id);
-    let action_name = type_name::get<Action>();
+    let action_name = type_name::with_defining_ids<Action>();
     rule.actions.remove(&action_name);
 }
 
@@ -313,7 +313,7 @@ public fun add_condition_to_rule_with_config<Condition: drop, Config: store + co
     assert!(policy.package == admin.package, ENotPolicyAdmin);
 
     let rule = vec_map::get_mut(&mut policy.rules, &rule_id);
-    let condition_name = type_name::get<Condition>();
+    let condition_name = type_name::with_defining_ids<Condition>();
     rule.conditions.insert(condition_name);
 
     rule.condition_configs.insert(condition_name, config);
@@ -345,7 +345,7 @@ public fun remove_condition_from_rule<Condition: drop>(
     assert!(policy.package == admin.package, ENotPolicyAdmin);
 
     let rule = &mut policy.rules[&rule_id];
-    let condition_name = type_name::get<Condition>();
+    let condition_name = type_name::with_defining_ids<Condition>();
     rule.condition_configs.remove<TypeName, ConfigNone>(condition_name);
 
     rule.conditions.remove(&condition_name);
@@ -365,7 +365,7 @@ public fun add_config_for_condition<Condition, Config: store + copy + drop>(
     assert!(policy.package == admin.package, ENotPolicyAdmin);
 
     let rule = &mut policy.rules[&rule_id];
-    let condition_name = type_name::get<Condition>();
+    let condition_name = type_name::with_defining_ids<Condition>();
 
     rule.condition_configs.remove<TypeName, ConfigNone>(condition_name);
     rule.condition_configs.insert(condition_name, config);
@@ -381,7 +381,7 @@ public fun remove_config_for_condition<Condition, Config: store + copy + drop>(
     assert!(policy.package == admin.package, ENotPolicyAdmin);
 
     let rule = &mut policy.rules[&rule_id];
-    let condition_name = type_name::get<Condition>();
+    let condition_name = type_name::with_defining_ids<Condition>();
 
     rule.condition_configs.remove<TypeName, Config>(condition_name);
     rule.condition_configs.insert(condition_name, ConfigNone {});
@@ -394,7 +394,7 @@ public fun borrow_condition_config<Condition, Config: store + copy + drop>(
 ): &Config {
     check_version(policy);
     let rule = &policy.rules[rule_id];
-    let condition_name = type_name::get<Condition>();
+    let condition_name = type_name::with_defining_ids<Condition>();
     &rule.condition_configs[condition_name]
 }
 
@@ -408,7 +408,7 @@ public fun borrow_mut_condition_config<Condition, Config: store + copy + drop>(
     assert!(policy.package == admin.package, ENotPolicyAdmin);
 
     let rule = &mut policy.rules[&rule_id];
-    let condition_name = type_name::get<Condition>();
+    let condition_name = type_name::with_defining_ids<Condition>();
 
     &mut rule.condition_configs[condition_name]
 }
@@ -418,7 +418,7 @@ public fun borrow_mut_condition_config<Condition, Config: store + copy + drop>(
 /// Creates a new action request.
 public fun new_request<Action: drop>(_: Action, ctx: &mut TxContext): ActionRequest {
     ActionRequest {
-        action_name: type_name::get<Action>(),
+        action_name: type_name::with_defining_ids<Action>(),
         context: dynamic_map::new(ctx),
         approved_conditions: vec_map::empty(),
     }
@@ -442,7 +442,7 @@ public fun new_request_with_context<Action: drop>(
     context: DynamicMap<std::ascii::String>,
 ): ActionRequest {
     ActionRequest {
-        action_name: type_name::get<Action>(),
+        action_name: type_name::with_defining_ids<Action>(),
         context,
         approved_conditions: vec_map::empty(),
     }
@@ -471,10 +471,10 @@ public fun get_condition_witness<Condition, Action: drop, Config: store + copy +
     assert!(policy.allowed_entities.contains(&object::id(entity)), EEntityNotAllowed);
 
     let rule = &policy.rules[&rule_id];
-    let action_name = type_name::get<Action>();
+    let action_name = type_name::with_defining_ids<Action>();
     assert!(rule.actions.contains(&action_name), EActionNotInRule);
 
-    let condition_name = type_name::get<Condition>();
+    let condition_name = type_name::with_defining_ids<Condition>();
     let config = rule.condition_configs[condition_name];
 
     ConditionWitness {
@@ -528,7 +528,7 @@ public fun approve_condition<Condition: drop, Config: store + copy + drop>(
     witness: &ConditionWitness<Condition, Config>,
     _: Condition,
 ) {
-    let condition_name = type_name::get<Condition>();
+    let condition_name = type_name::with_defining_ids<Condition>();
     request.approved_conditions.insert(condition_name, witness.rule_id);
 }
 
@@ -556,7 +556,7 @@ public fun approve_and_return_context(
     assert!(rule.actions.contains(&action_name), EActionNotInRule);
 
     let mut required_conditions = rule.conditions;
-    let size = required_conditions.size();
+    let size = required_conditions.length();
     let mut i = 0;
     while (i < size) {
         let (approved_condition_name, approved_rule_id) = approved_conditions.pop();
@@ -591,7 +591,7 @@ public fun admin_approve_request_and_return_context(
     request: ActionRequest,
     admin: &PackageAdmin,
 ): DynamicMap<String> {
-    let request_package = request.action_name.get_address();
+    let request_package = request.action_name.address_string();
     assert!(request_package == admin.package, ENotActionAdmin);
 
     let ActionRequest {
@@ -617,9 +617,9 @@ public fun admin_approve_request_with_original_id_and_return_context<Action: dro
     request: ActionRequest,
     admin: &PackageAdmin,
 ): DynamicMap<String> {
-    assert!(type_name::get<Action>() == request.action_name, EActionMismatch);
+    assert!(type_name::with_defining_ids<Action>() == request.action_name, EActionMismatch);
 
-    let orig_package = type_name::get_with_original_ids<Action>().get_address();
+    let orig_package = type_name::with_original_ids<Action>().address_string();
     assert!(orig_package == admin.package, ENotActionAdmin);
 
     let ActionRequest {
@@ -645,7 +645,7 @@ public fun admin_approve_request_with_original_id<Action: drop>(
 
 #[test_only]
 public fun create_admin_for_testing<W>(ctx: &mut TxContext): PackageAdmin {
-    let package = type_name::get_with_original_ids<W>().get_address();
+    let package = type_name::with_original_ids<W>().address_string();
     PackageAdmin {
         id: object::new(ctx),
         package,
