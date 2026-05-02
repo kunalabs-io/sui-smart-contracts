@@ -9,6 +9,7 @@ use usdc::usdc::USDC;
 
 public struct KLUSDC has drop {}
 
+#[allow(deprecated_usage)]
 fun init(w: KLUSDC, ctx: &mut TxContext) {
     let decimals = 6;
     let symbol = b"klUSDC-2";

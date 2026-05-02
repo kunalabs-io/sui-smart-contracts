@@ -9,6 +9,7 @@ use whusdte::coin::COIN as WHUSDTE;
 
 public struct KLWHUSDTE has drop {}
 
+#[allow(deprecated_usage)]
 fun init(w: KLWHUSDTE, ctx: &mut TxContext) {
     let decimals = 6;
     let symbol = b"klWHUSDTE";

@@ -9,6 +9,7 @@ use wbtc::btc::BTC as WBTC;
 
 public struct KLWBTC has drop {}
 
+#[allow(deprecated_usage)]
 fun init(w: KLWBTC, ctx: &mut TxContext) {
     let decimals = 8;
     let symbol = b"klWBTC";

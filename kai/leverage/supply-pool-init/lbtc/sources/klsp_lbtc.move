@@ -9,6 +9,7 @@ use lbtc::lbtc::LBTC;
 
 public struct KLLBTC has drop {}
 
+#[allow(deprecated_usage)]
 fun init(w: KLLBTC, ctx: &mut TxContext) {
     let decimals = 8;
     let symbol = b"klLBTC";

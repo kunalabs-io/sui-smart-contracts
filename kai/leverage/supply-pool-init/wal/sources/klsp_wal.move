@@ -9,6 +9,7 @@ use wal::wal::WAL;
 
 public struct KLWAL has drop {}
 
+#[allow(deprecated_usage)]
 fun init(w: KLWAL, ctx: &mut TxContext) {
     let decimals = 9;
     let symbol = b"klWAL";
