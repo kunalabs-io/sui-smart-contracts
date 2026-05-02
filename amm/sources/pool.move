@@ -507,15 +507,15 @@ public struct FOOd has drop {}
 
 #[test]
 fun test_cmp_type() {
-    assert!(cmp_type_names(&type_name::get<BAR>(), &type_name::get<FOO>()) == 0, 0);
-    assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<FOO>()) == 1, 0);
-    assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<BAR>()) == 2, 0);
+    assert!(cmp_type_names(&type_name::get<BAR>(), &type_name::get<FOO>()) == 0);
+    assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<FOO>()) == 1);
+    assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<BAR>()) == 2);
 
-    assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<FOOd>()) == 0, 0);
-    assert!(cmp_type_names(&type_name::get<FOOd>(), &type_name::get<FOO>()) == 2, 0);
+    assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<FOOd>()) == 0);
+    assert!(cmp_type_names(&type_name::get<FOOd>(), &type_name::get<FOO>()) == 2);
 
-    assert!(cmp_type_names(&type_name::get<FOOD>(), &type_name::get<FOOd>()) == 0, 0);
-    assert!(cmp_type_names(&type_name::get<FOOd>(), &type_name::get<FOOD>()) == 2, 0);
+    assert!(cmp_type_names(&type_name::get<FOOD>(), &type_name::get<FOOd>()) == 0);
+    assert!(cmp_type_names(&type_name::get<FOOd>(), &type_name::get<FOOD>()) == 2);
 }
 
 #[test_only]
