@@ -493,3 +493,51 @@ fun net_limit_coverage_abort_outflow_scenario() {
 
     destroy(clock);
 }
+
+// Regression test for the cross-side staleness bug in `check_net_limits`.
+//
+// `consume_inflow` and `consume_outflow` each advance only their own side's
+// `RingAggregator`. `check_net_limits` then reads `total_sum()` from BOTH
+// sides — a cached field that is only refreshed inside `advance_and_add`.
+// If a `consume_*` call happens after a long enough quiet period for the
+// opposite side's buckets to have rolled out of the window, the cap-check
+// runs against a stale total and can pick the wrong limit branch, allowing
+// the actual net to exceed `max_net_outflow_limit` (or `max_net_inflow_limit`).
+#[test, expected_failure(abort_code = net_sliding_sum_limiter::ENetLimitExceeded)]
+fun consume_outflow_aborts_when_stale_inflow_would_otherwise_bypass_net_outflow_cap() {
+    let mut ctx = tx_context::dummy();
+    let mut clock = clock::create_for_testing(&mut ctx);
+
+    clock.set_for_testing(10_000_000);
+
+    // 5-minute buckets, 12 buckets = 1-hour window.
+    // No per-direction caps; only max_net_outflow_limit = 500.
+    let mut net_limiter = net_sliding_sum_limiter::new(
+        5 * 60 * 1000,
+        12,
+        option::none(),
+        option::none(),
+        option::none(),
+        option::some(500),
+        &clock,
+    );
+
+    // t=0: large inflow lands in bucket 0.
+    net_limiter.consume_inflow(1500, &clock);
+
+    // t = 65 min: the full 1-hour window has rolled. The bucket holding
+    // the 1500 should have been zeroed ~5 minutes after t=0, but the
+    // inflow side has not been advanced since — its cached `total_sum`
+    // is still 1500.
+    clock.set_for_testing(10_000_000 + 65 * 60 * 1000);
+
+    // Should abort with ENetLimitExceeded: the actual within-window net is
+    // 800 outflow, which exceeds the 500 max_net_outflow_limit.
+    //
+    // BUG: stale inflow.total_sum() = 1500 makes net_value() return
+    // (700, false) ("inflow-dominant"), so check_net_limits consults
+    // max_net_inflow_limit (= None) and the 800 outflow passes.
+    net_limiter.consume_outflow(800, &clock);
+
+    destroy(clock);
+}

@@ -164,11 +164,20 @@ fun check_net_limits(self: &NetSlidingSumLimiter) {
 /// Consume an inflow value and add it to the current time bucket, enforcing the maximum inflow limit and net limits.
 public fun consume_inflow(self: &mut NetSlidingSumLimiter, value: u64, clock: &Clock) {
     self.inflow_limiter.consume(value, clock);
+    // Advance the opposite (outflow) side to the same clock position so
+    // `check_net_limits` reads fresh `total_sum` values from both sides.
+    // Without this, a stale outflow `total_sum` (cached at its last consume
+    // time) can cause `net_value` to misreport direction and route the cap
+    // check to the wrong limit branch.
+    self.outflow_limiter.advance(clock);
     check_net_limits(self);
 }
 
 /// Consume an outflow value and add it to the current time bucket, enforcing the maximum outflow limit and net limits.
 public fun consume_outflow(self: &mut NetSlidingSumLimiter, value: u64, clock: &Clock) {
     self.outflow_limiter.consume(value, clock);
+    // See note in `consume_inflow`. Advancing the inflow side keeps both
+    // limiters at the same clock position before the net cap check.
+    self.inflow_limiter.advance(clock);
     check_net_limits(self);
 }

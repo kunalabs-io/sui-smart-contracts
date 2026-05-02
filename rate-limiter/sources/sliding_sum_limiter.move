@@ -72,6 +72,16 @@ public fun set_max_sum_limit(self: &mut SlidingSumLimiter, max_sum_limit: Option
     self.max_sum_limit = max_sum_limit;
 }
 
+/// Advance the underlying ring aggregator to the current clock time without
+/// recording a new value. Use this to refresh `total_sum()` for accurate
+/// reads or to keep parallel limiters synchronized in time.
+///
+/// Cap-safe: the underlying advance can only decrease `total_sum` (bucket
+/// roll-out), so this call cannot trigger `EMaxSumLimitExceeded`.
+public fun advance(self: &mut SlidingSumLimiter, clock: &Clock) {
+    self.ring_aggregator.advance(clock.timestamp_ms() as u256);
+}
+
 /// Consume a value and add it to the current time bucket, enforcing the maximum sum limit.
 public fun consume(self: &mut SlidingSumLimiter, value: u64, clock: &Clock) {
     self.ring_aggregator.advance_and_add(clock.timestamp_ms() as u256, value);
