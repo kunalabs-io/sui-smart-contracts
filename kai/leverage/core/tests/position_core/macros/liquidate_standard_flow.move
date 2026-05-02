@@ -9,7 +9,6 @@ use kai_leverage::position_core_test_util::{
 };
 use kai_leverage::util;
 use std::type_name;
-use std::u256;
 use std::u64;
 use sui::balance;
 use sui::sui::SUI;
@@ -446,7 +445,7 @@ public macro fun liquidate_col_y_standard_flow<$Setup>($setup: &mut $Setup): Pos
             let repayment_value_with_bonus_x64 =
                 (debt_value_x64 * ((1 << 64) + liq_bonus_x64)) >> 64;
 
-            u256::divide_and_round_up(repayment_value_with_bonus_x64, 1 << 64) as u64
+            repayment_value_with_bonus_x64.div_ceil(1 << 64) as u64
         };
         let exp_fee_amt_y = util::muldiv(
             exp_reward_amt_y,

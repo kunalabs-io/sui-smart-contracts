@@ -39,7 +39,7 @@ public fun saturating_muldiv_round_up_u128(a: u128, b: u128, c: u128): u128 {
         (c as u256),
     );
     if (res > (1 << 128) - 1) {
-        ((1 << 128) - 1) as u128
+        (1 << 128) - 1u128
     } else {
         res as u128
     }
