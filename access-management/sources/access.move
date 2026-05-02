@@ -96,7 +96,7 @@ public struct ActionRequest {
 }
 
 /// Carries condition configuration and context for condition approval functions.
-/// 
+///
 /// Type Parameters:
 /// - `Condition`: The condition type being witnessed
 /// - `Config`: Configuration data for the condition
@@ -112,7 +112,7 @@ public struct ConditionWitness<phantom Condition, Config: store + copy + drop> h
 }
 
 /// Represents a default configuration for a condition that does not require any additional configuration.
-public struct ConfigNone has store, copy, drop {}
+public struct ConfigNone has copy, drop, store {}
 
 /* ================= upgrade ================= */
 
@@ -130,7 +130,7 @@ public fun migrate_policy_version(policy: &mut Policy, admin: &PackageAdmin) {
 /* ================= package admin ================= */
 
 /// Claims package admin rights using a one-time witness.
-/// 
+///
 /// Aborts if the witness is not a valid one-time witness or if it does not originate from the expected module.
 public fun claim_package<OTW: drop>(otw: OTW, ctx: &mut TxContext): PackageAdmin {
     assert!(types::is_one_time_witness(&otw), ENotOneTimeWitness);
@@ -428,11 +428,7 @@ public fun new_request<Action: drop>(_: Action, ctx: &mut TxContext): ActionRequ
 /// `new_request<Action: drop>` (inferred `Action = String`), so the
 /// resulting request was always unapproveable.
 #[deprecated(note = b"Aborts; action argument is discarded.")]
-public fun new_request_for_resource<T: key>(
-    _: String,
-    _: &T,
-    _: &mut TxContext,
-): ActionRequest {
+public fun new_request_for_resource<T: key>(_: String, _: &T, _: &mut TxContext): ActionRequest {
     abort EDeprecated
 }
 
