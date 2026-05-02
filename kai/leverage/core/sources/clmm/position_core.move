@@ -3206,7 +3206,7 @@ public(package) macro fun add_liquidity_inner<$X, $Y, $Pool, $LP>(
         $pool_object,
         |pool, lp_position| {
             let (delta_l, delta_x, delta_y) = $add_liquidity_inner(pool, lp_position);
-            (delta_l, delta_x, delta_y, 0)
+            (delta_l, delta_x, delta_y, false)
         },
     );
     info

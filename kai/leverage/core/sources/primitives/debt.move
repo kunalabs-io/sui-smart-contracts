@@ -104,6 +104,7 @@ public fun create_registry_with_cap<T: drop>(_: &TreasuryCap<T>): DebtRegistry<T
 }
 
 /// Create a new debt treasury. The treasury has the ability to mint debt as fungible coins.
+#[deprecated(note = b"TODO: migrate currency creation to `coin_registry`")]
 public fun create_treasury<T: drop>(
     witness: T,
     decimals: u8,

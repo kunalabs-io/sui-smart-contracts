@@ -15,7 +15,6 @@ use kai_leverage::position_core_test_util::{
 use kai_leverage::pyth;
 use kai_leverage::supply_pool_tests::{SSUI, SUSDC};
 use std::type_name;
-use std::u128;
 use sui::balance;
 use sui::sui::SUI;
 use sui::test_scenario;
@@ -51,7 +50,7 @@ public fun calc_expected_debt(
 ): u64 {
     let seconds_in_year = 365 * 24 * 60 * 60;
     let accrued = (initial_debt_x64 * seconds_passed * interest_pct) / 100 / seconds_in_year;
-    u128::divide_and_round_up(initial_debt_x64 + accrued, q64!()) as u64
+    (initial_debt_x64 + accrued).div_ceil(q64!()) as u64
 }
 
 public macro fun create_position<$Setup>($setup: &mut $Setup): PositionCap {
