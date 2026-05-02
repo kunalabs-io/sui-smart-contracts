@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 module access_management::access_tests {
-    use sui::test_utils::destroy;
+    use std::unit_test::destroy;
     use std::ascii::{Self, String};
 
     use access_management::dynamic_map;
