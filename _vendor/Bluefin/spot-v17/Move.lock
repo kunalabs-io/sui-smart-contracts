@@ -33,3 +33,33 @@ source = { local = "../../Cetus/integer-mate-v5" }
 use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
+
+[pinned.testnet.MoveStdlib]
+source = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/move-stdlib", rev = "c2428b3aaf9c24270b609001e56d96cb10c76d28" }
+use_environment = "testnet"
+manifest_digest = "C4FE4C91DE74CBF223B2E380AE40F592177D21870DC2D7EB6227D2D694E05363"
+deps = {}
+
+[pinned.testnet.Sui]
+source = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "c2428b3aaf9c24270b609001e56d96cb10c76d28" }
+use_environment = "testnet"
+manifest_digest = "7AFB66695545775FBFBB2D3078ADFD084244D5002392E837FDE21D9EA1C6D01C"
+deps = { MoveStdlib = "MoveStdlib" }
+
+[pinned.testnet.bluefin_spot]
+source = { root = true }
+use_environment = "testnet"
+manifest_digest = "D9F8D7EF4D6A1EFBDE2F84F7F9CE524193D8E2CAB250D0AE01451881FEABDDAF"
+deps = { integer_library = "integer_library", integer_mate = "integer_mate", std = "MoveStdlib", sui = "Sui" }
+
+[pinned.testnet.integer_library]
+source = { local = "../integer-library-v3" }
+use_environment = "testnet"
+manifest_digest = "5745706258F61D6CE210904B3E6AE87A73CE9D31A6F93BE4718C442529332A87"
+deps = { std = "MoveStdlib", sui = "Sui" }
+
+[pinned.testnet.integer_mate]
+source = { local = "../../Cetus/integer-mate-v5" }
+use_environment = "testnet"
+manifest_digest = "5745706258F61D6CE210904B3E6AE87A73CE9D31A6F93BE4718C442529332A87"
+deps = { std = "MoveStdlib", sui = "Sui" }
