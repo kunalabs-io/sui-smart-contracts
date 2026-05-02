@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Bump deliberately. Verify locally with `./scripts/test.sh` before bumping.
+  # `mainnet-X.Y.Z` and `testnet-X.Y.Z` are different builds even at the same
+  # version number. Match the channel the team develops/tests against.
+  SUI_VERSION: mainnet-1.70.2
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-sui
+      - run: ./scripts/test.sh
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-sui
+      - run: ./scripts/lint.sh
