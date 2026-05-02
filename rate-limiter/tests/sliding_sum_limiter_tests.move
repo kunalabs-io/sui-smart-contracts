@@ -3,7 +3,7 @@ module rate_limiter::sliding_sum_limiter_tests;
 
 use rate_limiter::sliding_sum_limiter;
 use sui::clock;
-use sui::test_utils::destroy;
+use std::unit_test::destroy;
 
 fun empty_buckets(count: u64): vector<u128> {
     let mut buckets = vector::empty();
