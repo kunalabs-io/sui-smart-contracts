@@ -9,6 +9,7 @@ use xbtc::xbtc::XBTC;
 
 public struct KLXBTC has drop {}
 
+#[allow(deprecated_usage)]
 fun init(w: KLXBTC, ctx: &mut TxContext) {
     let decimals = 8;
     let symbol = b"klXBTC";

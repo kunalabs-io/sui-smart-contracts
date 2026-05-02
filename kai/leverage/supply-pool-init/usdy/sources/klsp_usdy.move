@@ -9,6 +9,7 @@ use usdy::usdy::USDY;
 
 public struct KLUSDY has drop {}
 
+#[allow(deprecated_usage)]
 fun init(w: KLUSDY, ctx: &mut TxContext) {
     let decimals = 6;
     let symbol = b"klUSDY";

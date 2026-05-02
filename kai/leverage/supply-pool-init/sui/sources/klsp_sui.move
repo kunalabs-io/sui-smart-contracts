@@ -9,6 +9,7 @@ use sui::sui::SUI;
 
 public struct KLSUI has drop {}
 
+#[allow(deprecated_usage)]
 fun init(w: KLSUI, ctx: &mut TxContext) {
     let decimals = 6;
     let symbol = b"klSUI";

@@ -9,6 +9,7 @@ use suiusdt::usdt::USDT as SUIUSDT;
 
 public struct KLSUIUSDT has drop {}
 
+#[allow(deprecated_usage)]
 fun init(w: KLSUIUSDT, ctx: &mut TxContext) {
     let decimals = 6;
     let symbol = b"klsuiUSDT";
