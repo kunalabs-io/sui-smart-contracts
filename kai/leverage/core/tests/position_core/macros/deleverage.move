@@ -9,7 +9,7 @@ use std::u128;
 use sui::balance;
 use sui::sui::SUI;
 use sui::test_scenario;
-use sui::test_utils::destroy;
+use std::unit_test::destroy;
 use kai_leverage::supply_pool_tests::{SSUI, SUSDC};
 use usdc::usdc::USDC;
 

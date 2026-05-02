@@ -9,7 +9,7 @@ use std::type_name::{Self, TypeName};
 use sui::balance;
 use sui::clock::{Self, Clock};
 use sui::sui::SUI;
-use sui::test_utils::destroy;
+use std::unit_test::destroy;
 use sui::vec_map;
 use usdc::usdc::USDC;
 

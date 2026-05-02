@@ -5,7 +5,7 @@ use kai_leverage::position_core_clmm as core;
 use kai_leverage::position_core_test_util;
 use sui::clock;
 use sui::test_scenario;
-use sui::test_utils::destroy;
+use std::unit_test::destroy;
 
 #[test]
 fun test_price_deviation_is_acceptable() {

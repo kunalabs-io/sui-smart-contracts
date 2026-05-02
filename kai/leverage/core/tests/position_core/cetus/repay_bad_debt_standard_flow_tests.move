@@ -3,7 +3,7 @@ module kai_leverage::position_core_cetus_repay_bad_debt_standard_flow_tests;
 
 use kai_leverage::position_core_cetus_test_setup;
 use kai_leverage::position_core_repay_bad_debt_standard_flow_test_macros as macros;
-use sui::test_utils::destroy;
+use std::unit_test::destroy;
 
 #[test]
 fun repay_bad_debt_x_standard_flow_is_correct() {

@@ -11,7 +11,7 @@ use sui::balance;
 use sui::clock::{Self, Clock};
 use sui::coin;
 use sui::sui::SUI;
-use sui::test_utils::destroy;
+use std::unit_test::destroy;
 use sui::test_scenario::{Self as scenario};
 
 public struct YSUI has drop {}
