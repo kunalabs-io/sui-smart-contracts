@@ -1,22 +1,22 @@
 /// Ring buffer-based aggregator for maintaining sliding window sums over positions.
-/// 
+///
 /// Maintains a fixed number of buckets in a circular buffer. As positions advance,
 /// the aggregator automatically rotates through buckets, zeroing out old buckets
 /// and maintaining an accurate sum of values within the sliding window.
-/// 
+///
 /// Supports configurable bucket width and count, with O(1) operations for adding
 /// values and advancing positions. Validates that positions can only advance forward.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```move
 /// // Create aggregator with 10 buckets of width 1000
 /// let mut agg = ring_aggregator::new(1000, 10);
-/// 
+///
 /// // Add values at different positions
 /// agg.advance_and_add(500, 100);   // Add 100 at position 500
 /// agg.advance_and_add(1500, 200);  // Add 200 at position 1500
-/// 
+///
 /// // Check current state
 /// let total = agg.total_sum();           // Returns 300
 /// let position = agg.current_position(); // Returns 1500
@@ -26,6 +26,10 @@ module rate_limiter::ring_aggregator;
 #[error(code = 0)]
 const EInvalidPosition: vector<u8> =
     b"New position must be greater than or equal to the current position";
+#[error(code = 1)]
+const EInvalidBucketWidth: vector<u8> = b"bucket_width must be greater than zero";
+#[error(code = 2)]
+const EInvalidBucketCount: vector<u8> = b"bucket_count must be greater than zero";
 
 public struct RingAggregator has copy, drop, store {
     buckets: vector<u128>,
@@ -44,6 +48,8 @@ fun create_empty_buckets(count: u64): vector<u128> {
 
 /// Create a new RingAggregator with the specified bucket configuration.
 public fun new(bucket_width: u64, bucket_count: u64): RingAggregator {
+    assert!(bucket_width > 0, EInvalidBucketWidth);
+    assert!(bucket_count > 0, EInvalidBucketCount);
     RingAggregator {
         buckets: create_empty_buckets(bucket_count),
         bucket_width,
@@ -58,6 +64,8 @@ public fun new_with_initial_position(
     bucket_count: u64,
     initial_position: u256,
 ): RingAggregator {
+    assert!(bucket_width > 0, EInvalidBucketWidth);
+    assert!(bucket_count > 0, EInvalidBucketCount);
     RingAggregator {
         buckets: create_empty_buckets(bucket_count),
         bucket_width,
