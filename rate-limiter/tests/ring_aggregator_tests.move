@@ -191,3 +191,23 @@ fun total_sum_at_aborts_on_backward_position() {
     // sliding-window aggregator and should abort.
     let _ = agg.total_sum_at(40);
 }
+
+#[test, expected_failure(abort_code = ring_aggregator::EInvalidBucketWidth)]
+fun new_aborts_on_zero_bucket_width() {
+    let _ = ring_aggregator::new(0, 7);
+}
+
+#[test, expected_failure(abort_code = ring_aggregator::EInvalidBucketCount)]
+fun new_aborts_on_zero_bucket_count() {
+    let _ = ring_aggregator::new(10, 0);
+}
+
+#[test, expected_failure(abort_code = ring_aggregator::EInvalidBucketWidth)]
+fun new_with_initial_position_aborts_on_zero_bucket_width() {
+    let _ = ring_aggregator::new_with_initial_position(0, 7, 100);
+}
+
+#[test, expected_failure(abort_code = ring_aggregator::EInvalidBucketCount)]
+fun new_with_initial_position_aborts_on_zero_bucket_count() {
+    let _ = ring_aggregator::new_with_initial_position(10, 0, 100);
+}
