@@ -216,6 +216,19 @@ module access_management::access_tests {
 
         destroy(admin);
         destroy(policy);
-        destroy(entity); 
+        destroy(entity);
+    }
+
+    #[test, expected_failure(abort_code = access::EDeprecated)]
+    #[allow(deprecated_usage)]
+    fun test_new_request_for_resource_aborts() {
+        let ctx = &mut tx_context::dummy();
+        let admin = access::create_admin_for_testing<ADMIN_WITNESS>(ctx);
+        destroy(access::new_request_for_resource(
+            ascii::string(b"transfer"),
+            &admin,
+            ctx,
+        ));
+        destroy(admin);
     }
 }
