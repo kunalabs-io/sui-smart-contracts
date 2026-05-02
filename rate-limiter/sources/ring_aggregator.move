@@ -81,9 +81,44 @@ public fun current_position(self: &RingAggregator): u256 {
     self.current_position
 }
 
-/// Return the total sum of all values currently in the sliding window.
+/// Return the cached total sum from the last `advance` (or `advance_and_add`).
+///
+/// **Caution:** this is a cached field, not a fresh windowed-sum
+/// computation. Buckets that should have rolled out since the last advance
+/// are still counted. For an accurate current-time read, use
+/// `total_sum_at(position)`. See module-level note on staleness footguns.
 public fun total_sum(self: &RingAggregator): u256 {
     self.total_sum
+}
+
+/// Compute the total sum that would be in the sliding window at `position`,
+/// without mutating the aggregator. Use this when you need an accurate
+/// read but cannot — or do not want to — `advance` the aggregator.
+///
+/// Aborts if `position < self.current_position` (a sliding-window
+/// aggregator does not support reading the past).
+public fun total_sum_at(self: &RingAggregator, position: u256): u256 {
+    assert!(position >= self.current_position, EInvalidPosition);
+
+    let bucket_count = self.buckets.length();
+    let bucket_width_u256 = self.bucket_width as u256;
+    let steps = (position / bucket_width_u256) - (self.current_position / bucket_width_u256);
+
+    if (steps >= bucket_count as u256) {
+        return 0
+    };
+    if (steps == 0) {
+        return self.total_sum
+    };
+
+    let start_bucket_index = self.get_current_bucket_index() + 1;
+    let mut rolled_out_sum: u256 = 0;
+    (steps as u64).do!(|i| {
+        let bucket_value = &self.buckets[((start_bucket_index + (i as u64)) % bucket_count)];
+        rolled_out_sum = rolled_out_sum + (*bucket_value as u256);
+    });
+
+    self.total_sum - rolled_out_sum
 }
 
 /// Return a reference to the internal bucket vector for inspection.

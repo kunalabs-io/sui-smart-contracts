@@ -127,3 +127,67 @@ fun advance_and_add_aborts_on_invalid_position() {
 
     agg.advance_and_add(10, 6);
 }
+
+#[test]
+fun total_sum_at_returns_cached_when_position_unchanged() {
+    let mut agg = ring_aggregator::new(10, 7);
+    agg.advance_and_add(0, 1);
+    agg.advance_and_add(10, 2);
+    agg.advance_and_add(20, 3);
+
+    // Same position as current — no buckets have rolled out.
+    assert!(agg.total_sum_at(20) == 6);
+
+    // Read-only invariant: cached state unchanged.
+    assert!(agg.total_sum() == 6);
+    assert!(agg.current_position() == 20);
+}
+
+#[test]
+fun total_sum_at_subtracts_rolled_out_buckets() {
+    let mut agg = ring_aggregator::new(10, 7);
+    // Fill all 7 buckets with 1, 2, ..., 7.
+    agg.advance_and_add(0, 1);
+    agg.advance_and_add(10, 2);
+    agg.advance_and_add(20, 3);
+    agg.advance_and_add(30, 4);
+    agg.advance_and_add(40, 5);
+    agg.advance_and_add(50, 6);
+    agg.advance_and_add(60, 7);
+    assert!(agg.total_sum() == 28);
+
+    // Same position — nothing rolled out.
+    assert!(agg.total_sum_at(60) == 28);
+
+    // 1 step forward (position 70..79 = bucket index 0): bucket 0 (value 1)
+    // would roll out.
+    assert!(agg.total_sum_at(70) == 27);
+    assert!(agg.total_sum_at(75) == 27);
+
+    // 2 steps forward (position 80..89): buckets at indices 0, 1
+    // (values 1, 2) would roll out.
+    assert!(agg.total_sum_at(80) == 25);
+
+    // 6 steps forward (position 120): buckets 0..5 (values 1..6) roll out;
+    // only bucket 6 (value 7) remains.
+    assert!(agg.total_sum_at(120) == 7);
+
+    // 7 steps forward (position 130): full window has rolled, all out.
+    assert!(agg.total_sum_at(130) == 0);
+
+    // Far in the future: still 0.
+    assert!(agg.total_sum_at(1_000_000) == 0);
+
+    // After all those reads, cached state is unchanged.
+    assert!(agg.total_sum() == 28);
+    assert!(agg.current_position() == 60);
+}
+
+#[test, expected_failure(abort_code = ring_aggregator::EInvalidPosition)]
+fun total_sum_at_aborts_on_backward_position() {
+    let mut agg = ring_aggregator::new(10, 7);
+    agg.advance_and_add(50, 5);
+    // Reading at a position before current_position is not meaningful for a
+    // sliding-window aggregator and should abort.
+    let _ = agg.total_sum_at(40);
+}

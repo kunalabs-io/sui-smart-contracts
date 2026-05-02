@@ -78,21 +78,62 @@ public fun outflow_limiter(self: &NetSlidingSumLimiter): &SlidingSumLimiter {
     &self.outflow_limiter
 }
 
-/// Return the total sum of all inflow values currently in the sliding window.
+/// Return the cached inflow total from the last `consume_*` or
+/// `inflow_limiter.advance`.
+///
+/// **Caution:** cached, may be stale across time gaps. For an accurate
+/// current-clock read, use `inflow_total_at(clock)`.
 public fun inflow_total(self: &NetSlidingSumLimiter): u256 {
     self.inflow_limiter.total_sum()
 }
 
-/// Return the total sum of all outflow values currently in the sliding window.
+/// Compute the inflow total that would be in the sliding window at the
+/// current clock time, without mutating the limiter.
+public fun inflow_total_at(self: &NetSlidingSumLimiter, clock: &Clock): u256 {
+    self.inflow_limiter.total_sum_at(clock)
+}
+
+/// Return the cached outflow total from the last `consume_*` or
+/// `outflow_limiter.advance`.
+///
+/// **Caution:** cached, may be stale across time gaps. For an accurate
+/// current-clock read, use `outflow_total_at(clock)`.
 public fun outflow_total(self: &NetSlidingSumLimiter): u256 {
     self.outflow_limiter.total_sum()
 }
 
-/// Return the net value as (absolute_difference, is_outflow). It's inflow if inflow >= outflow, otherwise outflow.
-/// Returns (inflow - outflow, false) if inflow >= outflow, otherwise (outflow - inflow, true).
+/// Compute the outflow total that would be in the sliding window at the
+/// current clock time, without mutating the limiter.
+public fun outflow_total_at(self: &NetSlidingSumLimiter, clock: &Clock): u256 {
+    self.outflow_limiter.total_sum_at(clock)
+}
+
+/// Return the net value as (absolute_difference, is_outflow), computed
+/// from cached inflow / outflow totals.
+///
+/// **Caution:** cached, may be stale across time gaps. If the two sides
+/// were last advanced at different positions (e.g., outside the
+/// `consume_*` paths), the absolute_difference and direction may not
+/// reflect the current sliding-window state. For an accurate
+/// current-clock read, use `net_value_at(clock)`.
 public fun net_value(self: &NetSlidingSumLimiter): (u256, bool) {
     let inflow_sum = self.inflow_limiter.total_sum();
     let outflow_sum = self.outflow_limiter.total_sum();
+
+    if (inflow_sum >= outflow_sum) {
+        (inflow_sum - outflow_sum, false)
+    } else {
+        (outflow_sum - inflow_sum, true)
+    }
+}
+
+/// Compute the net value that would be in the sliding window at the
+/// current clock time, without mutating the limiter. Returns
+/// (absolute_difference, is_outflow), where is_outflow is true if outflow
+/// dominates inflow.
+public fun net_value_at(self: &NetSlidingSumLimiter, clock: &Clock): (u256, bool) {
+    let inflow_sum = self.inflow_limiter.total_sum_at(clock);
+    let outflow_sum = self.outflow_limiter.total_sum_at(clock);
 
     if (inflow_sum >= outflow_sum) {
         (inflow_sum - outflow_sum, false)
