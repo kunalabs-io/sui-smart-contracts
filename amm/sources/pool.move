@@ -18,8 +18,7 @@ public use fun registry_add as PoolRegistry.add;
 #[error]
 const EZeroInput: vector<u8> = b"Input balances cannot be zero.";
 #[error]
-const EExcessiveSlippage: vector<u8> =
-    b"The resulting amount is below slippage tolerance.";
+const EExcessiveSlippage: vector<u8> = b"The resulting amount is below slippage tolerance.";
 #[error]
 const ENoLiquidity: vector<u8> = b"Pool has no liquidity";
 #[error]
@@ -66,11 +65,7 @@ public struct Pool<phantom A, phantom B> has key {
 /// Returns the balances of token A and B present in the pool and the total
 /// supply of LP coins.
 public fun values<A, B>(pool: &Pool<A, B>): (u64, u64, u64) {
-    (
-        pool.balance_a.value(),
-        pool.balance_b.value(),
-        pool.lp_supply.supply_value(),
-    )
+    (pool.balance_a.value(), pool.balance_b.value(), pool.lp_supply.supply_value())
 }
 
 /// Returns the pool fee info.
@@ -137,10 +132,10 @@ public fun cmp_type_names(a: &TypeName, b: &TypeName): u8 {
     };
 
     return if (len_a < len_b) {
-            0
-        } else {
-            2
-        }
+        0
+    } else {
+        2
+    }
 }
 
 /// Add a new coin type tuple (`A`, `B`) to the registry. Types must be sorted alphabetically (ASCII ordered)
@@ -354,10 +349,7 @@ public fun withdraw<A, B>(
     pool.lp_supply.decrease_supply(lp_in);
 
     // return amounts
-    (
-        pool.balance_a.split(a_out),
-        pool.balance_b.split(b_out),
-    )
+    (pool.balance_a.split(a_out), pool.balance_b.split(b_out))
 }
 
 /// Calclates swap result and fees based on the input amount and current pool state.
@@ -381,7 +373,8 @@ fun calc_swap_result(
     // calc admin fee
     let admin_fee_value = muldiv(lp_fee_value, admin_fee_pct, 100);
     // dL = L * sqrt((A + dA) / A) - L = sqrt(L^2(A + dA) / A) - L
-    let admin_fee_in_lp = (
+    let admin_fee_in_lp =
+        (
         u128::sqrt(
             muldiv_u128(
                 (pool_lp_value as u128) * (pool_lp_value as u128),
@@ -397,20 +390,13 @@ fun calc_swap_result(
 
 /// Swaps the provided amount of A for B. Fails if the resulting amount of B
 /// is smaller than `min_out`.
-public fun swap_a<A, B>(
-    pool: &mut Pool<A, B>,
-    input: Balance<A>,
-    min_out: u64,
-): Balance<B> {
+public fun swap_a<A, B>(pool: &mut Pool<A, B>, input: Balance<A>, min_out: u64): Balance<B> {
     if (input.value() == 0) {
         assert!(min_out == 0, EExcessiveSlippage);
         input.destroy_zero();
         return balance::zero()
     };
-    assert!(
-        pool.balance_a.value() > 0 && pool.balance_b.value() > 0,
-        ENoLiquidity,
-    );
+    assert!(pool.balance_a.value() > 0 && pool.balance_b.value() > 0, ENoLiquidity);
 
     // calculate swap result
     let i_value = input.value();
@@ -430,9 +416,7 @@ public fun swap_a<A, B>(
     assert!(out_value >= min_out, EExcessiveSlippage);
 
     // deposit admin fee
-    pool
-        .admin_fee_balance
-        .join(pool.lp_supply.increase_supply(admin_fee_in_lp));
+    pool.admin_fee_balance.join(pool.lp_supply.increase_supply(admin_fee_in_lp));
 
     // deposit input
     pool.balance_a.join(input);
@@ -443,20 +427,13 @@ public fun swap_a<A, B>(
 
 /// Swaps the provided amount of B for A. Fails if the resulting amount of A
 /// is smaller than `min_out`.
-public fun swap_b<A, B>(
-    pool: &mut Pool<A, B>,
-    input: Balance<B>,
-    min_out: u64,
-): Balance<A> {
+public fun swap_b<A, B>(pool: &mut Pool<A, B>, input: Balance<B>, min_out: u64): Balance<A> {
     if (input.value() == 0) {
         assert!(min_out == 0, EExcessiveSlippage);
         input.destroy_zero();
         return balance::zero()
     };
-    assert!(
-        pool.balance_a.value() > 0 && pool.balance_b.value() > 0,
-        ENoLiquidity,
-    );
+    assert!(pool.balance_a.value() > 0 && pool.balance_b.value() > 0, ENoLiquidity);
 
     // calculate swap result
     let i_value = input.value();
@@ -476,9 +453,7 @@ public fun swap_b<A, B>(
     assert!(out_value >= min_out, EExcessiveSlippage);
 
     // deposit admin fee
-    pool
-        .admin_fee_balance
-        .join(pool.lp_supply.increase_supply(admin_fee_in_lp));
+    pool.admin_fee_balance.join(pool.lp_supply.increase_supply(admin_fee_in_lp));
 
     // deposit input
     pool.balance_b.join(input);
@@ -532,36 +507,15 @@ public struct FOOd has drop {}
 
 #[test]
 fun test_cmp_type() {
-    assert!(
-        cmp_type_names(&type_name::get<BAR>(), &type_name::get<FOO>()) == 0,
-        0,
-    );
-    assert!(
-        cmp_type_names(&type_name::get<FOO>(), &type_name::get<FOO>()) == 1,
-        0,
-    );
-    assert!(
-        cmp_type_names(&type_name::get<FOO>(), &type_name::get<BAR>()) == 2,
-        0,
-    );
+    assert!(cmp_type_names(&type_name::get<BAR>(), &type_name::get<FOO>()) == 0, 0);
+    assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<FOO>()) == 1, 0);
+    assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<BAR>()) == 2, 0);
 
-    assert!(
-        cmp_type_names(&type_name::get<FOO>(), &type_name::get<FOOd>()) == 0,
-        0,
-    );
-    assert!(
-        cmp_type_names(&type_name::get<FOOd>(), &type_name::get<FOO>()) == 2,
-        0,
-    );
+    assert!(cmp_type_names(&type_name::get<FOO>(), &type_name::get<FOOd>()) == 0, 0);
+    assert!(cmp_type_names(&type_name::get<FOOd>(), &type_name::get<FOO>()) == 2, 0);
 
-    assert!(
-        cmp_type_names(&type_name::get<FOOD>(), &type_name::get<FOOd>()) == 0,
-        0,
-    );
-    assert!(
-        cmp_type_names(&type_name::get<FOOd>(), &type_name::get<FOOD>()) == 2,
-        0,
-    );
+    assert!(cmp_type_names(&type_name::get<FOOD>(), &type_name::get<FOOd>()) == 0, 0);
+    assert!(cmp_type_names(&type_name::get<FOOd>(), &type_name::get<FOOD>()) == 2, 0);
 }
 
 #[test_only]
