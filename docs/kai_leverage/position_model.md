@@ -525,7 +525,7 @@ for a given price, expressed in Y.
     // (x(p) + <a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cx">cx</a>) * p + y(p) + <a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cy">cy</a>
     <b>let</b> <a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_y_x64">y_x64</a> = (<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_y_x64">y_x64</a>(self, sqrt_p_x64) <b>as</b> u256);
     <b>let</b> <a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_x_x64">x_x64</a> = (<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_x_x64">x_x64</a>(self, sqrt_p_x64) <b>as</b> u256);
-    (<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_x_x64">x_x64</a> + cx_x64) * p_x64 + (<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_y_x64">y_x64</a> + cy_x64) &lt;&lt; 64
+    (<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_x_x64">x_x64</a> + cx_x64) * p_x64 + ((<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_y_x64">y_x64</a> + cy_x64) &lt;&lt; 64)
 }
 </code></pre>
 
@@ -703,15 +703,15 @@ repaid.
 Summary:
 - when <code>M &gt;= Md</code> returns 0
 - when <code>Md &gt; M &gt; 1</code> returns <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_l">l</a></code> such that the position reaches a constant target margin after
-the deleverage
+  the deleverage
 - when <code>1 &gt;= M</code> returns <code>position.<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_l">l</a></code>
 - if the position has no debt, returns 0
 - when extra collateral <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cx">cx</a></code> or <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cy">cy</a></code> is present, it is assumed that this will also be used to
-repay debt, and together with returned <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_l">l</a></code> will amount to <code>deleverage_factor_bps</code> of debt
-repaid
+  repay debt, and together with returned <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_l">l</a></code> will amount to <code>deleverage_factor_bps</code> of debt
+  repaid
 - if extra collateral <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cx">cx</a></code> and <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cy">cy</a></code> are enough to repay all debt, returns 0
 - if the target debt value cannot be repaid with position's total liquidity and extra collateral
-(<code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cx">cx</a></code> and <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cy">cy</a></code>), returns <code>position.<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_l">l</a></code>
+  (<code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cx">cx</a></code> and <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cy">cy</a></code>), returns <code>position.<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_l">l</a></code>
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_calc_max_deleverage_delta_l">calc_max_deleverage_delta_l</a>(position: &<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_PositionModel">kai_leverage::position_model_clmm::PositionModel</a>, p_x128: u256, deleverage_margin_bps: u16, base_deleverage_factor_bps: u16): u128
@@ -862,10 +862,10 @@ margin level, the factor decreases.
 Summary:
 - when <code>M &gt;= Ml</code> returns 0
 - when <code>Ml &gt; M &gt; (Ml + Mc) / 2</code> returns a factor so that the position reaches a constant target
-margin after liquidation
+  margin after liquidation
 - when <code>(Ml + Mc) / 2 &gt;= M &gt;= Mc</code> returns 1
 - when <code>Mc &gt; M</code> returns a factor so that maximum possible debt is liquidated while respecting
-the liquidation bonus
+  the liquidation bonus
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_calc_max_liq_factor_x64">calc_max_liq_factor_x64</a>(current_margin_x64: u128, liq_margin_bps: u16, liq_bonus_bps: u16, base_liq_factor_bps: u16): u128
@@ -990,18 +990,18 @@ Returns <code><b>true</b></code> if position's margin is below the given thresho
 
 Liquidates the collateral X from the position for the given <code>repayment_amt_y</code>.
 Returns <code>(repayment_amt_y, reward_amt_x)</code> where:
-- <code>repayment_amt_y</code> is the amount of Y repaid (up to <code>max_repayment_amt_y</code>)
-- <code>reward_amt_x</code> is the amount of X returned to the liquidator.
+  - <code>repayment_amt_y</code> is the amount of Y repaid (up to <code>max_repayment_amt_y</code>)
+  - <code>reward_amt_x</code> is the amount of X returned to the liquidator.
 
 Notes:
 - Returns <code>(0, 0)</code> when the position can't be liquidated:
-- It's not below the liquidation threshold
-- It's not "fully deleveraged"
-- <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cx">cx</a> == 0</code>
+    - It's not below the liquidation threshold
+    - It's not "fully deleveraged"
+    - <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cx">cx</a> == 0</code>
 - The position is liquidated so that the margin level is above the liquidation threshold after
-the liquidation, if possible for the given <code>max_repayment_amt_y</code> and available collateral.
+  the liquidation, if possible for the given <code>max_repayment_amt_y</code> and available collateral.
 - Always respects the liquidation bonus, even if there's not enough collateral to cover a full
-liquidation.
+  liquidation.
 - Never aborts.
 
 See documentation for <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_calc_max_liq_factor_x64">calc_max_liq_factor_x64</a></code> for more details on how the liquidation factor
@@ -1089,13 +1089,13 @@ liquidator.
 
 Note:
 - Returns <code>(0, 0)</code> when the position can't be liquidated:
-- It's not below the liquidation threshold
-- It's not "fully deleveraged"
-- <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cy">cy</a> == 0</code>
+  - It's not below the liquidation threshold
+  - It's not "fully deleveraged"
+  - <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cy">cy</a> == 0</code>
 - The position is liquidated so that the margin level is above the liquidation threshold after
-the liquidation, if possible for the given <code>max_repayment_amt_x</code> and available collateral.
+  the liquidation, if possible for the given <code>max_repayment_amt_x</code> and available collateral.
 - Always respects the liquidation bonus, even if there's not enough collateral to cover a full
-liquidation.
+  liquidation.
 - Never aborts.
 
 See documentation for <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_calc_max_liq_factor_x64">calc_max_liq_factor_x64</a></code> for more details on how the liquidation factor

@@ -335,17 +335,18 @@ seamless integration with diverse AMM architectures.
 <b>use</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth">kai_leverage::pyth</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool">kai_leverage::supply_pool</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/util.md#kai_leverage_util">kai_leverage::util</a>;
-<b>use</b> <a href="../../dependencies/pyth/i64.md#pyth_i64">pyth::i64</a>;
-<b>use</b> <a href="../../dependencies/pyth/price.md#pyth_price">pyth::price</a>;
-<b>use</b> <a href="../../dependencies/pyth/price_feed.md#pyth_price_feed">pyth::price_feed</a>;
-<b>use</b> <a href="../../dependencies/pyth/price_identifier.md#pyth_price_identifier">pyth::price_identifier</a>;
-<b>use</b> <a href="../../dependencies/pyth/price_info.md#pyth_price_info">pyth::price_info</a>;
+<b>use</b> pyth::i64;
+<b>use</b> pyth::price;
+<b>use</b> pyth::price_feed;
+<b>use</b> pyth::price_identifier;
+<b>use</b> pyth::price_info;
 <b>use</b> <a href="../../dependencies/rate_limiter/net_sliding_sum_limiter.md#rate_limiter_net_sliding_sum_limiter">rate_limiter::net_sliding_sum_limiter</a>;
 <b>use</b> <a href="../../dependencies/rate_limiter/ring_aggregator.md#rate_limiter_ring_aggregator">rate_limiter::ring_aggregator</a>;
 <b>use</b> <a href="../../dependencies/rate_limiter/sliding_sum_limiter.md#rate_limiter_sliding_sum_limiter">rate_limiter::sliding_sum_limiter</a>;
 <b>use</b> <a href="../../dependencies/std/address.md#std_address">std::address</a>;
 <b>use</b> <a href="../../dependencies/std/ascii.md#std_ascii">std::ascii</a>;
 <b>use</b> <a href="../../dependencies/std/bcs.md#std_bcs">std::bcs</a>;
+<b>use</b> <a href="../../dependencies/std/internal.md#std_internal">std::internal</a>;
 <b>use</b> <a href="../../dependencies/std/option.md#std_option">std::option</a>;
 <b>use</b> <a href="../../dependencies/std/string.md#std_string">std::string</a>;
 <b>use</b> <a href="../../dependencies/std/type_name.md#std_type_name">std::type_name</a>;
@@ -353,9 +354,11 @@ seamless integration with diverse AMM architectures.
 <b>use</b> <a href="../../dependencies/std/u64.md#std_u64">std::u64</a>;
 <b>use</b> <a href="../../dependencies/std/vector.md#std_vector">std::vector</a>;
 <b>use</b> <a href="../../dependencies/sui/accumulator.md#sui_accumulator">sui::accumulator</a>;
+<b>use</b> <a href="../../dependencies/sui/accumulator_settlement.md#sui_accumulator_settlement">sui::accumulator_settlement</a>;
 <b>use</b> <a href="../../dependencies/sui/address.md#sui_address">sui::address</a>;
 <b>use</b> <a href="../../dependencies/sui/bag.md#sui_bag">sui::bag</a>;
 <b>use</b> <a href="../../dependencies/sui/balance.md#sui_balance">sui::balance</a>;
+<b>use</b> <a href="../../dependencies/sui/bcs.md#sui_bcs">sui::bcs</a>;
 <b>use</b> <a href="../../dependencies/sui/clock.md#sui_clock">sui::clock</a>;
 <b>use</b> <a href="../../dependencies/sui/coin.md#sui_coin">sui::coin</a>;
 <b>use</b> <a href="../../dependencies/sui/config.md#sui_config">sui::config</a>;
@@ -363,9 +366,12 @@ seamless integration with diverse AMM architectures.
 <b>use</b> <a href="../../dependencies/sui/dynamic_field.md#sui_dynamic_field">sui::dynamic_field</a>;
 <b>use</b> <a href="../../dependencies/sui/dynamic_object_field.md#sui_dynamic_object_field">sui::dynamic_object_field</a>;
 <b>use</b> <a href="../../dependencies/sui/event.md#sui_event">sui::event</a>;
+<b>use</b> <a href="../../dependencies/sui/funds_accumulator.md#sui_funds_accumulator">sui::funds_accumulator</a>;
+<b>use</b> <a href="../../dependencies/sui/hash.md#sui_hash">sui::hash</a>;
 <b>use</b> <a href="../../dependencies/sui/hex.md#sui_hex">sui::hex</a>;
 <b>use</b> <a href="../../dependencies/sui/object.md#sui_object">sui::object</a>;
 <b>use</b> <a href="../../dependencies/sui/party.md#sui_party">sui::party</a>;
+<b>use</b> <a href="../../dependencies/sui/protocol_config.md#sui_protocol_config">sui::protocol_config</a>;
 <b>use</b> <a href="../../dependencies/sui/sui.md#sui_sui">sui::sui</a>;
 <b>use</b> <a href="../../dependencies/sui/table.md#sui_table">sui::table</a>;
 <b>use</b> <a href="../../dependencies/sui/transfer.md#sui_transfer">sui::transfer</a>;
@@ -7841,7 +7847,7 @@ Validate pool price is within acceptable slippage tolerance.
     <b>let</b> num = p * (amount <b>as</b> u128);
     (<b>if</b> (expo + dec &gt; 6) {
             <b>if</b> (round_up) {
-                <a href="../../dependencies/std/macros.md#std_macros_num_divide_and_round_up">std::macros::num_divide_and_round_up</a>!(num, 10_u128.pow(expo + dec - 6))
+                util::num_div_ceil!(num, 10_u128.pow(expo + dec - 6))
             } <b>else</b> {
                 num / 10_u128.pow(expo + dec - 6)
             }
@@ -9328,7 +9334,7 @@ ensuring all risk and protocol constraints are maintained.
         $pool_object,
         |pool, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_lp_position">lp_position</a>| {
             <b>let</b> (<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_delta_l">delta_l</a>, delta_x, delta_y) = $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>(pool, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_lp_position">lp_position</a>);
-            (<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_delta_l">delta_l</a>, delta_x, delta_y, 0)
+            (<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_delta_l">delta_l</a>, delta_x, delta_y, <b>false</b>)
         },
     );
     info

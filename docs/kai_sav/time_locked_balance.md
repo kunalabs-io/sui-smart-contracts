@@ -39,9 +39,11 @@ emission modules (e.g. vesting).
 <b>use</b> <a href="../dependencies/std/address.md#std_address">std::address</a>;
 <b>use</b> <a href="../dependencies/std/ascii.md#std_ascii">std::ascii</a>;
 <b>use</b> <a href="../dependencies/std/bcs.md#std_bcs">std::bcs</a>;
+<b>use</b> <a href="../dependencies/std/internal.md#std_internal">std::internal</a>;
 <b>use</b> <a href="../dependencies/std/option.md#std_option">std::option</a>;
 <b>use</b> <a href="../dependencies/std/string.md#std_string">std::string</a>;
 <b>use</b> <a href="../dependencies/std/type_name.md#std_type_name">std::type_name</a>;
+<b>use</b> <a href="../dependencies/std/u128.md#std_u128">std::u128</a>;
 <b>use</b> <a href="../dependencies/std/u64.md#std_u64">std::u64</a>;
 <b>use</b> <a href="../dependencies/std/vector.md#std_vector">std::vector</a>;
 <b>use</b> <a href="../dependencies/sui/accumulator.md#sui_accumulator">sui::accumulator</a>;
@@ -49,9 +51,11 @@ emission modules (e.g. vesting).
 <b>use</b> <a href="../dependencies/sui/balance.md#sui_balance">sui::balance</a>;
 <b>use</b> <a href="../dependencies/sui/clock.md#sui_clock">sui::clock</a>;
 <b>use</b> <a href="../dependencies/sui/dynamic_field.md#sui_dynamic_field">sui::dynamic_field</a>;
+<b>use</b> <a href="../dependencies/sui/funds_accumulator.md#sui_funds_accumulator">sui::funds_accumulator</a>;
 <b>use</b> <a href="../dependencies/sui/hex.md#sui_hex">sui::hex</a>;
 <b>use</b> <a href="../dependencies/sui/object.md#sui_object">sui::object</a>;
 <b>use</b> <a href="../dependencies/sui/party.md#sui_party">sui::party</a>;
+<b>use</b> <a href="../dependencies/sui/protocol_config.md#sui_protocol_config">sui::protocol_config</a>;
 <b>use</b> <a href="../dependencies/sui/transfer.md#sui_transfer">sui::transfer</a>;
 <b>use</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context">sui::tx_context</a>;
 <b>use</b> <a href="../dependencies/sui/vec_map.md#sui_vec_map">sui::vec_map</a>;
