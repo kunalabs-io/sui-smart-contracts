@@ -4,15 +4,44 @@
 /// for input and output values, allowing calculation of net values (input - output)
 /// while enforcing maximum limits on both directions independently.
 ///
+/// # Gross vs. net caps
+///
+/// Each side has two independent bounds: a *gross* cap on the per-side total
+/// over the window (`max_inflow_limit`, `max_outflow_limit`) and a *net* cap on
+/// `|inflow − outflow|` (`max_net_inflow_limit`, `max_net_outflow_limit`).
+/// They are not interchangeable.
+///
+/// The net cap is a secondary check that bounds wash-style flows where both
+/// sides grow together; it does *not* bound damage on its own. The effective
+/// outflow ceiling over the window is:
+///
+/// ```text
+/// min(max_outflow_limit, max_net_outflow_limit + inflow_sum)
+/// ```
+///
+/// If `max_outflow_limit = None`, the ceiling scales 1:1 with however much
+/// inflow has accumulated in the window — including inflow from unrelated
+/// callers. A caller can therefore inflate their own outflow headroom by
+/// first generating inflow, or by waiting for inflow from any other source.
+/// The same relationship holds symmetrically on the inflow side.
+///
+/// Set both the gross and the net cap on a given side unless the ceiling is
+/// intended to float with the opposite side.
+///
+/// See `sliding_sum_limiter`'s module-level "Cap sizing" note for the
+/// per-side burst behavior that applies to each gross cap.
+///
 /// # Examples
 ///
 /// ```move
 /// // Create net limiter with 5-minute buckets, 12 buckets total (1 hour window)
 /// let mut net_limiter = net_sliding_sum_limiter::new(
-///     5 * 60 * 1000,  // 5 minutes per bucket
-///     12,             // 12 buckets (1 hour total)
-///     option::some(10000), // Maximum inflow limit
-///     option::some(8000),  // Maximum outflow limit
+///     5 * 60 * 1000,       // 5 minutes per bucket
+///     12,                  // 12 buckets (1 hour total)
+///     option::some(10000), // Gross inflow cap (per-window total)
+///     option::some(8000),  // Gross outflow cap (per-window total)
+///     option::some(5000),  // Net inflow cap  (bound on inflow - outflow)
+///     option::some(3000),  // Net outflow cap (bound on outflow - inflow)
 ///     &clock
 /// );
 ///
@@ -41,6 +70,11 @@ public struct NetSlidingSumLimiter has copy, drop, store {
 }
 
 /// Create a new NetSlidingSumLimiter with the specified configuration.
+///
+/// See the module-level "Gross vs. net caps" note: set both the gross and the
+/// net cap on a given side unless the ceiling on that side is intended to
+/// float with the opposite side. See `sliding_sum_limiter`'s "Cap sizing"
+/// note for the per-side burst behavior of each gross cap.
 public fun new(
     bucket_width_ms: u64,
     bucket_count: u64,
@@ -143,11 +177,19 @@ public fun net_value_at(self: &NetSlidingSumLimiter, clock: &Clock): (u256, bool
 }
 
 /// Update the maximum inflow limit for the limiter.
+///
+/// See the module-level "Gross vs. net caps" note: this is the *gross* per-window
+/// inflow ceiling. Leaving it as `None` while keeping `max_net_inflow_limit` set
+/// makes the effective inflow ceiling float with concurrent outflow.
 public fun set_max_inflow_limit(self: &mut NetSlidingSumLimiter, max_inflow_limit: Option<u256>) {
     self.inflow_limiter.set_max_sum_limit(max_inflow_limit);
 }
 
 /// Update the maximum outflow limit for the limiter.
+///
+/// See the module-level "Gross vs. net caps" note: this is the *gross* per-window
+/// outflow ceiling. Leaving it as `None` while keeping `max_net_outflow_limit` set
+/// makes the effective outflow ceiling float with concurrent inflow.
 public fun set_max_outflow_limit(self: &mut NetSlidingSumLimiter, max_outflow_limit: Option<u256>) {
     self.outflow_limiter.set_max_sum_limit(max_outflow_limit);
 }
@@ -163,6 +205,10 @@ public fun max_net_outflow_limit(self: &NetSlidingSumLimiter): Option<u256> {
 }
 
 /// Update the maximum net inflow limit for the limiter.
+///
+/// See the module-level "Gross vs. net caps" note: this bounds `inflow - outflow`,
+/// not gross inflow. It is a secondary check on top of `max_inflow_limit` and
+/// does not by itself bound how much can flow in.
 public fun set_max_net_inflow_limit(
     self: &mut NetSlidingSumLimiter,
     max_net_inflow_limit: Option<u256>,
@@ -171,6 +217,10 @@ public fun set_max_net_inflow_limit(
 }
 
 /// Update the maximum net outflow limit for the limiter.
+///
+/// See the module-level "Gross vs. net caps" note: this bounds `outflow - inflow`,
+/// not gross outflow. It is a secondary check on top of `max_outflow_limit` and
+/// does not by itself bound how much can flow out.
 public fun set_max_net_outflow_limit(
     self: &mut NetSlidingSumLimiter,
     max_net_outflow_limit: Option<u256>,
