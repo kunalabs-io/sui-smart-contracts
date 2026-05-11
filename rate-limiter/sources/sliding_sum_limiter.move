@@ -1,11 +1,26 @@
 /// Time-based rate limiter that enforces maximum sum limits over a sliding window.
-/// 
+///
 /// Wraps the RingAggregator to provide time-based rate limiting functionality with
 /// configurable maximum sum limits. Uses Sui's Clock object for position tracking
 /// and enforces limits by aborting when the maximum sum would be exceeded.
-/// 
+///
+/// # Cap sizing
+///
+/// The window slides in discrete bucket steps, not continuously. An adversarial
+/// caller timing a bucket boundary can extract up to ~2× `max_sum_limit` over
+/// approximately one window length: one full-cap call at the end of a bucket,
+/// then another at the moment that bucket rolls out of the window (`(N - 1) × W`
+/// later, where `N = bucket_count` and `W = bucket_width_ms`). The long-run
+/// sustained rate converges to `max_sum_limit / (N × W)`.
+///
+/// Treat `max_sum_limit` as the worst single-window burst that can be absorbed,
+/// not as a long-term volume budget. Pick `N × W` (the total window length) to
+/// match the detection / response time on whatever activity is being limited:
+/// the burst that can occur before a response is bounded by ~2× cap, so the
+/// window length determines how long an attacker has to wait between bursts.
+///
 /// # Examples
-/// 
+///
 /// ```move
 /// // Create rate limiter with 5-minute buckets, 12 buckets total (1 hour window)
 /// let mut limiter = sliding_sum_limiter::new(
@@ -14,11 +29,11 @@
 ///     option::some(10000), // Maximum sum limit
 ///     &clock
 /// );
-/// 
+///
 /// // Consume values (will abort if limit exceeded)
 /// limiter.consume(1000, &clock);  // Add 1000 to current bucket
 /// limiter.consume(2000, &clock);  // Add 2000 to current bucket
-/// 
+///
 /// // Check current state
 /// let total = limiter.total_sum(); // Returns 3000
 /// ```
@@ -36,6 +51,10 @@ public struct SlidingSumLimiter has copy, drop, store {
 }
 
 /// Create a new SlidingSumLimiter with the specified configuration.
+///
+/// See the module-level "Cap sizing" note: `max_sum_limit` is a per-window
+/// burst ceiling, not a smooth budget — worst-case extraction is ~2× cap
+/// over roughly one window length (`bucket_count × bucket_width_ms`).
 public fun new(
     bucket_width_ms: u64,
     bucket_count: u64,
@@ -79,6 +98,9 @@ public fun max_sum_limit(self: &SlidingSumLimiter): Option<u256> {
 }
 
 /// Update the maximum sum limit for the limiter.
+///
+/// See the module-level "Cap sizing" note: this is a per-window burst
+/// ceiling, not a smooth budget.
 public fun set_max_sum_limit(self: &mut SlidingSumLimiter, max_sum_limit: Option<u256>) {
     self.max_sum_limit = max_sum_limit;
 }

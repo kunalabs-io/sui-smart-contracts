@@ -64,12 +64,12 @@ use rate_limiter::net_sliding_sum_limiter;
 
 // Create a net rate limiter
 let mut net_limiter = net_sliding_sum_limiter::new(
-    5 * 60 * 1000,  // 5 minutes per bucket
-    12,             // 12 buckets (1 hour window)
-    option::some(10000), // Maximum inflow limit
-    option::some(8000),  // Maximum outflow limit
-    option::some(5000),  // Maximum net inflow limit
-    option::some(3000),  // Maximum net outflow limit
+    5 * 60 * 1000,       // 5 minutes per bucket
+    12,                  // 12 buckets (1 hour window)
+    option::some(10000), // Gross inflow cap  (per-window total)
+    option::some(8000),  // Gross outflow cap (per-window total)
+    option::some(5000),  // Net inflow cap    (bound on inflow - outflow)
+    option::some(3000),  // Net outflow cap   (bound on outflow - inflow)
     &clock
 );
 
@@ -81,6 +81,29 @@ net_limiter.consume_outflow(500, &clock);
 let (net_amount, is_outflow) = net_limiter.net_value();
 // Returns (500, false) - net inflow of 500
 ```
+
+## Configuration notes
+
+Two properties of the limiter are easy to misread from the API surface. See the
+`sliding_sum_limiter` and `net_sliding_sum_limiter` module docs for full
+details; the short version:
+
+- **Set both the gross and the net cap on each side.** The net caps
+  (`max_net_inflow_limit`, `max_net_outflow_limit`) bound `|inflow − outflow|`,
+  not the gross flow. The effective outflow ceiling over the window is
+  `min(max_outflow_limit, max_net_outflow_limit + inflow_sum)` — leaving
+  `max_outflow_limit = None` lets the ceiling scale 1:1 with inflow from any
+  source. Treat the gross cap as the hard ceiling and the net cap as a
+  secondary check on wash-style flows. The same relationship holds on the
+  inflow side.
+
+- **The cap is a per-window burst, not a smooth budget.** The window slides in
+  discrete bucket steps, so an adversarial caller timing a bucket boundary can
+  extract up to ~2× cap over approximately one window length; the long-run
+  sustained rate converges to `cap / (bucket_count × bucket_width)`. Size the
+  cap as the worst single-window burst that can be absorbed, and choose the
+  window length to match the detection / response time on whatever activity is
+  being limited.
 
 ## Performance
 
