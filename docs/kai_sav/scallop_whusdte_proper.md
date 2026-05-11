@@ -24,34 +24,32 @@
 -  [Function `withdraw`](#kai_sav_scallop_whusdte_proper_withdraw)
 
 
-<pre><code><b>use</b> <a href="../dependencies/779b5c547976899f5474f3a5bc0db36ddf4697ad7e5a901db0415c2281d28162/ac_table.md#0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162_ac_table">0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::ac_table</a>;
-<b>use</b> <a href="../dependencies/779b5c547976899f5474f3a5bc0db36ddf4697ad7e5a901db0415c2281d28162/balance_bag.md#0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162_balance_bag">0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::balance_bag</a>;
-<b>use</b> <a href="../dependencies/779b5c547976899f5474f3a5bc0db36ddf4697ad7e5a901db0415c2281d28162/one_time_lock_value.md#0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162_one_time_lock_value">0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::one_time_lock_value</a>;
-<b>use</b> <a href="../dependencies/779b5c547976899f5474f3a5bc0db36ddf4697ad7e5a901db0415c2281d28162/ownership.md#0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162_ownership">0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::ownership</a>;
-<b>use</b> <a href="../dependencies/779b5c547976899f5474f3a5bc0db36ddf4697ad7e5a901db0415c2281d28162/supply_bag.md#0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162_supply_bag">0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::supply_bag</a>;
-<b>use</b> <a href="../dependencies/779b5c547976899f5474f3a5bc0db36ddf4697ad7e5a901db0415c2281d28162/wit_table.md#0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162_wit_table">0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::wit_table</a>;
-<b>use</b> <a href="../dependencies/779b5c547976899f5474f3a5bc0db36ddf4697ad7e5a901db0415c2281d28162/witness.md#0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162_witness">0x779B5C547976899F5474F3A5BC0DB36DDF4697AD7E5A901DB0415C2281D28162::witness</a>;
-<b>use</b> <a href="../dependencies/whusdte/coin.md#0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C_coin">0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C::coin</a>;
-<b>use</b> <a href="../dependencies/scallop_pool/rewards_pool.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_rewards_pool">0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A::rewards_pool</a>;
-<b>use</b> <a href="../dependencies/scallop_pool/spool.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool">0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A::spool</a>;
-<b>use</b> <a href="../dependencies/scallop_pool/spool_account.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool_account">0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A::spool_account</a>;
-<b>use</b> <a href="../dependencies/scallop_pool/user.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_user">0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A::user</a>;
-<b>use</b> <a href="../dependencies/scallop_protocol/asset_active_state.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_asset_active_state">0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::asset_active_state</a>;
-<b>use</b> <a href="../dependencies/scallop_protocol/borrow_dynamics.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_borrow_dynamics">0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::borrow_dynamics</a>;
-<b>use</b> <a href="../dependencies/scallop_protocol/collateral_stats.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_collateral_stats">0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::collateral_stats</a>;
-<b>use</b> <a href="../dependencies/scallop_protocol/incentive_rewards.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_incentive_rewards">0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::incentive_rewards</a>;
-<b>use</b> <a href="../dependencies/scallop_protocol/interest_model.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_interest_model">0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::interest_model</a>;
-<b>use</b> <a href="../dependencies/scallop_protocol/limiter.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_limiter">0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::limiter</a>;
-<b>use</b> <a href="../dependencies/scallop_protocol/market.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_market">0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::market</a>;
-<b>use</b> <a href="../dependencies/scallop_protocol/mint.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_mint">0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::mint</a>;
-<b>use</b> <a href="../dependencies/scallop_protocol/redeem.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_redeem">0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::redeem</a>;
-<b>use</b> <a href="../dependencies/scallop_protocol/reserve.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_reserve">0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::reserve</a>;
-<b>use</b> <a href="../dependencies/scallop_protocol/risk_model.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_risk_model">0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::risk_model</a>;
-<b>use</b> <a href="../dependencies/scallop_protocol/version.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_version">0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF::version</a>;
+<pre><code><b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::asset_active_state;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::borrow_dynamics;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::collateral_stats;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::current_version;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::error;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::incentive_rewards;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::interest_model;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::limiter;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::market;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::market_dynamic_keys;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::mint;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::redeem;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::reserve;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::risk_model;
+<b>use</b> (protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::version;
+<b>use</b> (spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::rewards_pool;
+<b>use</b> (spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::spool;
+<b>use</b> (spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::spool_account;
+<b>use</b> (spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::user;
 <b>use</b> <a href="../kai_sav/time_locked_balance.md#kai_sav_time_locked_balance">kai_sav::time_locked_balance</a>;
 <b>use</b> <a href="../kai_sav/util.md#kai_sav_util">kai_sav::util</a>;
 <b>use</b> <a href="../kai_sav/vault.md#kai_sav_vault">kai_sav::vault</a>;
 <b>use</b> <a href="../dependencies/kai_ywhusdte_ysui/ywhusdte.md#kai_ywhusdte_ysui_ywhusdte">kai_ywhusdte_ysui::ywhusdte</a>;
+<b>use</b> math::fixed_point32_empower;
+<b>use</b> math::u128;
+<b>use</b> math::u64;
 <b>use</b> <a href="../dependencies/rate_limiter/net_sliding_sum_limiter.md#rate_limiter_net_sliding_sum_limiter">rate_limiter::net_sliding_sum_limiter</a>;
 <b>use</b> <a href="../dependencies/rate_limiter/ring_aggregator.md#rate_limiter_ring_aggregator">rate_limiter::ring_aggregator</a>;
 <b>use</b> <a href="../dependencies/rate_limiter/sliding_sum_limiter.md#rate_limiter_sliding_sum_limiter">rate_limiter::sliding_sum_limiter</a>;
@@ -59,15 +57,19 @@
 <b>use</b> <a href="../dependencies/std/ascii.md#std_ascii">std::ascii</a>;
 <b>use</b> <a href="../dependencies/std/bcs.md#std_bcs">std::bcs</a>;
 <b>use</b> <a href="../dependencies/std/fixed_point32.md#std_fixed_point32">std::fixed_point32</a>;
+<b>use</b> <a href="../dependencies/std/internal.md#std_internal">std::internal</a>;
 <b>use</b> <a href="../dependencies/std/option.md#std_option">std::option</a>;
 <b>use</b> <a href="../dependencies/std/string.md#std_string">std::string</a>;
 <b>use</b> <a href="../dependencies/std/type_name.md#std_type_name">std::type_name</a>;
+<b>use</b> <a href="../dependencies/std/u128.md#std_u128">std::u128</a>;
 <b>use</b> <a href="../dependencies/std/u64.md#std_u64">std::u64</a>;
 <b>use</b> <a href="../dependencies/std/vector.md#std_vector">std::vector</a>;
 <b>use</b> <a href="../dependencies/sui/accumulator.md#sui_accumulator">sui::accumulator</a>;
+<b>use</b> <a href="../dependencies/sui/accumulator_settlement.md#sui_accumulator_settlement">sui::accumulator_settlement</a>;
 <b>use</b> <a href="../dependencies/sui/address.md#sui_address">sui::address</a>;
 <b>use</b> <a href="../dependencies/sui/bag.md#sui_bag">sui::bag</a>;
 <b>use</b> <a href="../dependencies/sui/balance.md#sui_balance">sui::balance</a>;
+<b>use</b> <a href="../dependencies/sui/bcs.md#sui_bcs">sui::bcs</a>;
 <b>use</b> <a href="../dependencies/sui/clock.md#sui_clock">sui::clock</a>;
 <b>use</b> <a href="../dependencies/sui/coin.md#sui_coin">sui::coin</a>;
 <b>use</b> <a href="../dependencies/sui/config.md#sui_config">sui::config</a>;
@@ -75,10 +77,14 @@
 <b>use</b> <a href="../dependencies/sui/dynamic_field.md#sui_dynamic_field">sui::dynamic_field</a>;
 <b>use</b> <a href="../dependencies/sui/dynamic_object_field.md#sui_dynamic_object_field">sui::dynamic_object_field</a>;
 <b>use</b> <a href="../dependencies/sui/event.md#sui_event">sui::event</a>;
+<b>use</b> <a href="../dependencies/sui/funds_accumulator.md#sui_funds_accumulator">sui::funds_accumulator</a>;
+<b>use</b> <a href="../dependencies/sui/hash.md#sui_hash">sui::hash</a>;
 <b>use</b> <a href="../dependencies/sui/hex.md#sui_hex">sui::hex</a>;
+<b>use</b> <a href="../dependencies/sui/math.md#sui_math">sui::math</a>;
 <b>use</b> <a href="../dependencies/sui/object.md#sui_object">sui::object</a>;
 <b>use</b> <a href="../dependencies/sui/package.md#sui_package">sui::package</a>;
 <b>use</b> <a href="../dependencies/sui/party.md#sui_party">sui::party</a>;
+<b>use</b> <a href="../dependencies/sui/protocol_config.md#sui_protocol_config">sui::protocol_config</a>;
 <b>use</b> <a href="../dependencies/sui/sui.md#sui_sui">sui::sui</a>;
 <b>use</b> <a href="../dependencies/sui/table.md#sui_table">sui::table</a>;
 <b>use</b> <a href="../dependencies/sui/transfer.md#sui_transfer">sui::transfer</a>;
@@ -87,6 +93,15 @@
 <b>use</b> <a href="../dependencies/sui/url.md#sui_url">sui::url</a>;
 <b>use</b> <a href="../dependencies/sui/vec_map.md#sui_vec_map">sui::vec_map</a>;
 <b>use</b> <a href="../dependencies/sui/vec_set.md#sui_vec_set">sui::vec_set</a>;
+<b>use</b> whitelist::whitelist;
+<b>use</b> <a href="../dependencies/whusdte/coin.md#whusdte_coin">whusdte::coin</a>;
+<b>use</b> x::ac_table;
+<b>use</b> x::balance_bag;
+<b>use</b> x::one_time_lock_value;
+<b>use</b> x::ownership;
+<b>use</b> x::supply_bag;
+<b>use</b> x::wit_table;
+<b>use</b> x::witness;
 </code></pre>
 
 
@@ -149,7 +164,7 @@
 <dd>
 </dd>
 <dt>
-<code>scallop_pool_acc: <a href="../dependencies/scallop_pool/spool_account.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool_account_SpoolAccount">scallop_pool::spool_account::SpoolAccount</a>&lt;<a href="../dependencies/scallop_protocol/reserve.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_reserve_MarketCoin">scallop_protocol::reserve::MarketCoin</a>&lt;<a href="../dependencies/whusdte/coin.md#0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C_coin_COIN">whusdte::coin::COIN</a>&gt;&gt;</code>
+<code>scallop_pool_acc: (scallop_pool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::spool_account::SpoolAccount&lt;(scallop_protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::reserve::MarketCoin&lt;<a href="../dependencies/whusdte/coin.md#whusdte_coin_COIN">whusdte::coin::COIN</a>&gt;&gt;</code>
 </dt>
 <dd>
 </dd>
@@ -159,7 +174,7 @@
 <dd>
 </dd>
 <dt>
-<code>collected_profit_usdt: <a href="../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;<a href="../dependencies/whusdte/coin.md#0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C_coin_COIN">whusdte::coin::COIN</a>&gt;</code>
+<code>collected_profit_usdt: <a href="../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;<a href="../dependencies/whusdte/coin.md#whusdte_coin_COIN">whusdte::coin::COIN</a>&gt;</code>
 </dt>
 <dd>
 </dd>
@@ -285,7 +300,7 @@ Migration is not an upgrade
 
 
 
-<pre><code><b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_pool">assert_scallop_pool</a>(pool: &<a href="../dependencies/scallop_pool/spool.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool_Spool">scallop_pool::spool::Spool</a>)
+<pre><code><b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_pool">assert_scallop_pool</a>(pool: &(scallop_pool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::spool::Spool)
 </code></pre>
 
 
@@ -309,7 +324,7 @@ Migration is not an upgrade
 
 
 
-<pre><code><b>public</b>(package) <b>entry</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_new">new</a>(scallop_pool: &<b>mut</b> <a href="../dependencies/scallop_pool/spool.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool_Spool">scallop_pool::spool::Spool</a>, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
+<pre><code><b>public</b>(package) <b>entry</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_new">new</a>(scallop_pool: &<b>mut</b> (scallop_pool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::spool::Spool, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
 </code></pre>
 
 
@@ -322,7 +337,7 @@ Migration is not an upgrade
     <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_pool">assert_scallop_pool</a>(scallop_pool);
     <b>let</b> admin_cap = <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_AdminCap">AdminCap</a> { id: object::new(ctx) };
     <b>let</b> admin_cap_id = object::id(&admin_cap);
-    <b>let</b> scallop_pool_acc = <a href="../dependencies/scallop_pool/user.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_user_new_spool_account">scallop_pool::user::new_spool_account</a>(scallop_pool, clock, ctx);
+    <b>let</b> scallop_pool_acc = <a href="../dependencies/scallop_pool/user.md#(spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)_user_new_spool_account">scallop_pool::user::new_spool_account</a>(scallop_pool, clock, ctx);
     <b>let</b> strategy = <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">Strategy</a> {
         id: object::new(ctx),
         admin_cap_id,
@@ -400,7 +415,7 @@ Migration is not an upgrade
 
 
 
-<pre><code><b>entry</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_join_vault">join_vault</a>(vault_cap: &<a href="../kai_sav/vault.md#kai_sav_vault_AdminCap">kai_sav::vault::AdminCap</a>&lt;<a href="../dependencies/kai_ywhusdte_ysui/ywhusdte.md#kai_ywhusdte_ysui_ywhusdte_YWHUSDTE">kai_ywhusdte_ysui::ywhusdte::YWHUSDTE</a>&gt;, <a href="../kai_sav/vault.md#kai_sav_vault">vault</a>: &<b>mut</b> <a href="../kai_sav/vault.md#kai_sav_vault_Vault">kai_sav::vault::Vault</a>&lt;<a href="../dependencies/whusdte/coin.md#0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C_coin_COIN">whusdte::coin::COIN</a>, <a href="../dependencies/kai_ywhusdte_ysui/ywhusdte.md#kai_ywhusdte_ysui_ywhusdte_YWHUSDTE">kai_ywhusdte_ysui::ywhusdte::YWHUSDTE</a>&gt;, strategy_cap: &<a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_AdminCap">kai_sav::scallop_whusdte_proper::AdminCap</a>, strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
+<pre><code><b>entry</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_join_vault">join_vault</a>(vault_cap: &<a href="../kai_sav/vault.md#kai_sav_vault_AdminCap">kai_sav::vault::AdminCap</a>&lt;<a href="../dependencies/kai_ywhusdte_ysui/ywhusdte.md#kai_ywhusdte_ysui_ywhusdte_YWHUSDTE">kai_ywhusdte_ysui::ywhusdte::YWHUSDTE</a>&gt;, <a href="../kai_sav/vault.md#kai_sav_vault">vault</a>: &<b>mut</b> <a href="../kai_sav/vault.md#kai_sav_vault_Vault">kai_sav::vault::Vault</a>&lt;<a href="../dependencies/whusdte/coin.md#whusdte_coin_COIN">whusdte::coin::COIN</a>, <a href="../dependencies/kai_ywhusdte_ysui/ywhusdte.md#kai_ywhusdte_ysui_ywhusdte_YWHUSDTE">kai_ywhusdte_ysui::ywhusdte::YWHUSDTE</a>&gt;, strategy_cap: &<a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_AdminCap">kai_sav::scallop_whusdte_proper::AdminCap</a>, strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
 </code></pre>
 
 
@@ -433,7 +448,7 @@ Migration is not an upgrade
 
 
 
-<pre><code><b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_market">assert_scallop_market</a>(market: &<a href="../dependencies/scallop_protocol/market.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_market_Market">scallop_protocol::market::Market</a>)
+<pre><code><b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_market">assert_scallop_market</a>(market: &(scallop_protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::market::Market)
 </code></pre>
 
 
@@ -457,7 +472,7 @@ Migration is not an upgrade
 
 
 
-<pre><code><b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_rewards_pool">assert_scallop_rewards_pool</a>(pool: &<a href="../dependencies/scallop_pool/rewards_pool.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_rewards_pool_RewardsPool">scallop_pool::rewards_pool::RewardsPool</a>&lt;<a href="../dependencies/sui/sui.md#sui_sui_SUI">sui::sui::SUI</a>&gt;)
+<pre><code><b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_rewards_pool">assert_scallop_rewards_pool</a>(pool: &(scallop_pool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::rewards_pool::RewardsPool&lt;<a href="../dependencies/sui/sui.md#sui_sui_SUI">sui::sui::SUI</a>&gt;)
 </code></pre>
 
 
@@ -481,7 +496,7 @@ Migration is not an upgrade
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_remove_from_vault">remove_from_vault</a>(cap: &<a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_AdminCap">kai_sav::scallop_whusdte_proper::AdminCap</a>, strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, scallop_version: &<a href="../dependencies/scallop_protocol/version.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_version_Version">scallop_protocol::version::Version</a>, scallop_market: &<b>mut</b> <a href="../dependencies/scallop_protocol/market.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_market_Market">scallop_protocol::market::Market</a>, scallop_pool: &<b>mut</b> <a href="../dependencies/scallop_pool/spool.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool_Spool">scallop_pool::spool::Spool</a>, scallop_rewards_pool: &<b>mut</b> <a href="../dependencies/scallop_pool/rewards_pool.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_rewards_pool_RewardsPool">scallop_pool::rewards_pool::RewardsPool</a>&lt;<a href="../dependencies/sui/sui.md#sui_sui_SUI">sui::sui::SUI</a>&gt;, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../kai_sav/vault.md#kai_sav_vault_StrategyRemovalTicket">kai_sav::vault::StrategyRemovalTicket</a>&lt;<a href="../dependencies/whusdte/coin.md#0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C_coin_COIN">whusdte::coin::COIN</a>, <a href="../dependencies/kai_ywhusdte_ysui/ywhusdte.md#kai_ywhusdte_ysui_ywhusdte_YWHUSDTE">kai_ywhusdte_ysui::ywhusdte::YWHUSDTE</a>&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_remove_from_vault">remove_from_vault</a>(cap: &<a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_AdminCap">kai_sav::scallop_whusdte_proper::AdminCap</a>, strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, scallop_version: &(scallop_protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::version::Version, scallop_market: &<b>mut</b> (scallop_protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::market::Market, scallop_pool: &<b>mut</b> (scallop_pool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::spool::Spool, scallop_rewards_pool: &<b>mut</b> (scallop_pool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::rewards_pool::RewardsPool&lt;<a href="../dependencies/sui/sui.md#sui_sui_SUI">sui::sui::SUI</a>&gt;, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../kai_sav/vault.md#kai_sav_vault_StrategyRemovalTicket">kai_sav::vault::StrategyRemovalTicket</a>&lt;<a href="../dependencies/whusdte/coin.md#whusdte_coin_COIN">whusdte::coin::COIN</a>, <a href="../dependencies/kai_ywhusdte_ysui/ywhusdte.md#kai_ywhusdte_ysui_ywhusdte_YWHUSDTE">kai_ywhusdte_ysui::ywhusdte::YWHUSDTE</a>&gt;
 </code></pre>
 
 
@@ -505,7 +520,7 @@ Migration is not an upgrade
     <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_market">assert_scallop_market</a>(scallop_market);
     <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_pool">assert_scallop_pool</a>(scallop_pool);
     <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_rewards_pool">assert_scallop_rewards_pool</a>(scallop_rewards_pool);
-    <b>let</b> rewards = <a href="../dependencies/scallop_pool/user.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_user_redeem_rewards">scallop_pool::user::redeem_rewards</a>(
+    <b>let</b> rewards = <a href="../dependencies/scallop_pool/user.md#(spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)_user_redeem_rewards">scallop_pool::user::redeem_rewards</a>(
         scallop_pool,
         scallop_rewards_pool,
         &<b>mut</b> strategy.scallop_pool_acc,
@@ -515,15 +530,15 @@ Migration is not an upgrade
     <b>assert</b>!(coin::value(&rewards) == 0, <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_EHasPendingRewards">EHasPendingRewards</a>);
     <b>assert</b>!(balance::value(&strategy.collected_profit_sui) == 0, <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_EHasPendingRewards">EHasPendingRewards</a>);
     coin::destroy_zero(rewards);
-    <b>let</b> amount_susdt = <a href="../dependencies/scallop_pool/spool_account.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool_account_stake_amount">scallop_pool::spool_account::stake_amount</a>(&strategy.scallop_pool_acc);
-    <b>let</b> unstaked_susdt = <a href="../dependencies/scallop_pool/user.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_user_unstake">scallop_pool::user::unstake</a>(
+    <b>let</b> amount_susdt = <a href="../dependencies/scallop_pool/spool_account.md#(spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)_spool_account_stake_amount">scallop_pool::spool_account::stake_amount</a>(&strategy.scallop_pool_acc);
+    <b>let</b> unstaked_susdt = <a href="../dependencies/scallop_pool/user.md#(spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)_user_unstake">scallop_pool::user::unstake</a>(
         scallop_pool,
         &<b>mut</b> strategy.scallop_pool_acc,
         amount_susdt,
         clock,
         ctx,
     );
-    <b>let</b> redeemed_coin = <a href="../dependencies/scallop_protocol/redeem.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_redeem_redeem">scallop_protocol::redeem::redeem</a>(
+    <b>let</b> redeemed_coin = <a href="../dependencies/scallop_protocol/redeem.md#(protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)_redeem_redeem">scallop_protocol::redeem::redeem</a>(
         scallop_version,
         scallop_market,
         unstaked_susdt,
@@ -579,7 +594,7 @@ Migration is not an upgrade
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_rebalance">rebalance</a>(cap: &<a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_AdminCap">kai_sav::scallop_whusdte_proper::AdminCap</a>, strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, <a href="../kai_sav/vault.md#kai_sav_vault">vault</a>: &<b>mut</b> <a href="../kai_sav/vault.md#kai_sav_vault_Vault">kai_sav::vault::Vault</a>&lt;<a href="../dependencies/whusdte/coin.md#0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C_coin_COIN">whusdte::coin::COIN</a>, <a href="../dependencies/kai_ywhusdte_ysui/ywhusdte.md#kai_ywhusdte_ysui_ywhusdte_YWHUSDTE">kai_ywhusdte_ysui::ywhusdte::YWHUSDTE</a>&gt;, amounts: &<a href="../kai_sav/vault.md#kai_sav_vault_RebalanceAmounts">kai_sav::vault::RebalanceAmounts</a>, scallop_version: &<a href="../dependencies/scallop_protocol/version.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_version_Version">scallop_protocol::version::Version</a>, scallop_market: &<b>mut</b> <a href="../dependencies/scallop_protocol/market.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_market_Market">scallop_protocol::market::Market</a>, scallop_pool: &<b>mut</b> <a href="../dependencies/scallop_pool/spool.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool_Spool">scallop_pool::spool::Spool</a>, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
+<pre><code><b>public</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_rebalance">rebalance</a>(cap: &<a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_AdminCap">kai_sav::scallop_whusdte_proper::AdminCap</a>, strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, <a href="../kai_sav/vault.md#kai_sav_vault">vault</a>: &<b>mut</b> <a href="../kai_sav/vault.md#kai_sav_vault_Vault">kai_sav::vault::Vault</a>&lt;<a href="../dependencies/whusdte/coin.md#whusdte_coin_COIN">whusdte::coin::COIN</a>, <a href="../dependencies/kai_ywhusdte_ysui/ywhusdte.md#kai_ywhusdte_ysui_ywhusdte_YWHUSDTE">kai_ywhusdte_ysui::ywhusdte::YWHUSDTE</a>&gt;, amounts: &<a href="../kai_sav/vault.md#kai_sav_vault_RebalanceAmounts">kai_sav::vault::RebalanceAmounts</a>, scallop_version: &(scallop_protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::version::Version, scallop_market: &<b>mut</b> (scallop_protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::market::Market, scallop_pool: &<b>mut</b> (scallop_pool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::spool::Spool, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
 </code></pre>
 
 
@@ -606,7 +621,7 @@ Migration is not an upgrade
     <b>let</b> vault_access = option::borrow(&strategy.vault_access);
     <b>let</b> (can_borrow, to_repay) = <a href="../kai_sav/vault.md#kai_sav_vault_rebalance_amounts_get">vault::rebalance_amounts_get</a>(amounts, vault_access);
     <b>if</b> (to_repay &gt; 0) {
-        <b>let</b> staked_amount_susdt = <a href="../dependencies/scallop_pool/spool_account.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool_account_stake_amount">scallop_pool::spool_account::stake_amount</a>(
+        <b>let</b> staked_amount_susdt = <a href="../dependencies/scallop_pool/spool_account.md#(spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)_spool_account_stake_amount">scallop_pool::spool_account::stake_amount</a>(
             &strategy.scallop_pool_acc,
         );
         <b>let</b> unstake_susdt_amt = muldiv(
@@ -614,14 +629,14 @@ Migration is not an upgrade
             to_repay,
             strategy.underlying_nominal_value_usdt,
         );
-        <b>let</b> unstaked_susdt = <a href="../dependencies/scallop_pool/user.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_user_unstake">scallop_pool::user::unstake</a>(
+        <b>let</b> unstaked_susdt = <a href="../dependencies/scallop_pool/user.md#(spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)_user_unstake">scallop_pool::user::unstake</a>(
             scallop_pool,
             &<b>mut</b> strategy.scallop_pool_acc,
             unstake_susdt_amt,
             clock,
             ctx,
         );
-        <b>let</b> redeemed_coin = <a href="../dependencies/scallop_protocol/redeem.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_redeem_redeem">scallop_protocol::redeem::redeem</a>(
+        <b>let</b> redeemed_coin = <a href="../dependencies/scallop_protocol/redeem.md#(protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)_redeem_redeem">scallop_protocol::redeem::redeem</a>(
             scallop_version,
             scallop_market,
             unstaked_susdt,
@@ -645,14 +660,14 @@ Migration is not an upgrade
             <a href="../kai_sav/vault.md#kai_sav_vault_strategy_borrow">vault::strategy_borrow</a>(<a href="../kai_sav/vault.md#kai_sav_vault">vault</a>, vault_access, borrow_amt),
             ctx,
         );
-        <b>let</b> susdt = <a href="../dependencies/scallop_protocol/mint.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_mint_mint">scallop_protocol::mint::mint</a>(
+        <b>let</b> susdt = <a href="../dependencies/scallop_protocol/mint.md#(protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)_mint_mint">scallop_protocol::mint::mint</a>(
             scallop_version,
             scallop_market,
             borrowed,
             clock,
             ctx,
         );
-        <a href="../dependencies/scallop_pool/user.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_user_stake">scallop_pool::user::stake</a>(
+        <a href="../dependencies/scallop_pool/user.md#(spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)_user_stake">scallop_pool::user::stake</a>(
             scallop_pool,
             &<b>mut</b> strategy.scallop_pool_acc,
             susdt,
@@ -679,7 +694,7 @@ USDT deposited back with <code><a href="../kai_sav/scallop_whusdte_proper.md#kai
 In the future iterations of the protocol, this may be implemented on the smart contract level.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_take_profits_for_selling">take_profits_for_selling</a>(cap: &<a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_AdminCap">kai_sav::scallop_whusdte_proper::AdminCap</a>, strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, amount: <a href="../dependencies/std/option.md#std_option_Option">std::option::Option</a>&lt;u64&gt;, scallop_pool: &<b>mut</b> <a href="../dependencies/scallop_pool/spool.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool_Spool">scallop_pool::spool::Spool</a>, scallop_rewards_pool: &<b>mut</b> <a href="../dependencies/scallop_pool/rewards_pool.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_rewards_pool_RewardsPool">scallop_pool::rewards_pool::RewardsPool</a>&lt;<a href="../dependencies/sui/sui.md#sui_sui_SUI">sui::sui::SUI</a>&gt;, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;<a href="../dependencies/sui/sui.md#sui_sui_SUI">sui::sui::SUI</a>&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_take_profits_for_selling">take_profits_for_selling</a>(cap: &<a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_AdminCap">kai_sav::scallop_whusdte_proper::AdminCap</a>, strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, amount: <a href="../dependencies/std/option.md#std_option_Option">std::option::Option</a>&lt;u64&gt;, scallop_pool: &<b>mut</b> (scallop_pool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::spool::Spool, scallop_rewards_pool: &<b>mut</b> (scallop_pool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::rewards_pool::RewardsPool&lt;<a href="../dependencies/sui/sui.md#sui_sui_SUI">sui::sui::SUI</a>&gt;, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;<a href="../dependencies/sui/sui.md#sui_sui_SUI">sui::sui::SUI</a>&gt;
 </code></pre>
 
 
@@ -701,7 +716,7 @@ In the future iterations of the protocol, this may be implemented on the smart c
     <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_version">assert_version</a>(strategy);
     <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_pool">assert_scallop_pool</a>(scallop_pool);
     <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_rewards_pool">assert_scallop_rewards_pool</a>(scallop_rewards_pool);
-    <b>let</b> coin = <a href="../dependencies/scallop_pool/user.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_user_redeem_rewards">scallop_pool::user::redeem_rewards</a>(
+    <b>let</b> coin = <a href="../dependencies/scallop_pool/user.md#(spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)_user_redeem_rewards">scallop_pool::user::redeem_rewards</a>(
         scallop_pool,
         scallop_rewards_pool,
         &<b>mut</b> strategy.scallop_pool_acc,
@@ -729,7 +744,7 @@ In the future iterations of the protocol, this may be implemented on the smart c
 Skim the profits earned on base APY.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_skim_base_profits">skim_base_profits</a>(cap: &<a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_AdminCap">kai_sav::scallop_whusdte_proper::AdminCap</a>, strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, scallop_version: &<a href="../dependencies/scallop_protocol/version.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_version_Version">scallop_protocol::version::Version</a>, scallop_market: &<b>mut</b> <a href="../dependencies/scallop_protocol/market.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_market_Market">scallop_protocol::market::Market</a>, scallop_pool: &<b>mut</b> <a href="../dependencies/scallop_pool/spool.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool_Spool">scallop_pool::spool::Spool</a>, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
+<pre><code><b>public</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_skim_base_profits">skim_base_profits</a>(cap: &<a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_AdminCap">kai_sav::scallop_whusdte_proper::AdminCap</a>, strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, scallop_version: &(scallop_protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::version::Version, scallop_market: &<b>mut</b> (scallop_protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::market::Market, scallop_pool: &<b>mut</b> (scallop_pool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::spool::Spool, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
 </code></pre>
 
 
@@ -751,15 +766,15 @@ Skim the profits earned on base APY.
     <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_version">assert_version</a>(strategy);
     <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_market">assert_scallop_market</a>(scallop_market);
     <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_assert_scallop_pool">assert_scallop_pool</a>(scallop_pool);
-    <b>let</b> staked_amount_susdt = <a href="../dependencies/scallop_pool/spool_account.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool_account_stake_amount">scallop_pool::spool_account::stake_amount</a>(&strategy.scallop_pool_acc);
-    <b>let</b> unstaked_susdt = <a href="../dependencies/scallop_pool/user.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_user_unstake">scallop_pool::user::unstake</a>(
+    <b>let</b> staked_amount_susdt = <a href="../dependencies/scallop_pool/spool_account.md#(spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)_spool_account_stake_amount">scallop_pool::spool_account::stake_amount</a>(&strategy.scallop_pool_acc);
+    <b>let</b> unstaked_susdt = <a href="../dependencies/scallop_pool/user.md#(spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)_user_unstake">scallop_pool::user::unstake</a>(
         scallop_pool,
         &<b>mut</b> strategy.scallop_pool_acc,
         staked_amount_susdt,
         clock,
         ctx,
     );
-    <b>let</b> redeemed_coin = <a href="../dependencies/scallop_protocol/redeem.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_redeem_redeem">scallop_protocol::redeem::redeem</a>(
+    <b>let</b> redeemed_coin = <a href="../dependencies/scallop_protocol/redeem.md#(protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)_redeem_redeem">scallop_protocol::redeem::redeem</a>(
         scallop_version,
         scallop_market,
         unstaked_susdt,
@@ -776,14 +791,14 @@ Skim the profits earned on base APY.
         );
     };
     <b>let</b> stake_coin = coin::from_balance(redeemed_balance_usdt, ctx);
-    <b>let</b> susdc = <a href="../dependencies/scallop_protocol/mint.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_mint_mint">scallop_protocol::mint::mint</a>(
+    <b>let</b> susdc = <a href="../dependencies/scallop_protocol/mint.md#(protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)_mint_mint">scallop_protocol::mint::mint</a>(
         scallop_version,
         scallop_market,
         stake_coin,
         clock,
         ctx,
     );
-    <a href="../dependencies/scallop_pool/user.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_user_stake">scallop_pool::user::stake</a>(
+    <a href="../dependencies/scallop_pool/user.md#(spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)_user_stake">scallop_pool::user::stake</a>(
         scallop_pool,
         &<b>mut</b> strategy.scallop_pool_acc,
         susdc,
@@ -804,7 +819,7 @@ Skim the profits earned on base APY.
 Return the converted profits. See <code><a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_take_profits_for_selling">take_profits_for_selling</a></code>.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_deposit_sold_profits">deposit_sold_profits</a>(cap: &<a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_AdminCap">kai_sav::scallop_whusdte_proper::AdminCap</a>, strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, <a href="../kai_sav/vault.md#kai_sav_vault">vault</a>: &<b>mut</b> <a href="../kai_sav/vault.md#kai_sav_vault_Vault">kai_sav::vault::Vault</a>&lt;<a href="../dependencies/whusdte/coin.md#0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C_coin_COIN">whusdte::coin::COIN</a>, <a href="../dependencies/kai_ywhusdte_ysui/ywhusdte.md#kai_ywhusdte_ysui_ywhusdte_YWHUSDTE">kai_ywhusdte_ysui::ywhusdte::YWHUSDTE</a>&gt;, profit: <a href="../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;<a href="../dependencies/whusdte/coin.md#0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C_coin_COIN">whusdte::coin::COIN</a>&gt;, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>)
+<pre><code><b>public</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_deposit_sold_profits">deposit_sold_profits</a>(cap: &<a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_AdminCap">kai_sav::scallop_whusdte_proper::AdminCap</a>, strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, <a href="../kai_sav/vault.md#kai_sav_vault">vault</a>: &<b>mut</b> <a href="../kai_sav/vault.md#kai_sav_vault_Vault">kai_sav::vault::Vault</a>&lt;<a href="../dependencies/whusdte/coin.md#whusdte_coin_COIN">whusdte::coin::COIN</a>, <a href="../dependencies/kai_ywhusdte_ysui/ywhusdte.md#kai_ywhusdte_ysui_ywhusdte_YWHUSDTE">kai_ywhusdte_ysui::ywhusdte::YWHUSDTE</a>&gt;, profit: <a href="../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;<a href="../dependencies/whusdte/coin.md#whusdte_coin_COIN">whusdte::coin::COIN</a>&gt;, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>)
 </code></pre>
 
 
@@ -841,7 +856,7 @@ Return the converted profits. See <code><a href="../kai_sav/scallop_whusdte_prop
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_withdraw">withdraw</a>(strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, ticket: &<b>mut</b> <a href="../kai_sav/vault.md#kai_sav_vault_WithdrawTicket">kai_sav::vault::WithdrawTicket</a>&lt;<a href="../dependencies/whusdte/coin.md#0xC060006111016B8A020AD5B33834984A437AAA7D3C74C18E09A95D48ACEAB08C_coin_COIN">whusdte::coin::COIN</a>, <a href="../dependencies/kai_ywhusdte_ysui/ywhusdte.md#kai_ywhusdte_ysui_ywhusdte_YWHUSDTE">kai_ywhusdte_ysui::ywhusdte::YWHUSDTE</a>&gt;, scallop_version: &<a href="../dependencies/scallop_protocol/version.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_version_Version">scallop_protocol::version::Version</a>, scallop_market: &<b>mut</b> <a href="../dependencies/scallop_protocol/market.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_market_Market">scallop_protocol::market::Market</a>, scallop_pool: &<b>mut</b> <a href="../dependencies/scallop_pool/spool.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool_Spool">scallop_pool::spool::Spool</a>, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
+<pre><code><b>public</b> <b>fun</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_withdraw">withdraw</a>(strategy: &<b>mut</b> <a href="../kai_sav/scallop_whusdte_proper.md#kai_sav_scallop_whusdte_proper_Strategy">kai_sav::scallop_whusdte_proper::Strategy</a>, ticket: &<b>mut</b> <a href="../kai_sav/vault.md#kai_sav_vault_WithdrawTicket">kai_sav::vault::WithdrawTicket</a>&lt;<a href="../dependencies/whusdte/coin.md#whusdte_coin_COIN">whusdte::coin::COIN</a>, <a href="../dependencies/kai_ywhusdte_ysui/ywhusdte.md#kai_ywhusdte_ysui_ywhusdte_YWHUSDTE">kai_ywhusdte_ysui::ywhusdte::YWHUSDTE</a>&gt;, scallop_version: &(scallop_protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::version::Version, scallop_market: &<b>mut</b> (scallop_protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)::market::Market, scallop_pool: &<b>mut</b> (scallop_pool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)::spool::Spool, clock: &<a href="../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>)
 </code></pre>
 
 
@@ -867,20 +882,20 @@ Return the converted profits. See <code><a href="../kai_sav/scallop_whusdte_prop
     <b>if</b> (to_withdraw == 0) {
         <b>return</b>
     };
-    <b>let</b> staked_amount_susdt = <a href="../dependencies/scallop_pool/spool_account.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_spool_account_stake_amount">scallop_pool::spool_account::stake_amount</a>(&strategy.scallop_pool_acc);
+    <b>let</b> staked_amount_susdt = <a href="../dependencies/scallop_pool/spool_account.md#(spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)_spool_account_stake_amount">scallop_pool::spool_account::stake_amount</a>(&strategy.scallop_pool_acc);
     <b>let</b> unstake_susdt_amt = muldiv(
         staked_amount_susdt,
         to_withdraw,
         strategy.underlying_nominal_value_usdt,
     );
-    <b>let</b> unstaked_susdt = <a href="../dependencies/scallop_pool/user.md#0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A_user_unstake">scallop_pool::user::unstake</a>(
+    <b>let</b> unstaked_susdt = <a href="../dependencies/scallop_pool/user.md#(spool=0xE87F1B2D498106A2C61421CEC75B7B5C5E348512B0DC263949A0E7A3C256571A)_user_unstake">scallop_pool::user::unstake</a>(
         scallop_pool,
         &<b>mut</b> strategy.scallop_pool_acc,
         unstake_susdt_amt,
         clock,
         ctx,
     );
-    <b>let</b> redeemed_coin = <a href="../dependencies/scallop_protocol/redeem.md#0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF_redeem_redeem">scallop_protocol::redeem::redeem</a>(
+    <b>let</b> redeemed_coin = <a href="../dependencies/scallop_protocol/redeem.md#(protocol=0xEFE8B36D5B2E43728CC323298626B83177803521D195CFB11E15B910E892FDDF)_redeem_redeem">scallop_protocol::redeem::redeem</a>(
         scallop_version,
         scallop_market,
         unstaked_susdt,

@@ -467,6 +467,16 @@ The action does not match the action in the request.
 
 
 
+<a name="access_management_access_EDeprecated"></a>
+
+The function is deprecated and disabled.
+
+
+<pre><code><b>const</b> <a href="../../dependencies/access_management/access.md#access_management_access_EDeprecated">EDeprecated</a>: u64 = 11;
+</code></pre>
+
+
+
 <a name="access_management_access_MODULE_VERSION"></a>
 
 
@@ -547,12 +557,12 @@ Aborts if the witness is not a valid one-time witness or if it does not originat
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/access_management/access.md#access_management_access_claim_package">claim_package</a>&lt;OTW: drop&gt;(otw: OTW, ctx: &<b>mut</b> TxContext): <a href="../../dependencies/access_management/access.md#access_management_access_PackageAdmin">PackageAdmin</a> {
     <b>assert</b>!(types::is_one_time_witness(&otw), <a href="../../dependencies/access_management/access.md#access_management_access_ENotOneTimeWitness">ENotOneTimeWitness</a>);
-    <b>let</b> `type` = type_name::get_with_original_ids&lt;OTW&gt;();
-    <b>let</b> module_name = `type`.get_module();
+    <b>let</b> `type` = type_name::with_original_ids&lt;OTW&gt;();
+    <b>let</b> module_name = `type`.module_string();
     <b>assert</b>!(module_name == ascii::string(b"access_init"), <a href="../../dependencies/access_management/access.md#access_management_access_EClaimFromInvalidModule">EClaimFromInvalidModule</a>);
     <a href="../../dependencies/access_management/access.md#access_management_access_PackageAdmin">PackageAdmin</a> {
         id: object::new(ctx),
-        package: `type`.get_address(),
+        package: `type`.address_string(),
     }
 }
 </code></pre>
@@ -925,10 +935,10 @@ Adds an action to a rule.
 ) {
     <a href="../../dependencies/access_management/access.md#access_management_access_check_version">check_version</a>(policy);
     <b>assert</b>!(policy.package == admin.package, <a href="../../dependencies/access_management/access.md#access_management_access_ENotPolicyAdmin">ENotPolicyAdmin</a>);
-    <b>let</b> orig_package = type_name::get_with_original_ids&lt;Action&gt;().get_address();
+    <b>let</b> orig_package = type_name::with_original_ids&lt;Action&gt;().address_string();
     <b>assert</b>!(orig_package == admin.package, <a href="../../dependencies/access_management/access.md#access_management_access_ENotActionAdmin">ENotActionAdmin</a>);
     <b>let</b> rule = &<b>mut</b> policy.rules[&rule_id];
-    <b>let</b> action_name = type_name::get&lt;Action&gt;();
+    <b>let</b> action_name = type_name::with_defining_ids&lt;Action&gt;();
     rule.actions.insert(action_name);
 }
 </code></pre>
@@ -961,7 +971,7 @@ Removes an action from a rule.
     <a href="../../dependencies/access_management/access.md#access_management_access_check_version">check_version</a>(policy);
     <b>assert</b>!(policy.package == admin.package, <a href="../../dependencies/access_management/access.md#access_management_access_ENotPolicyAdmin">ENotPolicyAdmin</a>);
     <b>let</b> rule = vec_map::get_mut(&<b>mut</b> policy.rules, &rule_id);
-    <b>let</b> action_name = type_name::get&lt;Action&gt;();
+    <b>let</b> action_name = type_name::with_defining_ids&lt;Action&gt;();
     rule.actions.remove(&action_name);
 }
 </code></pre>
@@ -995,7 +1005,7 @@ Adds a condition with configuration to a rule.
     <a href="../../dependencies/access_management/access.md#access_management_access_check_version">check_version</a>(policy);
     <b>assert</b>!(policy.package == admin.package, <a href="../../dependencies/access_management/access.md#access_management_access_ENotPolicyAdmin">ENotPolicyAdmin</a>);
     <b>let</b> rule = vec_map::get_mut(&<b>mut</b> policy.rules, &rule_id);
-    <b>let</b> condition_name = type_name::get&lt;Condition&gt;();
+    <b>let</b> condition_name = type_name::with_defining_ids&lt;Condition&gt;();
     rule.conditions.insert(condition_name);
     rule.condition_configs.insert(condition_name, config);
 }
@@ -1065,7 +1075,7 @@ Aborts if the condition config is not the <code><a href="../../dependencies/acce
     <a href="../../dependencies/access_management/access.md#access_management_access_check_version">check_version</a>(policy);
     <b>assert</b>!(policy.package == admin.package, <a href="../../dependencies/access_management/access.md#access_management_access_ENotPolicyAdmin">ENotPolicyAdmin</a>);
     <b>let</b> rule = &<b>mut</b> policy.rules[&rule_id];
-    <b>let</b> condition_name = type_name::get&lt;Condition&gt;();
+    <b>let</b> condition_name = type_name::with_defining_ids&lt;Condition&gt;();
     rule.condition_configs.remove&lt;TypeName, <a href="../../dependencies/access_management/access.md#access_management_access_ConfigNone">ConfigNone</a>&gt;(condition_name);
     rule.conditions.remove(&condition_name);
 }
@@ -1101,7 +1111,7 @@ Aborts if the config is not the <code><a href="../../dependencies/access_managem
     <a href="../../dependencies/access_management/access.md#access_management_access_check_version">check_version</a>(policy);
     <b>assert</b>!(policy.package == admin.package, <a href="../../dependencies/access_management/access.md#access_management_access_ENotPolicyAdmin">ENotPolicyAdmin</a>);
     <b>let</b> rule = &<b>mut</b> policy.rules[&rule_id];
-    <b>let</b> condition_name = type_name::get&lt;Condition&gt;();
+    <b>let</b> condition_name = type_name::with_defining_ids&lt;Condition&gt;();
     rule.condition_configs.remove&lt;TypeName, <a href="../../dependencies/access_management/access.md#access_management_access_ConfigNone">ConfigNone</a>&gt;(condition_name);
     rule.condition_configs.insert(condition_name, config);
 }
@@ -1135,7 +1145,7 @@ Removes configuration for a condition.
     <a href="../../dependencies/access_management/access.md#access_management_access_check_version">check_version</a>(policy);
     <b>assert</b>!(policy.package == admin.package, <a href="../../dependencies/access_management/access.md#access_management_access_ENotPolicyAdmin">ENotPolicyAdmin</a>);
     <b>let</b> rule = &<b>mut</b> policy.rules[&rule_id];
-    <b>let</b> condition_name = type_name::get&lt;Condition&gt;();
+    <b>let</b> condition_name = type_name::with_defining_ids&lt;Condition&gt;();
     rule.condition_configs.remove&lt;TypeName, Config&gt;(condition_name);
     rule.condition_configs.insert(condition_name, <a href="../../dependencies/access_management/access.md#access_management_access_ConfigNone">ConfigNone</a> {});
 }
@@ -1167,7 +1177,7 @@ Borrows condition configuration from a policy.
 ): &Config {
     <a href="../../dependencies/access_management/access.md#access_management_access_check_version">check_version</a>(policy);
     <b>let</b> rule = &policy.rules[rule_id];
-    <b>let</b> condition_name = type_name::get&lt;Condition&gt;();
+    <b>let</b> condition_name = type_name::with_defining_ids&lt;Condition&gt;();
     &rule.condition_configs[condition_name]
 }
 </code></pre>
@@ -1200,7 +1210,7 @@ Borrows mutable condition configuration from a policy.
     <a href="../../dependencies/access_management/access.md#access_management_access_check_version">check_version</a>(policy);
     <b>assert</b>!(policy.package == admin.package, <a href="../../dependencies/access_management/access.md#access_management_access_ENotPolicyAdmin">ENotPolicyAdmin</a>);
     <b>let</b> rule = &<b>mut</b> policy.rules[&rule_id];
-    <b>let</b> condition_name = type_name::get&lt;Condition&gt;();
+    <b>let</b> condition_name = type_name::with_defining_ids&lt;Condition&gt;();
     &<b>mut</b> rule.condition_configs[condition_name]
 }
 </code></pre>
@@ -1227,7 +1237,7 @@ Creates a new action request.
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/access_management/access.md#access_management_access_new_request">new_request</a>&lt;Action: drop&gt;(_: Action, ctx: &<b>mut</b> TxContext): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">ActionRequest</a> {
     <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">ActionRequest</a> {
-        action_name: type_name::get&lt;Action&gt;(),
+        action_name: type_name::with_defining_ids&lt;Action&gt;(),
         context: dynamic_map::new(ctx),
         approved_conditions: vec_map::empty(),
     }
@@ -1242,11 +1252,12 @@ Creates a new action request.
 
 ## Function `new_request_for_resource`
 
-Populates the context with the <code>resource_id</code> and <code>resource_type_name</code> fields
-for the provided resource.
+Deprecated: aborts. The <code>action: String</code> was discarded by the inner
+<code><a href="../../dependencies/access_management/access.md#access_management_access_new_request">new_request</a>&lt;Action: drop&gt;</code> (inferred <code>Action = String</code>), so the
+resulting request was always unapproveable.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/access_management/access.md#access_management_access_new_request_for_resource">new_request_for_resource</a>&lt;T: key&gt;(action: <a href="../../dependencies/std/ascii.md#std_ascii_String">std::ascii::String</a>, resource: &T, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/access_management/access.md#access_management_access_new_request_for_resource">new_request_for_resource</a>&lt;T: key&gt;(_: <a href="../../dependencies/std/ascii.md#std_ascii_String">std::ascii::String</a>, _: &T, _: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
 </code></pre>
 
 
@@ -1255,15 +1266,8 @@ for the provided resource.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/access_management/access.md#access_management_access_new_request_for_resource">new_request_for_resource</a>&lt;T: key&gt;(
-    action: String,
-    resource: &T,
-    ctx: &<b>mut</b> TxContext,
-): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">ActionRequest</a> {
-    <b>let</b> <b>mut</b> request = <a href="../../dependencies/access_management/access.md#access_management_access_new_request">new_request</a>(action, ctx);
-    request.context.insert(ascii::string(b"resource_id"), object::id(resource));
-    request.context.insert(ascii::string(b"resource_type_name"), type_name::get&lt;T&gt;());
-    request
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/access_management/access.md#access_management_access_new_request_for_resource">new_request_for_resource</a>&lt;T: key&gt;(_: String, _: &T, _: &<b>mut</b> TxContext): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">ActionRequest</a> {
+    <b>abort</b> <a href="../../dependencies/access_management/access.md#access_management_access_EDeprecated">EDeprecated</a>
 }
 </code></pre>
 
@@ -1292,7 +1296,7 @@ Creates a new action request with pre-populated context.
     context: DynamicMap&lt;<a href="../../dependencies/std/ascii.md#std_ascii_String">std::ascii::String</a>&gt;,
 ): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">ActionRequest</a> {
     <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">ActionRequest</a> {
-        action_name: type_name::get&lt;Action&gt;(),
+        action_name: type_name::with_defining_ids&lt;Action&gt;(),
         context,
         approved_conditions: vec_map::empty(),
     }
@@ -1378,9 +1382,9 @@ Gets a condition witness for approval.
     <b>assert</b>!(policy.enabled, <a href="../../dependencies/access_management/access.md#access_management_access_EPolicyDisabled">EPolicyDisabled</a>);
     <b>assert</b>!(policy.allowed_entities.contains(&object::id(entity)), <a href="../../dependencies/access_management/access.md#access_management_access_EEntityNotAllowed">EEntityNotAllowed</a>);
     <b>let</b> rule = &policy.rules[&rule_id];
-    <b>let</b> action_name = type_name::get&lt;Action&gt;();
+    <b>let</b> action_name = type_name::with_defining_ids&lt;Action&gt;();
     <b>assert</b>!(rule.actions.contains(&action_name), <a href="../../dependencies/access_management/access.md#access_management_access_EActionNotInRule">EActionNotInRule</a>);
-    <b>let</b> condition_name = type_name::get&lt;Condition&gt;();
+    <b>let</b> condition_name = type_name::with_defining_ids&lt;Condition&gt;();
     <b>let</b> config = rule.condition_configs[condition_name];
     <a href="../../dependencies/access_management/access.md#access_management_access_ConditionWitness">ConditionWitness</a> {
         rule_id,
@@ -1525,7 +1529,7 @@ Aborts if the condition is not needed for the action request.
     witness: &<a href="../../dependencies/access_management/access.md#access_management_access_ConditionWitness">ConditionWitness</a>&lt;Condition, Config&gt;,
     _: Condition,
 ) {
-    <b>let</b> condition_name = type_name::get&lt;Condition&gt;();
+    <b>let</b> condition_name = type_name::with_defining_ids&lt;Condition&gt;();
     request.approved_conditions.insert(condition_name, witness.rule_id);
 }
 </code></pre>
@@ -1542,11 +1546,11 @@ Approves an action request and returns the context.
 
 Aborts with:
 - <code><a href="../../dependencies/access_management/access.md#access_management_access_EInvalidConditionApproval">EInvalidConditionApproval</a></code> if an approved condition's rule id does not
-match the requested rule id.
+  match the requested rule id.
 - <code>std::vector::EKeyDoesNotExist</code> if a required condition is not present
-in the approved conditions or has already been approved.
+  in the approved conditions or has already been approved.
 - <code><a href="../../dependencies/sui/vec_map.md#sui_vec_map_EMapEmpty">sui::vec_map::EMapEmpty</a></code> if one or more required conditions have not
-been approved.
+  been approved.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/access_management/access.md#access_management_access_approve_and_return_context">approve_and_return_context</a>(request: <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>, entity: &<a href="../../dependencies/access_management/access.md#access_management_access_Entity">access_management::access::Entity</a>, policy: &<a href="../../dependencies/access_management/access.md#access_management_access_Policy">access_management::access::Policy</a>, rule_id: <b>address</b>): <a href="../../dependencies/access_management/dynamic_map.md#access_management_dynamic_map_DynamicMap">access_management::dynamic_map::DynamicMap</a>&lt;<a href="../../dependencies/std/ascii.md#std_ascii_String">std::ascii::String</a>&gt;
@@ -1571,7 +1575,7 @@ been approved.
     <b>let</b> <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">ActionRequest</a> { action_name, context, <b>mut</b> approved_conditions } = request;
     <b>assert</b>!(rule.actions.contains(&action_name), <a href="../../dependencies/access_management/access.md#access_management_access_EActionNotInRule">EActionNotInRule</a>);
     <b>let</b> <b>mut</b> required_conditions = rule.conditions;
-    <b>let</b> size = required_conditions.size();
+    <b>let</b> size = required_conditions.length();
     <b>let</b> <b>mut</b> i = 0;
     <b>while</b> (i &lt; size) {
         <b>let</b> (approved_condition_name, approved_rule_id) = approved_conditions.pop();
@@ -1643,7 +1647,7 @@ Note: this will not work if the action type was added in an upgrade. Use
     request: <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">ActionRequest</a>,
     admin: &<a href="../../dependencies/access_management/access.md#access_management_access_PackageAdmin">PackageAdmin</a>,
 ): DynamicMap&lt;String&gt; {
-    <b>let</b> request_package = request.action_name.get_address();
+    <b>let</b> request_package = request.action_name.address_string();
     <b>assert</b>!(request_package == admin.package, <a href="../../dependencies/access_management/access.md#access_management_access_ENotActionAdmin">ENotActionAdmin</a>);
     <b>let</b> <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">ActionRequest</a> {
         action_name: _,
@@ -1708,8 +1712,8 @@ Admin approves an action request with original ID and returns the context.
     request: <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">ActionRequest</a>,
     admin: &<a href="../../dependencies/access_management/access.md#access_management_access_PackageAdmin">PackageAdmin</a>,
 ): DynamicMap&lt;String&gt; {
-    <b>assert</b>!(type_name::get&lt;Action&gt;() == request.action_name, <a href="../../dependencies/access_management/access.md#access_management_access_EActionMismatch">EActionMismatch</a>);
-    <b>let</b> orig_package = type_name::get_with_original_ids&lt;Action&gt;().get_address();
+    <b>assert</b>!(type_name::with_defining_ids&lt;Action&gt;() == request.action_name, <a href="../../dependencies/access_management/access.md#access_management_access_EActionMismatch">EActionMismatch</a>);
+    <b>let</b> orig_package = type_name::with_original_ids&lt;Action&gt;().address_string();
     <b>assert</b>!(orig_package == admin.package, <a href="../../dependencies/access_management/access.md#access_management_access_ENotActionAdmin">ENotActionAdmin</a>);
     <b>let</b> <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">ActionRequest</a> {
         action_name: _,

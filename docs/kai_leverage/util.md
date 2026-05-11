@@ -11,6 +11,7 @@ Utility functions for mathematical operations and time handling.
 -  [Function `muldiv_u128`](#kai_leverage_util_muldiv_u128)
 -  [Function `muldiv_round_up_u128`](#kai_leverage_util_muldiv_round_up_u128)
 -  [Function `saturating_muldiv_round_up_u128`](#kai_leverage_util_saturating_muldiv_round_up_u128)
+-  [Macro function `num_div_ceil`](#kai_leverage_util_num_div_ceil)
 -  [Function `divide_and_round_up_u128`](#kai_leverage_util_divide_and_round_up_u128)
 -  [Function `divide_and_round_up_u256`](#kai_leverage_util_divide_and_round_up_u256)
 -  [Function `abs_diff`](#kai_leverage_util_abs_diff)
@@ -168,10 +169,36 @@ Saturating multiply and divide with rounding up.
         (c <b>as</b> u256),
     );
     <b>if</b> (res &gt; (1 &lt;&lt; 128) - 1) {
-        ((1 &lt;&lt; 128) - 1) <b>as</b> u128
+        (1 &lt;&lt; 128) - 1u128
     } <b>else</b> {
         res <b>as</b> u128
     }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_util_num_div_ceil"></a>
+
+## Macro function `num_div_ceil`
+
+
+
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/util.md#kai_leverage_util_num_div_ceil">num_div_ceil</a>&lt;$T&gt;($x: $T, $y: $T): $T
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/util.md#kai_leverage_util_num_div_ceil">num_div_ceil</a>&lt;$T&gt;($x: $T, $y: $T): $T {
+    <b>let</b> x = $x;
+    <b>let</b> y = $y;
+    <b>if</b> (x % y == 0) x / y <b>else</b> x / y + 1
 }
 </code></pre>
 
@@ -196,7 +223,7 @@ Divide with rounding up for 128-bit values.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/util.md#kai_leverage_util_divide_and_round_up_u128">divide_and_round_up_u128</a>(a: u128, b: u128): u128 {
-    <a href="../../dependencies/std/macros.md#std_macros_num_divide_and_round_up">std::macros::num_divide_and_round_up</a>!(a, b)
+    <a href="../../dependencies/kai_leverage/util.md#kai_leverage_util_num_div_ceil">num_div_ceil</a>!(a, b)
 }
 </code></pre>
 
@@ -221,7 +248,7 @@ Divide with rounding up for u256 values.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/util.md#kai_leverage_util_divide_and_round_up_u256">divide_and_round_up_u256</a>(a: u256, b: u256): u256 {
-    <a href="../../dependencies/std/macros.md#std_macros_num_divide_and_round_up">std::macros::num_divide_and_round_up</a>!(a, b)
+    <a href="../../dependencies/kai_leverage/util.md#kai_leverage_util_num_div_ceil">num_div_ceil</a>!(a, b)
 }
 </code></pre>
 
