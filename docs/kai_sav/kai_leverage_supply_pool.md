@@ -18,6 +18,8 @@ Implements basic compounding of rewards.
 -  [Function `join_vault`](#kai_sav_kai_leverage_supply_pool_join_vault)
 -  [Function `remove_from_vault`](#kai_sav_kai_leverage_supply_pool_remove_from_vault)
 -  [Function `migrate`](#kai_sav_kai_leverage_supply_pool_migrate)
+-  [Function `withdraw_leaves_reserve`](#kai_sav_kai_leverage_supply_pool_withdraw_leaves_reserve)
+-  [Function `max_withdraw_within_reserve`](#kai_sav_kai_leverage_supply_pool_max_withdraw_within_reserve)
 -  [Function `rebalance`](#kai_sav_kai_leverage_supply_pool_rebalance)
 -  [Function `skim_base_profits`](#kai_sav_kai_leverage_supply_pool_skim_base_profits)
 -  [Function `inject_incentives`](#kai_sav_kai_leverage_supply_pool_inject_incentives)
@@ -226,6 +228,19 @@ proper accounting of shares and underlying values.
 
 
 
+<a name="kai_sav_kai_leverage_supply_pool_WITHDRAW_RESERVE_BPS"></a>
+
+Fraction of the supply pool's total value, in basis points, that principal withdrawals must
+leave in its available balance. Profit skimming is exempt and may draw it down: <code><a href="../kai_sav/vault.md#kai_sav_vault">vault</a></code>
+counts strategy principal at cost basis, so a skim that cannot withdraw means the vault
+stops recognizing yield altogether.
+
+
+<pre><code><b>const</b> <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_WITHDRAW_RESERVE_BPS">WITHDRAW_RESERVE_BPS</a>: u64 = 100;
+</code></pre>
+
+
+
 <a name="kai_sav_kai_leverage_supply_pool_EInvalidAdmin"></a>
 
 Invalid <code><a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_AdminCap">AdminCap</a></code> has been provided for the strategy
@@ -262,6 +277,16 @@ Migration is not an upgrade
 
 
 <pre><code><b>const</b> <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_ENotUpgrade">ENotUpgrade</a>: u64 = 3;
+</code></pre>
+
+
+
+<a name="kai_sav_kai_leverage_supply_pool_EInsufficientPoolLiquidity"></a>
+
+The withdrawal would leave the supply pool below its liquidity reserve
+
+
+<pre><code><b>const</b> <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_EInsufficientPoolLiquidity">EInsufficientPoolLiquidity</a>: u64 = 4;
 </code></pre>
 
 
@@ -440,6 +465,8 @@ Remove strategy from vault and return removal ticket.
     <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_assert_admin">assert_admin</a>(cap, strategy);
     <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_assert_version">assert_version</a>(strategy);
     <b>assert</b>!(balance::value(&strategy.collected_profit_t) == 0, <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_EHasPendingRewards">EHasPendingRewards</a>);
+    // Full teardown, so the withdrawal reserve is not enforced. Doing so would make the
+    // strategy unremovable whenever the pool <b>has</b> any utilization at all.
     <b>let</b> redeemed_balance = supply_pool.<a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_withdraw">withdraw</a>(strategy.shares.withdraw_all(), clock);
     strategy.underlying_nominal_value_t = 0;
     <a href="../kai_sav/vault.md#kai_sav_vault_new_strategy_removal_ticket">vault::new_strategy_removal_ticket</a>(
@@ -473,6 +500,75 @@ Migrate strategy to current module version.
     <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_assert_admin">assert_admin</a>(cap, strategy);
     <b>assert</b>!(strategy.version &lt; <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_MODULE_VERSION">MODULE_VERSION</a>, <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_ENotUpgrade">ENotUpgrade</a>);
     strategy.version = <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_MODULE_VERSION">MODULE_VERSION</a>;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_sav_kai_leverage_supply_pool_withdraw_leaves_reserve"></a>
+
+## Function `withdraw_leaves_reserve`
+
+Whether withdrawing <code>amount</code> leaves at least <code><a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_WITHDRAW_RESERVE_BPS">WITHDRAW_RESERVE_BPS</a></code> of the pool's total
+value available. <code>available</code> and <code>liabilities</code> describe the pool before the withdrawal.
+
+
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_withdraw_leaves_reserve">withdraw_leaves_reserve</a>(available: u64, liabilities: u128, amount: u64): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_withdraw_leaves_reserve">withdraw_leaves_reserve</a>(available: u64, liabilities: u128, amount: u64): bool {
+    // Never breaches the reserve, even <b>if</b> skimming <b>has</b> already taken the pool below it.
+    <b>if</b> (amount == 0) {
+        <b>return</b> <b>true</b>
+    };
+    <b>if</b> (available &lt; amount) {
+        <b>return</b> <b>false</b>
+    };
+    // Equivalent to capping post-withdrawal utilization at `10000 - <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_WITHDRAW_RESERVE_BPS">WITHDRAW_RESERVE_BPS</a>`:
+    // the withdrawal lowers available and total value alike, and leaves liabilities untouched.
+    <b>let</b> available_after = (available - amount) <b>as</b> u128;
+    <b>let</b> total_value_after = available_after + liabilities;
+    <b>let</b> reserve = total_value_after * (<a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_WITHDRAW_RESERVE_BPS">WITHDRAW_RESERVE_BPS</a> <b>as</b> u128) / 10000;
+    available_after &gt;= reserve
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_sav_kai_leverage_supply_pool_max_withdraw_within_reserve"></a>
+
+## Function `max_withdraw_within_reserve`
+
+The largest amount withdrawable from a pool holding <code>available</code> with <code>liabilities</code> out on
+loan that still leaves the reserve. Zero if the pool is already at or below it.
+
+
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_max_withdraw_within_reserve">max_withdraw_within_reserve</a>(available: u64, liabilities: u128): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_max_withdraw_within_reserve">max_withdraw_within_reserve</a>(available: u64, liabilities: u128): u64 {
+    // Solves `available_after * (10000 - <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_WITHDRAW_RESERVE_BPS">WITHDRAW_RESERVE_BPS</a>) &gt;= liabilities *
+    // <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_WITHDRAW_RESERVE_BPS">WITHDRAW_RESERVE_BPS</a>`, rounding up so the result never breaches the reserve.
+    <b>let</b> bps = <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_WITHDRAW_RESERVE_BPS">WITHDRAW_RESERVE_BPS</a> <b>as</b> u128;
+    <b>let</b> min_available = u128::div_ceil(liabilities * bps, 10000 - bps);
+    // The result is bounded by `available`, so the downcast is lossless.
+    u128::saturating_sub(available <b>as</b> u128, min_available) <b>as</b> u64
 }
 </code></pre>
 
@@ -517,6 +613,27 @@ Rebalance strategy position based on vault requirements.
             to_repay,
             strategy.underlying_nominal_value_t,
         );
+        // Clamped rather than aborted: `<a href="../kai_sav/vault.md#kai_sav_vault_strategy_repay">vault::strategy_repay</a>` reduces `borrowed` by the
+        // amount actually repaid, so a short repayment stays exactly accounted and the rest is
+        // repaid on a later <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_rebalance">rebalance</a>. Aborting would fail the whole <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_rebalance">rebalance</a> transaction,
+        // which batches every <a href="../kai_sav/vault.md#kai_sav_vault">vault</a>. `calc_withdraw_by_shares` also accrues interest, so the
+        // pool state read below is current.
+        <b>let</b> withdraw_amt = supply_pool.calc_withdraw_by_shares(redeem_st_amt, clock);
+        <b>let</b> max_withdraw_amt = <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_max_withdraw_within_reserve">max_withdraw_within_reserve</a>(
+            supply_pool.available_balance_value(),
+            supply_pool.total_liabilities_x64() &gt;&gt; 64,
+        );
+        <b>let</b> redeem_st_amt = <b>if</b> (withdraw_amt &gt; max_withdraw_amt) {
+            <b>let</b> (share_amt, _) = supply_pool.calc_withdraw_by_amount(max_withdraw_amt, clock);
+            // redeem 1 share less to avoid withdrawing more than `max_withdraw_amt` due to
+            // rounding in `calc_withdraw_by_amount`
+            u64::max(share_amt, 1) - 1
+        } <b>else</b> {
+            redeem_st_amt
+        };
+        <b>if</b> (redeem_st_amt == 0) {
+            <b>return</b>
+        };
         <b>let</b> <b>mut</b> redeemed_balance_t = supply_pool.<a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_withdraw">withdraw</a>(
             strategy.shares.split(redeem_st_amt),
             clock,
@@ -566,7 +683,18 @@ Skim the profits earned on base APY.
 ) {
     <b>let</b> share_value = supply_pool.calc_withdraw_by_shares(strategy.shares.value(), clock);
     <b>if</b> (share_value &gt; strategy.underlying_nominal_value_t) {
-        <b>let</b> profit_amt = share_value - strategy.underlying_nominal_value_t;
+        // Skim at most what the pool can pay out, otherwise the split below underflows and
+        // aborts. The rest stays in `strategy.shares`, keeps accruing, and is skimmed once
+        // liquidity returns; `underlying_nominal_value_t` is untouched, so deferring loses no
+        // profit. Deliberately ignores `<a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_WITHDRAW_RESERVE_BPS">WITHDRAW_RESERVE_BPS</a>` — the skim is the path the
+        // reserve exists to keep alive.
+        <b>let</b> profit_amt = u64::min(
+            share_value - strategy.underlying_nominal_value_t,
+            supply_pool.available_balance_value(),
+        );
+        <b>if</b> (profit_amt == 0) {
+            <b>return</b>
+        };
         <b>let</b> (redeem_share_amount, _) = supply_pool.calc_withdraw_by_amount(profit_amt, clock);
         // redeem 1 share less to avoid withdrawing more than `profit_amt` due to rounding
         // in `calc_withdraw_by_amount`
@@ -682,6 +810,17 @@ Process withdrawal request from vault.
         to_withdraw,
         strategy.underlying_nominal_value_t,
     );
+    // Aborts rather than filling partially on purpose: `<a href="../kai_sav/vault.md#kai_sav_vault_redeem_withdraw_ticket">vault::redeem_withdraw_ticket</a>` treats
+    // a short fill <b>as</b> a `StrategyLossEvent` charged to the redeeming user, which would turn a
+    // liquidity limit into a realized loss. `calc_withdraw_by_shares` also accrues interest,
+    // so the state the check reads is current.
+    <b>let</b> withdraw_amt = supply_pool.calc_withdraw_by_shares(redeem_st_amt, clock);
+    <b>let</b> leaves_reserve = <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_withdraw_leaves_reserve">withdraw_leaves_reserve</a>(
+        supply_pool.available_balance_value(),
+        supply_pool.total_liabilities_x64() &gt;&gt; 64,
+        withdraw_amt,
+    );
+    <b>assert</b>!(leaves_reserve, <a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_EInsufficientPoolLiquidity">EInsufficientPoolLiquidity</a>);
     <b>let</b> <b>mut</b> redeemed_balance_t = supply_pool.<a href="../kai_sav/kai_leverage_supply_pool.md#kai_sav_kai_leverage_supply_pool_withdraw">withdraw</a>(
         strategy.shares.split(redeem_st_amt),
         clock,

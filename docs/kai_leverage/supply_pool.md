@@ -44,6 +44,7 @@ Key responsibilities:
 -  [Function `set_lend_facil_max_utilization_bps`](#kai_leverage_supply_pool_set_lend_facil_max_utilization_bps)
 -  [Function `set_interest_fee_bps`](#kai_leverage_supply_pool_set_interest_fee_bps)
 -  [Function `take_collected_fees`](#kai_leverage_supply_pool_take_collected_fees)
+-  [Function `available_balance_value`](#kai_leverage_supply_pool_available_balance_value)
 -  [Function `total_value_x64`](#kai_leverage_supply_pool_total_value_x64)
 -  [Function `utilization_bps`](#kai_leverage_supply_pool_utilization_bps)
 -  [Function `update_interest`](#kai_leverage_supply_pool_update_interest)
@@ -1011,6 +1012,32 @@ Take all collected fees from the supply pool.
 ): (EquityShareBalance&lt;ST&gt;, ActionRequest) {
     <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_check_version">check_version</a>(pool);
     (pool.collected_fees.withdraw_all(), access::new_request(<a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_ATakeFees">ATakeFees</a> {}, ctx))
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_supply_pool_available_balance_value"></a>
+
+## Function `available_balance_value`
+
+The portion of the pool's balance that is currently available, i.e. the part that is not
+out on loan. This is the upper bound on what a single <code><a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_withdraw">withdraw</a></code> call can pay out.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_available_balance_value">available_balance_value</a>&lt;T, ST&gt;(pool: &<a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;T, ST&gt;): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_available_balance_value">available_balance_value</a>&lt;T, ST&gt;(pool: &<a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">SupplyPool</a>&lt;T, ST&gt;): u64 {
+    pool.available_balance.value()
 }
 </code></pre>
 
