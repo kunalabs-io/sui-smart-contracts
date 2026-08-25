@@ -322,6 +322,12 @@ public fun take_collected_fees<T, ST>(
     (pool.collected_fees.withdraw_all(), access::new_request(ATakeFees {}, ctx))
 }
 
+/// The portion of the pool's balance that is currently available, i.e. the part that is not
+/// out on loan. This is the upper bound on what a single `withdraw` call can pay out.
+public fun available_balance_value<T, ST>(pool: &SupplyPool<T, ST>): u64 {
+    pool.available_balance.value()
+}
+
 /// Total balance of the pool. This is the sum of the available balance and the borrowed amount
 /// which is out on loan, or the total supply equity underlying value. In `UQ64.64` format.
 public fun total_value_x64<T, ST>(pool: &SupplyPool<T, ST>): u128 {
@@ -682,4 +688,18 @@ public(package) fun fdb_destroy_empty(self: FacilDebtBag) {
 
 public(package) fun fdb_length(self: &FacilDebtBag): u64 {
     self.inner.length()
+}
+
+/* ================= testing ================= */
+
+/// Test-only wrapper around the package-internal `borrow`, so that dependent packages can
+/// drive a pool to a given utilization in their tests.
+#[test_only]
+public fun borrow_for_testing<T, ST>(
+    pool: &mut SupplyPool<T, ST>,
+    facil_cap: &LendFacilCap,
+    amount: u64,
+    clock: &Clock,
+): (Balance<T>, FacilDebtShare<ST>) {
+    borrow(pool, facil_cap, amount, clock)
 }

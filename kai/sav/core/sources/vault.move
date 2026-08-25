@@ -1171,6 +1171,18 @@ fun create_a_treasury(ctx: &mut TxContext): (TreasuryCap<VAULT>, CoinMetadata<VA
     coin::create_currency(VAULT {}, 6, b"ywhUSDC.e", b"", b"", option::none(), ctx)
 }
 
+/// Test-only wrapper around `set_strategy_target_alloc_weights_bps`, which as a private
+/// `entry fun` cannot be called from other modules in this package.
+#[test_only]
+public(package) fun set_target_alloc_weights_for_testing<T, YT>(
+    cap: &AdminCap<YT>,
+    vault: &mut Vault<T, YT>,
+    ids: vector<ID>,
+    weights_bps: vector<u64>,
+) {
+    set_strategy_target_alloc_weights_bps(cap, vault, ids, weights_bps)
+}
+
 #[test_only]
 fun mint_a_balance(amount: u64): Balance<A> {
     let mut supply = balance::create_supply(A {});

@@ -2,9 +2,10 @@
 module kai_leverage::supply_pool_tests;
 
 use kai_leverage::equity;
+use kai_leverage::piecewise;
 use kai_leverage::supply_pool::{Self, SupplyPool};
 use sui::balance;
-use sui::clock::Clock;
+use sui::clock::{Self, Clock};
 use sui::sui::SUI;
 use sui::test_scenario;
 use std::unit_test::destroy;
@@ -89,4 +90,46 @@ public fun supply_for_testing<T, ST>(
     );
     destroy(request);
     destroy(shares);
+}
+
+#[test]
+fun test_available_balance_value() {
+    let mut test = test_scenario::begin(@0);
+    let clock = clock::create_for_testing(test.ctx());
+    let mut pool = create_sui_supply_pool_for_testing();
+
+    assert!(pool.available_balance_value() == 0);
+
+    supply_for_testing(&mut pool, 1_000_000, &clock, test.ctx());
+    assert!(pool.available_balance_value() == 1_000_000);
+    assert!(pool.utilization_bps() == 0);
+
+    let facil_cap = supply_pool::create_lend_facil_cap(test.ctx());
+    let facil_id = object::id(&facil_cap);
+    destroy(
+        pool.add_lend_facil(
+            facil_id,
+            piecewise::create(0, 10_00, vector::singleton(piecewise::section(100_00, 10_00))),
+            test.ctx(),
+        ),
+    );
+    destroy(
+        pool.set_lend_facil_max_liability_outstanding(facil_id, 1_000_000_000_000, test.ctx()),
+    );
+    destroy(pool.set_lend_facil_max_utilization_bps(facil_id, 100_00, test.ctx()));
+
+    let (borrowed, shares) = supply_pool::borrow(&mut pool, &facil_cap, 400_000, &clock);
+    assert!(borrowed.value() == 400_000);
+
+    // The borrowed amount leaves the available balance while staying in the pool's total
+    // value, so `available_balance_value` tracks exactly what a withdrawal can be paid from.
+    assert!(pool.available_balance_value() == 600_000);
+    assert!(pool.utilization_bps() == 40_00);
+
+    destroy(borrowed);
+    destroy(shares);
+    destroy(facil_cap);
+    destroy(pool);
+    clock::destroy_for_testing(clock);
+    test.end();
 }
