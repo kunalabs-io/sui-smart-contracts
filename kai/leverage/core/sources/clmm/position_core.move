@@ -26,11 +26,11 @@ module kai_leverage::position_core_clmm;
 use access_management::access::{Self, ActionRequest};
 use kai_leverage::balance_bag::{Self, BalanceBag};
 use kai_leverage::debt_info::{Self, DebtInfo, ValidatedDebtInfo};
+use kai_leverage::lp_shape_clmm::{Self, LpShape};
 use kai_leverage::position_model_clmm::{Self, PositionModel};
-use kai_leverage::pyth::{Self, PythPriceInfo, ValidatedPythPriceInfo};
+use kai_leverage::oracle_price::{PriceCollection, ValidatedPrices};
 use kai_leverage::supply_pool::{Self, SupplyPool, LendFacilCap, FacilDebtBag, FacilDebtShare};
 use kai_leverage::util;
-use pyth::i64 as pyth_i64;
 use rate_limiter::net_sliding_sum_limiter::NetSlidingSumLimiter;
 use std::type_name::{Self, TypeName};
 use sui::bag::{Self, Bag};
@@ -480,6 +480,13 @@ public struct PythConfig has copy, drop, store {
     pio_allowlist: VecMap<TypeName, ID>,
 }
 
+/// Configuration for the rail-agnostic oracle price collection
+/// (`kai_leverage::oracle_price`).
+public struct OraclePriceConfig has copy, drop, store {
+    max_age_secs: u64,
+    price_object_allowlist: VecMap<TypeName, ID>,
+}
+
 /// Configuration for leveraged concentrated liquidity position parameters and risk management.
 ///
 /// This configuration implements the theoretical framework described in "Concentrated Liquidity
@@ -741,6 +748,59 @@ public fun pyth_config_disallow_pio(
     let pyth_config: &mut PythConfig =
         &mut config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
     pyth_config.pio_allowlist.remove(&coin_type);
+    access::new_request(AModifyConfig {}, ctx)
+}
+
+/// Add empty oracle price configuration to position config.
+public fun config_add_empty_oracle_price_config(
+    config: &mut PositionConfig,
+    ctx: &mut TxContext,
+): ActionRequest {
+    let oracle_price_config = OraclePriceConfig {
+        max_age_secs: 0,
+        price_object_allowlist: vec_map::empty(),
+    };
+    config
+        .allowed_oracles
+        .add(type_name::with_defining_ids<OraclePriceConfig>(), oracle_price_config);
+
+    access::new_request(AModifyConfig {}, ctx)
+}
+
+/// Set maximum age for oracle price feeds in seconds.
+public fun set_oracle_price_config_max_age_secs(
+    config: &mut PositionConfig,
+    max_age_secs: u64,
+    ctx: &mut TxContext,
+): ActionRequest {
+    let oracle_price_config: &mut OraclePriceConfig =
+        &mut config.allowed_oracles[type_name::with_defining_ids<OraclePriceConfig>()];
+    oracle_price_config.max_age_secs = max_age_secs;
+    access::new_request(AModifyConfig {}, ctx)
+}
+
+/// Allow a specific oracle price info object for a coin type.
+public fun oracle_price_config_allow_price_object(
+    config: &mut PositionConfig,
+    coin_type: TypeName,
+    price_object_id: ID,
+    ctx: &mut TxContext,
+): ActionRequest {
+    let oracle_price_config: &mut OraclePriceConfig =
+        &mut config.allowed_oracles[type_name::with_defining_ids<OraclePriceConfig>()];
+    oracle_price_config.price_object_allowlist.insert(coin_type, price_object_id);
+    access::new_request(AModifyConfig {}, ctx)
+}
+
+/// Remove allowlist for a specific oracle price info object.
+public fun oracle_price_config_disallow_price_object(
+    config: &mut PositionConfig,
+    coin_type: TypeName,
+    ctx: &mut TxContext,
+): ActionRequest {
+    let oracle_price_config: &mut OraclePriceConfig =
+        &mut config.allowed_oracles[type_name::with_defining_ids<OraclePriceConfig>()];
+    oracle_price_config.price_object_allowlist.remove(&coin_type);
     access::new_request(AModifyConfig {}, ctx)
 }
 
@@ -1943,11 +2003,14 @@ public fun migrate_position<X, Y, LP>(
 
 public(package) fun validate_price_info(
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
-): ValidatedPythPriceInfo {
-    let pyth_config: &PythConfig =
-        &config.allowed_oracles[type_name::with_defining_ids<PythConfig>()];
-    price_info.validate(pyth_config.max_age_secs, &pyth_config.pio_allowlist)
+    price_info: &PriceCollection,
+): ValidatedPrices {
+    let oracle_price_config: &OraclePriceConfig =
+        &config.allowed_oracles[type_name::with_defining_ids<OraclePriceConfig>()];
+    price_info.validate(
+        oracle_price_config.max_age_secs,
+        &oracle_price_config.price_object_allowlist,
+    )
 }
 
 public(package) fun validate_debt_info(
@@ -2024,6 +2087,58 @@ public(package) fun init_margin_is_valid(
     true
 }
 
+/// Extract the LP position's shape as an [LpShape].
+///
+/// This is the only piece of position state whose extraction needs to know
+/// the concrete LP type (tick range and liquidity are structural method
+/// calls), so it stays a macro while the rest of the model build lives in
+/// [position_model_from_lp_shape].
+public(package) macro fun lp_shape<$X, $Y, $LP>($position: &Position<$X, $Y, $LP>): LpShape {
+    let position = $position;
+    let (tick_a, tick_b) = position.lp_position().tick_range();
+    lp_shape_clmm::new(
+        tick_a.as_sqrt_price_x64(),
+        tick_b.as_sqrt_price_x64(),
+        position.lp_position().liquidity(),
+    )
+}
+
+/// Build a `PositionModel` snapshot from position state given the LP
+/// position's shape (see [lp_shape]).
+public(package) fun position_model_from_lp_shape<X, Y, LP>(
+    position: &Position<X, Y, LP>,
+    debt_info: &ValidatedDebtInfo,
+    shape: LpShape,
+): PositionModel {
+    let cx = position.col_x().value();
+    let cy = position.col_y().value();
+
+    let sx = position.debt_bag().get_share_amount_by_asset_type<X>();
+    let dx = if (sx > 0) {
+        let share_type = position.debt_bag().get_share_type_for_asset<X>();
+        debt_info.calc_repay_by_shares(share_type, sx)
+    } else {
+        0
+    };
+    let sy = position.debt_bag().get_share_amount_by_asset_type<Y>();
+    let dy = if (sy > 0) {
+        let share_type = position.debt_bag().get_share_type_for_asset<Y>();
+        debt_info.calc_repay_by_shares(share_type, sy)
+    } else {
+        0
+    };
+
+    position_model_clmm::create(
+        shape.sqrt_pa_x64(),
+        shape.sqrt_pb_x64(),
+        shape.l(),
+        cx,
+        cy,
+        dx,
+        dy,
+    )
+}
+
 /// Extract position model from current position state.
 ///
 /// This internal macro creates a PositionModel snapshot from the current
@@ -2034,40 +2149,8 @@ public(package) macro fun model_from_position<$X, $Y, $LP>(
     $debt_info: &ValidatedDebtInfo,
 ): PositionModel {
     let position = $position;
-    let debt_info = $debt_info;
-
-    let (tick_a, tick_b) = position.lp_position().tick_range();
-
-    let l = position.lp_position().liquidity();
-    let sqrt_pa_x64 = tick_a.as_sqrt_price_x64();
-    let sqrt_pb_x64 = tick_b.as_sqrt_price_x64();
-    let cx = position.col_x().value();
-    let cy = position.col_y().value();
-
-    let sx = position.debt_bag().get_share_amount_by_asset_type<$X>();
-    let dx = if (sx > 0) {
-        let share_type = position.debt_bag().get_share_type_for_asset<$X>();
-        debt_info.calc_repay_by_shares(share_type, sx)
-    } else {
-        0
-    };
-    let sy = position.debt_bag().get_share_amount_by_asset_type<$Y>();
-    let dy = if (sy > 0) {
-        let share_type = position.debt_bag().get_share_type_for_asset<$Y>();
-        debt_info.calc_repay_by_shares(share_type, sy)
-    } else {
-        0
-    };
-
-    position_model_clmm::create(
-        sqrt_pa_x64,
-        sqrt_pb_x64,
-        l,
-        cx,
-        cy,
-        dx,
-        dy,
-    )
+    let shape = lp_shape!(position);
+    position_model_from_lp_shape(position, $debt_info, shape)
 }
 
 /// Validate pool price is within acceptable slippage tolerance.
@@ -2095,15 +2178,15 @@ public(package) macro fun slippage_tolerance_assertion(
 
 public(package) fun get_amount_ema_usd_value_6_decimals<T>(
     amount: u64,
-    price_info: &ValidatedPythPriceInfo,
+    price_info: &ValidatedPrices,
     round_up: bool,
 ): u64 {
     let t = type_name::with_defining_ids<T>();
-    let price = price_info.get_ema_price(t);
+    let quote = price_info.get_smoothed_price(t);
 
-    let p = pyth_i64::get_magnitude_if_positive(&price.get_price()) as u128;
-    let expo = pyth_i64::get_magnitude_if_negative(&price.get_expo()) as u8;
-    let dec = pyth::decimals(t);
+    let p = quote.quote_price() as u128;
+    let expo = quote.quote_expo_neg() as u8;
+    let dec = price_info.decimals(t);
 
     let num = p * (amount as u128);
     (if (expo + dec > 6) {
@@ -2119,7 +2202,7 @@ public(package) fun get_amount_ema_usd_value_6_decimals<T>(
 
 public(package) fun get_balance_ema_usd_value_6_decimals<T>(
     balance: &Balance<T>,
-    price_info: &ValidatedPythPriceInfo,
+    price_info: &ValidatedPrices,
     round_up: bool,
 ): u64 {
     get_amount_ema_usd_value_6_decimals<T>(balance.value(), price_info, round_up)
@@ -2142,7 +2225,7 @@ public(package) macro fun create_position_ticket<$X, $Y, $I32>(
     $principal_x: Balance<$X>,
     $principal_y: Balance<$Y>,
     $delta_l: u128,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $clock: &Clock,
     $ctx: &mut TxContext,
 ): CreatePositionTicket<$X, $Y, $I32> {
@@ -2187,7 +2270,7 @@ public(package) macro fun create_position_ticket<$X, $Y, $I32>(
 
     // validate price deviation
     {
-        let p0_oracle_ema_x128 = price_info.div_ema_price_numeric_x128(
+        let p0_oracle_ema_x128 = price_info.div_smoothed_price_numeric_x128(
             type_name::with_defining_ids<$X>(),
             type_name::with_defining_ids<$Y>(),
         );
@@ -2405,7 +2488,7 @@ public(package) macro fun create_position<$X, $Y, $I32, $Pool, $LP>(
 public(package) macro fun create_deleverage_ticket_inner<$X, $Y, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &mut $Pool,
     $max_delta_l: u128,
@@ -2508,7 +2591,7 @@ public(package) macro fun create_deleverage_ticket_inner<$X, $Y, $Pool, $LP>(
 public(package) macro fun create_deleverage_ticket<$X, $Y, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &mut $Pool,
     $max_delta_l: u128,
@@ -2537,7 +2620,7 @@ public(package) macro fun create_deleverage_ticket<$X, $Y, $Pool, $LP>(
 public(package) macro fun create_deleverage_ticket_for_liquidation<$X, $Y, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &mut $Pool,
     $remove_liquidity: |&mut $Pool, &mut $LP, u128| -> (Balance<$X>, Balance<$Y>),
@@ -2647,34 +2730,32 @@ public(package) fun calc_liq_fee_from_reward(config: &PositionConfig, reward_amt
 
 /// Liquidate X collateral by repaying Y debt.
 ///
-/// This macro performs partial liquidation of a position's X collateral
+/// This function performs partial liquidation of a position's X collateral
 /// in exchange for repaying Y debt. Liquidators receive X tokens as reward
 /// for helping restore position health by reducing debt obligations.
-public(package) macro fun liquidate_col_x<$X, $Y, $SY, $LP>(
-    $position: &mut Position<$X, $Y, $LP>,
-    $config: &PositionConfig,
-    $price_info: &PythPriceInfo,
-    $debt_info: &DebtInfo,
-    $repayment: &mut Balance<$Y>,
-    $supply_pool: &mut SupplyPool<$Y, $SY>,
-    $clock: &Clock,
-): Balance<$X> {
-    let position = $position;
-    let config = $config;
-    let repayment = $repayment;
-    let supply_pool = $supply_pool;
-
+///
+/// The LP position's shape is passed in by the wrapper via [lp_shape].
+public(package) fun liquidate_col_x<X, Y, SY, LP: store>(
+    position: &mut Position<X, Y, LP>,
+    config: &PositionConfig,
+    price_info: &PriceCollection,
+    debt_info: &DebtInfo,
+    repayment: &mut Balance<Y>,
+    supply_pool: &mut SupplyPool<Y, SY>,
+    shape: LpShape,
+    clock: &Clock,
+): Balance<X> {
     check_versions(position, config);
     assert!(position.config_id() == object::id(config), e_invalid_config!());
     assert!(position.ticket_active() == false, e_ticket_active!());
     assert!(!config.liquidation_disabled(), e_liquidation_disabled!());
-    let price_info = validate_price_info(config, $price_info);
-    let debt_info = validate_debt_info(config, $debt_info);
+    let price_info = validate_price_info(config, price_info);
+    let debt_info = validate_debt_info(config, debt_info);
 
-    let model = model_from_position!(position, &debt_info);
+    let model = position_model_from_lp_shape(position, &debt_info, shape);
     let p_x128 = price_info.div_price_numeric_x128(
-        type_name::with_defining_ids<$X>(),
-        type_name::with_defining_ids<$Y>(),
+        type_name::with_defining_ids<X>(),
+        type_name::with_defining_ids<Y>(),
     );
 
     let (repayment_amt_y, reward_amt_x) = model.calc_liquidate_col_x(
@@ -2690,14 +2771,14 @@ public(package) macro fun liquidate_col_x<$X, $Y, $SY, $LP>(
     let mut r = repayment.split(repayment_amt_y);
 
     assert!(
-        type_name::with_defining_ids<$SY>() == position.debt_bag().get_share_type_for_asset<$Y>(),
+        type_name::with_defining_ids<SY>() == position.debt_bag().get_share_type_for_asset<Y>(),
         e_supply_pool_mismatch!(),
     );
 
     let mut debt_shares = position.debt_bag_mut().take_all();
-    let (_, y_repaid) = supply_pool.repay_max_possible(&mut debt_shares, &mut r, $clock);
+    let (_, y_repaid) = supply_pool.repay_max_possible(&mut debt_shares, &mut r, clock);
 
-    position.debt_bag_mut().add<$Y, $SY>(debt_shares);
+    position.debt_bag_mut().add<Y, SY>(debt_shares);
     repayment.join(r);
 
     let mut reward = position.col_x_mut().split(reward_amt_x);
@@ -2731,34 +2812,32 @@ public(package) macro fun liquidate_col_x<$X, $Y, $SY, $LP>(
 
 /// Liquidate Y collateral by repaying X debt.
 ///
-/// This macro performs partial liquidation of a position's Y collateral
+/// This function performs partial liquidation of a position's Y collateral
 /// in exchange for repaying X debt. Liquidators receive Y tokens as reward
 /// for helping restore position health by reducing debt obligations.
-public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
-    $position: &mut Position<$X, $Y, $LP>,
-    $config: &PositionConfig,
-    $price_info: &PythPriceInfo,
-    $debt_info: &DebtInfo,
-    $repayment: &mut Balance<$X>,
-    $supply_pool: &mut SupplyPool<$X, $SX>,
-    $clock: &Clock,
-): Balance<$Y> {
-    let position = $position;
-    let config = $config;
-    let repayment = $repayment;
-    let supply_pool = $supply_pool;
-
+///
+/// The LP position's shape is passed in by the wrapper via [lp_shape].
+public(package) fun liquidate_col_y<X, Y, SX, LP: store>(
+    position: &mut Position<X, Y, LP>,
+    config: &PositionConfig,
+    price_info: &PriceCollection,
+    debt_info: &DebtInfo,
+    repayment: &mut Balance<X>,
+    supply_pool: &mut SupplyPool<X, SX>,
+    shape: LpShape,
+    clock: &Clock,
+): Balance<Y> {
     check_versions(position, config);
     assert!(position.config_id() == object::id(config), e_invalid_config!());
     assert!(position.ticket_active() == false, e_ticket_active!());
     assert!(!config.liquidation_disabled(), e_liquidation_disabled!());
-    let price_info = validate_price_info(config, $price_info);
-    let debt_info = validate_debt_info(config, $debt_info);
+    let price_info = validate_price_info(config, price_info);
+    let debt_info = validate_debt_info(config, debt_info);
 
-    let model = model_from_position!(position, &debt_info);
+    let model = position_model_from_lp_shape(position, &debt_info, shape);
     let p_x128 = price_info.div_price_numeric_x128(
-        type_name::with_defining_ids<$X>(),
-        type_name::with_defining_ids<$Y>(),
+        type_name::with_defining_ids<X>(),
+        type_name::with_defining_ids<Y>(),
     );
 
     let (repayment_amt_x, reward_amt_y) = model.calc_liquidate_col_y(
@@ -2774,14 +2853,14 @@ public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
     let mut r = repayment.split(repayment_amt_x);
 
     assert!(
-        type_name::with_defining_ids<$SX>() == position.debt_bag().get_share_type_for_asset<$X>(),
+        type_name::with_defining_ids<SX>() == position.debt_bag().get_share_type_for_asset<X>(),
         e_supply_pool_mismatch!(),
     );
 
     let mut debt_shares = position.debt_bag_mut().take_all();
-    let (_, x_repaid) = supply_pool.repay_max_possible(&mut debt_shares, &mut r, $clock);
+    let (_, x_repaid) = supply_pool.repay_max_possible(&mut debt_shares, &mut r, clock);
 
-    position.debt_bag_mut().add<$X, $SX>(debt_shares);
+    position.debt_bag_mut().add<X, SX>(debt_shares);
     repayment.join(r);
 
     let mut reward = position.col_y_mut().split(reward_amt_y);
@@ -2819,54 +2898,54 @@ public(package) macro fun liquidate_col_y<$X, $Y, $SX, $LP>(
 /// Standard liquidation is not possible here, typically due to the minimum liquidation bonus requirement,
 /// making the position under-collateralized and unable to be restored via normal means.
 /// 
-/// This macro enables an entity with the `ARepayBadDebt` permission to repay the residual debt,
+/// This function enables an entity with the `ARepayBadDebt` permission to repay the residual debt,
 /// aiding in restoring the solvency of the position and allowing the protocol to manage or close it gracefully.
-public(package) macro fun repay_bad_debt<$X, $Y, $T, $ST, $LP>(
-    $position: &mut Position<$X, $Y, $LP>,
-    $config: &PositionConfig,
-    $supply_pool: &mut SupplyPool<$T, $ST>,
-    $repayment: &mut Balance<$T>,
-    $clock: &Clock,
-    $ctx: &mut TxContext,
+///
+/// The LP position's shape is passed in by the wrapper via [lp_shape]
+/// (structural method calls on the LP type can't be made on an unbound
+/// generic).
+public(package) fun repay_bad_debt<X, Y, T, ST, LP: store>(
+    position: &mut Position<X, Y, LP>,
+    config: &PositionConfig,
+    supply_pool: &mut SupplyPool<T, ST>,
+    repayment: &mut Balance<T>,
+    shape: LpShape,
+    clock: &Clock,
+    ctx: &mut TxContext,
 ): ActionRequest {
-    let position = $position;
-    let config = $config;
-    let supply_pool = $supply_pool;
-
     check_versions(position, config);
     assert!(position.config_id() == object::id(config), e_invalid_config!());
     assert!(position.ticket_active() == false, e_ticket_active!());
     assert!(
-        position.debt_bag().share_type_matches_asset_if_any_exists<$T, $ST>(),
+        position.debt_bag().share_type_matches_asset_if_any_exists<T, ST>(),
         e_supply_pool_mismatch!(),
     );
 
-    let l = position.lp_position().liquidity();
     let cx = position.col_x().value();
     let cy = position.col_y().value();
-    let sx = position.debt_bag().get_share_amount_by_asset_type<$X>();
-    let sy = position.debt_bag().get_share_amount_by_asset_type<$Y>();
-    let has_assets = l > 0 || cx > 0 || cy > 0;
+    let sx = position.debt_bag().get_share_amount_by_asset_type<X>();
+    let sy = position.debt_bag().get_share_amount_by_asset_type<Y>();
+    let has_assets = shape.l() > 0 || cx > 0 || cy > 0;
     let has_debt = sx > 0 || sy > 0;
     assert!(has_assets == false && has_debt == true, e_no_bad_debt_or_not_fully_liquidated!());
 
     let mut debt_shares = position.debt_bag_mut().take_all();
     if (debt_shares.value_x64() == 0) {
         debt_shares.destroy_zero();
-        return access::new_request(a_repay_bad_debt(), $ctx)
+        return access::new_request(a_repay_bad_debt(), ctx)
     };
     let (shares_repaid, balance_repaid) = supply_pool.repay_max_possible(
         &mut debt_shares,
-        $repayment,
-        $clock,
+        repayment,
+        clock,
     );
-    position.debt_bag_mut().add<$T, $ST>(debt_shares);
+    position.debt_bag_mut().add<T, ST>(debt_shares);
 
     if (shares_repaid > 0 || balance_repaid > 0) {
-        emit_bad_debt_repaid<$ST>(object::id(position), shares_repaid, balance_repaid);
+        emit_bad_debt_repaid<ST>(object::id(position), shares_repaid, balance_repaid);
     };
 
-    access::new_request(a_repay_bad_debt(), $ctx)
+    access::new_request(a_repay_bad_debt(), ctx)
 }
 
 /* ================= user operations ================= */
@@ -2879,7 +2958,7 @@ public(package) macro fun reduce<$X, $Y, $SX, $SY, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
     $cap: &PositionCap,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $supply_pool_x: &mut SupplyPool<$X, $SX>,
     $supply_pool_y: &mut SupplyPool<$Y, $SY>,
     $pool_object: &mut $Pool,
@@ -3132,7 +3211,7 @@ public fun add_collateral_y<X, Y, LP: store>(
 public(package) macro fun add_liquidity_with_receipt_inner<$X, $Y, $Pool, $LP, $Receipt>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &mut $Pool,
     $add_liquidity_inner: |&mut $Pool, &mut $LP| -> (u128, u64, u64, $Receipt),
@@ -3193,7 +3272,7 @@ public(package) macro fun add_liquidity_with_receipt_inner<$X, $Y, $Pool, $LP, $
 public(package) macro fun add_liquidity_inner<$X, $Y, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &mut $Pool,
     $add_liquidity_inner: |&mut $Pool, &mut $LP| -> (u128, u64, u64),
@@ -3221,7 +3300,7 @@ public(package) macro fun add_liquidity_with_receipt<$X, $Y, $Pool, $LP, $Receip
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
     $cap: &PositionCap,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &mut $Pool,
     $add_liquidity_inner: |&mut $Pool, &mut $LP| -> (u128, u64, u64, $Receipt),
@@ -3251,7 +3330,7 @@ public(package) macro fun add_liquidity<$X, $Y, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
     $cap: &PositionCap,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &mut $Pool,
     $add_liquidity_inner: |&mut $Pool, &mut $LP| -> (u128, u64, u64),
@@ -3617,7 +3696,7 @@ public(package) macro fun rebalance_add_liquidity_with_receipt<$X, $Y, $Pool, $L
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
     $receipt: &mut RebalanceReceipt,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &mut $Pool,
     $add_liquidity_lambda: |&mut $Pool, &mut $LP| -> (u128, u64, u64, $Receipt),
@@ -3650,7 +3729,7 @@ public(package) macro fun rebalance_add_liquidity<$X, $Y, $Pool, $LP>(
     $position: &mut Position<$X, $Y, $LP>,
     $config: &mut PositionConfig,
     $receipt: &mut RebalanceReceipt,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &mut $Pool,
     $add_liquidity_lambda: |&mut $Pool, &mut $LP| -> (u128, u64, u64),
@@ -3849,30 +3928,30 @@ public(package) macro fun validated_model_for_position<$X, $Y, $LP>(
 }
 
 /// Calculate the required amounts to liquidate X collateral by repaying Y debt.
-public(package) macro fun calc_liquidate_col_x<$X, $Y, $LP>(
-    $position: &Position<$X, $Y, $LP>,
-    $config: &PositionConfig,
-    $price_info: &PythPriceInfo,
-    $debt_info: &DebtInfo,
-    $max_repayment_amt_y: u64,
+///
+/// The LP position's shape is passed in by the wrapper via [lp_shape].
+public(package) fun calc_liquidate_col_x<X, Y, LP: store>(
+    position: &Position<X, Y, LP>,
+    config: &PositionConfig,
+    price_info: &PriceCollection,
+    debt_info: &DebtInfo,
+    max_repayment_amt_y: u64,
+    shape: LpShape,
 ): (u64, u64) {
-    let position = $position;
-    let config = $config;
-
     assert!(position.config_id() == object::id(config), e_invalid_config!());
     assert!(position.ticket_active() == false, e_ticket_active!());
-    let price_info = validate_price_info(config, $price_info);
-    let debt_info = validate_debt_info(config, $debt_info);
+    let price_info = validate_price_info(config, price_info);
+    let debt_info = validate_debt_info(config, debt_info);
 
-    let model = model_from_position!(position, &debt_info);
+    let model = position_model_from_lp_shape(position, &debt_info, shape);
     let p_x128 = price_info.div_price_numeric_x128(
-        type_name::with_defining_ids<$X>(),
-        type_name::with_defining_ids<$Y>(),
+        type_name::with_defining_ids<X>(),
+        type_name::with_defining_ids<Y>(),
     );
 
     model.calc_liquidate_col_x(
         p_x128,
-        $max_repayment_amt_y,
+        max_repayment_amt_y,
         config.liq_margin_bps(),
         config.liq_bonus_bps(),
         config.base_liq_factor_bps(),
@@ -3880,30 +3959,30 @@ public(package) macro fun calc_liquidate_col_x<$X, $Y, $LP>(
 }
 
 /// Calculate the required amounts to liquidate Y collateral by repaying X debt.
-public(package) macro fun calc_liquidate_col_y<$X, $Y, $LP>(
-    $position: &Position<$X, $Y, $LP>,
-    $config: &PositionConfig,
-    $price_info: &PythPriceInfo,
-    $debt_info: &DebtInfo,
-    $max_repayment_amt_x: u64,
+///
+/// The LP position's shape is passed in by the wrapper via [lp_shape].
+public(package) fun calc_liquidate_col_y<X, Y, LP: store>(
+    position: &Position<X, Y, LP>,
+    config: &PositionConfig,
+    price_info: &PriceCollection,
+    debt_info: &DebtInfo,
+    max_repayment_amt_x: u64,
+    shape: LpShape,
 ): (u64, u64) {
-    let position = $position;
-    let config = $config;
-
     assert!(position.config_id() == object::id(config), e_invalid_config!());
     assert!(position.ticket_active() == false, e_ticket_active!());
-    let price_info = validate_price_info(config, $price_info);
-    let debt_info = validate_debt_info(config, $debt_info);
+    let price_info = validate_price_info(config, price_info);
+    let debt_info = validate_debt_info(config, debt_info);
 
-    let model = model_from_position!(position, &debt_info);
+    let model = position_model_from_lp_shape(position, &debt_info, shape);
     let p_x128 = price_info.div_price_numeric_x128(
-        type_name::with_defining_ids<$X>(),
-        type_name::with_defining_ids<$Y>(),
+        type_name::with_defining_ids<X>(),
+        type_name::with_defining_ids<Y>(),
     );
 
     model.calc_liquidate_col_y(
         p_x128,
-        $max_repayment_amt_x,
+        max_repayment_amt_x,
         config.liq_margin_bps(),
         config.liq_bonus_bps(),
         config.base_liq_factor_bps(),

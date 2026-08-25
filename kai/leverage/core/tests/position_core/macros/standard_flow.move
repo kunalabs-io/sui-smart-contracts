@@ -12,7 +12,6 @@ use kai_leverage::position_core_test_util::{
     price_mul_100_human_to_sqrt_x64,
     sqrt_price_x64_to_price_human_mul_n
 };
-use kai_leverage::pyth;
 use kai_leverage::supply_pool_tests::{SSUI, SUSDC};
 use std::type_name;
 use sui::balance;
@@ -75,9 +74,7 @@ public macro fun create_position<$Setup>($setup: &mut $Setup): PositionCap {
             price_mul_100_human_to_sqrt_x64<SUI, USDC>(3_60),
         );
 
-        let mut price_info = pyth::create(setup.clock());
-        price_info.add(setup.sui_pio_mut());
-        price_info.add(setup.usdc_pio_mut());
+        let price_info = setup.price_info();
 
         let mut ticket = setup.create_position_ticket(
             &mut config,

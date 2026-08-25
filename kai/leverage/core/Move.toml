@@ -9,6 +9,7 @@ access_management = { local = "../../../access-management" }
 cetus_clmm = { local = "../../../_vendor/Cetus/clmm-v13" }
 integer_mate = { local = "../../../_vendor/Cetus/integer-mate-v7", override = true }
 pyth = { local = "../../../_vendor/Pyth/core-v2" }
+pyth_pro = { local = "../../../_vendor/Pyth/pro-compatible-v1", rename-from = "pyth" }
 bluefin_spot = { local = "../../../_vendor/Bluefin/spot-v17" }
 rate_limiter = { local = "../../../rate-limiter" }
 

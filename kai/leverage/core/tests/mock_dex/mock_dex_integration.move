@@ -17,7 +17,7 @@ use kai_leverage::position_core_clmm::{
     e_invalid_balance_value
 };
 use kai_leverage::position_model_clmm::PositionModel;
-use kai_leverage::pyth::PythPriceInfo;
+use kai_leverage::oracle_price::PriceCollection;
 use kai_leverage::supply_pool::SupplyPool;
 use sui::balance::Balance;
 use sui::clock::Clock;
@@ -31,7 +31,7 @@ public fun create_position_ticket<X, Y>(
     principal_x: Balance<X>,
     principal_y: Balance<Y>,
     delta_l: u128,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     clock: &Clock,
     ctx: &mut TxContext,
 ): CreatePositionTicket<X, Y, I32> {
@@ -100,7 +100,7 @@ public fun create_position<X, Y>(
 public fun create_deleverage_ticket<X, Y>(
     position: &mut Position<X, Y, PositionKey>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     mock_dex_pool: &mut MockDexPool<X, Y>,
     max_delta_l: u128,
@@ -125,7 +125,7 @@ public fun create_deleverage_ticket<X, Y>(
 public fun create_deleverage_ticket_for_liquidation<X, Y>(
     position: &mut Position<X, Y, PositionKey>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     mock_dex_pool: &mut MockDexPool<X, Y>,
 ): DeleverageTicket {
@@ -146,7 +146,7 @@ public fun create_deleverage_ticket_for_liquidation<X, Y>(
 public fun deleverage<X, Y, SX, SY>(
     position: &mut Position<X, Y, PositionKey>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     supply_pool_x: &mut SupplyPool<X, SX>,
     supply_pool_y: &mut SupplyPool<Y, SY>,
     mock_dex_pool: &mut MockDexPool<X, Y>,
@@ -177,7 +177,7 @@ public fun deleverage<X, Y, SX, SY>(
 public fun deleverage_for_liquidation<X, Y, SX, SY>(
     position: &mut Position<X, Y, PositionKey>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     supply_pool_x: &mut SupplyPool<X, SX>,
     supply_pool_y: &mut SupplyPool<Y, SY>,
     mock_dex_pool: &mut MockDexPool<X, Y>,
@@ -202,42 +202,64 @@ public fun deleverage_for_liquidation<X, Y, SX, SY>(
 public fun liquidate_col_x<X, Y, SY>(
     position: &mut Position<X, Y, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &mut Balance<Y>,
     supply_pool: &mut SupplyPool<Y, SY>,
     clock: &Clock,
 ): Balance<X> {
-    core::liquidate_col_x!(position, config, price_info, debt_info, repayment, supply_pool, clock)
+    let shape = core::lp_shape!(position);
+    core::liquidate_col_x(
+        position,
+        config,
+        price_info,
+        debt_info,
+        repayment,
+        supply_pool,
+        shape,
+        clock,
+    )
 }
 
 public fun liquidate_col_y<X, Y, SX>(
     position: &mut Position<X, Y, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &mut Balance<X>,
     supply_pool: &mut SupplyPool<X, SX>,
     clock: &Clock,
 ): Balance<Y> {
-    core::liquidate_col_y!(position, config, price_info, debt_info, repayment, supply_pool, clock)
+    let shape = core::lp_shape!(position);
+    core::liquidate_col_y(
+        position,
+        config,
+        price_info,
+        debt_info,
+        repayment,
+        supply_pool,
+        shape,
+        clock,
+    )
 }
 
 public fun repay_bad_debt_x<X, Y, SX>(
     position: &mut Position<X, Y, PositionKey>,
     config: &PositionConfig,
-    _price_info: &PythPriceInfo,
+    _price_info: &PriceCollection,
     _debt_info: &DebtInfo,
     supply_pool: &mut SupplyPool<X, SX>,
     repayment: &mut Balance<X>,
     clock: &Clock,
     ctx: &mut TxContext,
 ): ActionRequest {
-    core::repay_bad_debt!(
+    let shape = core::lp_shape!(position);
+    core::repay_bad_debt(
         position,
         config,
         supply_pool,
         repayment,
+        shape,
         clock,
         ctx,
     )
@@ -246,18 +268,20 @@ public fun repay_bad_debt_x<X, Y, SX>(
 public fun repay_bad_debt_y<X, Y, SY>(
     position: &mut Position<X, Y, PositionKey>,
     config: &PositionConfig,
-    _price_info: &PythPriceInfo,
+    _price_info: &PriceCollection,
     _debt_info: &DebtInfo,
     supply_pool: &mut SupplyPool<Y, SY>,
     repayment: &mut Balance<Y>,
     clock: &Clock,
     ctx: &mut TxContext,
 ): ActionRequest {
-    core::repay_bad_debt!(
+    let shape = core::lp_shape!(position);
+    core::repay_bad_debt(
         position,
         config,
         supply_pool,
         repayment,
+        shape,
         clock,
         ctx,
     )
@@ -269,7 +293,7 @@ public fun reduce<X, Y, SX, SY>(
     position: &mut Position<X, Y, PositionKey>,
     config: &mut PositionConfig,
     cap: &PositionCap,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     supply_pool_x: &mut SupplyPool<X, SX>,
     supply_pool_y: &mut SupplyPool<Y, SY>,
     mock_dex_pool: &mut MockDexPool<X, Y>,
@@ -298,7 +322,7 @@ public fun add_liquidity<X, Y>(
     position: &mut Position<X, Y, PositionKey>,
     config: &mut PositionConfig,
     cap: &PositionCap,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     mock_dex_pool: &mut MockDexPool<X, Y>,
     delta_l: u128,
@@ -329,7 +353,7 @@ public fun add_liquidity_with_receipt<X, Y>(
     position: &mut Position<X, Y, PositionKey>,
     config: &mut PositionConfig,
     cap: &PositionCap,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     mock_dex_pool: &mut MockDexPool<X, Y>,
     delta_l: u128,
@@ -455,7 +479,7 @@ public fun rebalance_add_liquidity<X, Y>(
     position: &mut Position<X, Y, PositionKey>,
     config: &mut PositionConfig,
     receipt: &mut RebalanceReceipt,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     mock_dex_pool: &mut MockDexPool<X, Y>,
     delta_l: u128,
@@ -505,19 +529,35 @@ public fun validated_model_for_position<X, Y>(
 public fun calc_liquidate_col_x<X, Y>(
     position: &Position<X, Y, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_repayment_amt_y: u64,
 ): (u64, u64) {
-    core::calc_liquidate_col_x!(position, config, price_info, debt_info, max_repayment_amt_y)
+    let shape = core::lp_shape!(position);
+    core::calc_liquidate_col_x(
+        position,
+        config,
+        price_info,
+        debt_info,
+        max_repayment_amt_y,
+        shape,
+    )
 }
 
 public fun calc_liquidate_col_y<X, Y>(
     position: &Position<X, Y, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_repayment_amt_x: u64,
 ): (u64, u64) {
-    core::calc_liquidate_col_y!(position, config, price_info, debt_info, max_repayment_amt_x)
+    let shape = core::lp_shape!(position);
+    core::calc_liquidate_col_y(
+        position,
+        config,
+        price_info,
+        debt_info,
+        max_repayment_amt_x,
+        shape,
+    )
 }

@@ -3,6 +3,7 @@ module kai_leverage::position_core_mock_dex_test_setup;
 
 use access_management::access::{PackageAdmin, ActionRequest};
 use integer_mate::i32::{Self, I32};
+use kai_leverage::coin_registry_test_util;
 use kai_leverage::debt_info::{Self, DebtInfo, ValidatedDebtInfo};
 use kai_leverage::mock_dex::{Self, MockDexPool, PositionKey};
 use kai_leverage::mock_dex_integration;
@@ -24,15 +25,16 @@ use kai_leverage::position_core_test_util::{
 };
 use kai_leverage::position_core_test_util_macros;
 use kai_leverage::position_model_clmm::PositionModel;
-use kai_leverage::pyth::{Self, PythPriceInfo};
+use kai_leverage::oracle_price::{Self, PriceCollection};
 use kai_leverage::pyth_test_util;
 use kai_leverage::supply_pool::SupplyPool;
 use kai_leverage::supply_pool_tests::{Self, SSUI, SUSDC};
 use kai_leverage::util;
-use pyth::price_info::PriceInfoObject;
+use pyth_pro::price_info::PriceInfoObject;
 use std::u128;
 use sui::balance::{Self, Balance};
 use sui::clock::{Self, Clock};
+use sui::coin_registry::Currency;
 use sui::sui::SUI;
 use sui::test_scenario::{Self, Scenario, TransactionEffects};
 use std::unit_test::destroy as destroy_;
@@ -46,6 +48,8 @@ public struct Setup {
     clock: Clock,
     sui_pio: PriceInfoObject,
     usdc_pio: PriceInfoObject,
+    currency_x: Currency<SUI>,
+    currency_y: Currency<USDC>,
     supply_pool_x: SupplyPool<SUI, SSUI>,
     supply_pool_y: SupplyPool<USDC, SUSDC>,
     mock_dex_pool: MockDexPool<SUI, USDC>,
@@ -117,6 +121,21 @@ public fun new_setup(): Setup {
     let package_admin = position_core_test_util::create_admin_for_testing(scenario.ctx());
     let mut clock = clock::create_for_testing(scenario.ctx());
     clock.set_for_testing(INITIAL_CLOCK_TIMESTAMP_MS);
+
+    // registry-backed decimals evidence for the market pair
+    let mut coin_registry = coin_registry_test_util::create_registry_for_testing(scenario.ctx());
+    let currency_x = coin_registry_test_util::create_currency_for_testing<SUI>(
+        &mut coin_registry,
+        9,
+        scenario.ctx(),
+    );
+    let currency_y = coin_registry_test_util::create_currency_for_testing<USDC>(
+        &mut coin_registry,
+        6,
+        scenario.ctx(),
+    );
+    destroy_(coin_registry);
+
     let (
         sui_pio,
         usdc_pio,
@@ -165,6 +184,8 @@ public fun new_setup(): Setup {
         clock,
         sui_pio,
         usdc_pio,
+        currency_x,
+        currency_y,
         supply_pool_x,
         supply_pool_y,
         mock_dex_pool: pool,
@@ -188,7 +209,7 @@ public fun create_position_ticket(
     principal_x: Balance<SUI>,
     principal_y: Balance<USDC>,
     delta_l: u128,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
 ): CreatePositionTicket<SUI, USDC, I32> {
     mock_dex_integration::create_position_ticket(
         &mut self.mock_dex_pool,
@@ -212,7 +233,7 @@ public fun create_position_ticket_with_different_pool(
     principal_x: Balance<SUI>,
     principal_y: Balance<USDC>,
     delta_l: u128,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
 ): CreatePositionTicket<SUI, USDC, I32> {
     let mut different_pool = mock_dex::create_mock_dex_pool(
         self.mock_dex_pool.current_sqrt_price_x64(),
@@ -378,10 +399,12 @@ public fun rebalance_collect_reward<R>(
     )
 }
 
-public fun price_info(self: &mut Setup): PythPriceInfo {
-    let mut price_info = pyth::create(&self.clock);
-    price_info.add(&self.sui_pio);
-    price_info.add(&self.usdc_pio);
+public fun price_info(self: &mut Setup): PriceCollection {
+    let mut price_info = oracle_price::create(&self.clock);
+    price_info.add_pyth_pro(&self.sui_pio);
+    price_info.add_pyth_pro(&self.usdc_pio);
+    price_info.add_currency(&self.currency_x);
+    price_info.add_currency(&self.currency_y);
     price_info
 }
 
@@ -546,7 +569,7 @@ public fun add_liquidity(
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &mut PositionConfig,
     cap: &PositionCap,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     delta_l: u128,
     balance_x: Balance<SUI>,
@@ -570,7 +593,7 @@ public fun add_liquidity_with_receipt(
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &mut PositionConfig,
     cap: &PositionCap,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     delta_l: u128,
 ) {
@@ -642,6 +665,8 @@ public fun destroy(setup: Setup) {
         clock,
         sui_pio,
         usdc_pio,
+        currency_x,
+        currency_y,
         supply_pool_x,
         supply_pool_y,
         mock_dex_pool,
@@ -652,6 +677,8 @@ public fun destroy(setup: Setup) {
     destroy_(clock);
     destroy_(sui_pio);
     destroy_(usdc_pio);
+    destroy_(currency_x);
+    destroy_(currency_y);
     destroy_(supply_pool_x);
     destroy_(supply_pool_y);
     destroy_(mock_dex_pool);
@@ -744,7 +771,7 @@ public fun create_deleverage_ticket(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_delta_l: u128,
 ): (DeleverageTicket, ActionRequest) {
@@ -763,7 +790,7 @@ public fun deleverage(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     max_delta_l: u128,
 ): ActionRequest {
     mock_dex_integration::deleverage(
@@ -815,7 +842,7 @@ public fun create_deleverage_ticket_with_different_pool(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_delta_l: u128,
 ): (DeleverageTicket, ActionRequest) {
@@ -844,7 +871,7 @@ public fun create_deleverage_ticket_for_liquidation_with_different_pool(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
 ): DeleverageTicket {
     let mut different_pool = mock_dex::create_mock_dex_pool(
@@ -916,7 +943,7 @@ public fun create_deleverage_ticket_for_liquidation(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
 ): DeleverageTicket {
     mock_dex_integration::create_deleverage_ticket_for_liquidation(
@@ -932,7 +959,7 @@ public fun deleverage_for_liquidation(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
 ) {
     mock_dex_integration::deleverage_for_liquidation(
         position,
@@ -949,7 +976,7 @@ public fun calc_liquidate_col_x(
     _: &Setup,
     position: &Position<SUI, USDC, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_amount: u64,
 ): (u64, u64) {
@@ -966,7 +993,7 @@ public fun calc_liquidate_col_y(
     _: &Setup,
     position: &Position<SUI, USDC, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_amount: u64,
 ): (u64, u64) {
@@ -983,7 +1010,7 @@ public fun liquidate_col_x(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment_y: &mut Balance<USDC>,
 ): Balance<SUI> {
@@ -1002,7 +1029,7 @@ public fun liquidate_col_y(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment_x: &mut Balance<SUI>,
 ): Balance<USDC> {
@@ -1021,7 +1048,7 @@ public fun liquidate_col_x_with_wrong_supply_pool(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment_y: &mut Balance<USDC>,
 ): Balance<SUI> {
@@ -1045,7 +1072,7 @@ public fun liquidate_col_y_with_wrong_supply_pool(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment_x: &mut Balance<SUI>,
 ): Balance<USDC> {
@@ -1180,7 +1207,7 @@ public fun repay_bad_debt_x(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &mut Balance<SUI>,
 ): ActionRequest {
@@ -1200,7 +1227,7 @@ public fun repay_bad_debt_y(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &mut Balance<USDC>,
 ): ActionRequest {
@@ -1220,7 +1247,7 @@ public fun repay_bad_debt_x_with_wrong_supply_pool(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &mut Balance<SUI>,
 ): ActionRequest {
@@ -1245,7 +1272,7 @@ public fun repay_bad_debt_y_with_wrong_supply_pool(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, PositionKey>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &mut Balance<USDC>,
 ): ActionRequest {

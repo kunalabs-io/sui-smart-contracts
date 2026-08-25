@@ -5,11 +5,10 @@ use access_management::access::{Self, PackageAdmin};
 use kai_leverage::mock_dex::{Self, MockDexPool};
 use kai_leverage::piecewise;
 use kai_leverage::position_core_clmm::{Self as core, PositionConfig};
-use kai_leverage::pyth;
 use kai_leverage::pyth_test_util;
 use kai_leverage::supply_pool::SupplyPool;
 use kai_leverage::supply_pool_tests::{Self, SSUI, SUSDC};
-use pyth::price_info::PriceInfoObject;
+use pyth_pro::price_info::PriceInfoObject;
 use rate_limiter::net_sliding_sum_limiter;
 use std::type_name;
 use std::u128;
@@ -19,10 +18,25 @@ use sui::sui::SUI;
 use sui::test_scenario::{Self, Scenario};
 use usdc::usdc::USDC;
 
+// Test-local coin decimals for the price helpers below. Deliberately not
+// sourced from production code: the tested path reads decimals from the
+// coin-registry fixtures, and the frozen legacy pyth module should have no
+// consumers outside deployed history.
+fun test_decimals<T>(): u8 {
+    let t = type_name::with_defining_ids<T>();
+    if (t == type_name::with_defining_ids<SUI>()) {
+        9
+    } else if (t == type_name::with_defining_ids<USDC>()) {
+        6
+    } else {
+        abort 0
+    }
+}
+
 // Converts a price (multiplied by 100 in human format) to sqrt_price_x64 format.
 public fun price_mul_100_human_to_sqrt_x64<X, Y>(price: u64): u128 {
-    let decimals_x = pyth::decimals(type_name::with_defining_ids<X>());
-    let decimals_y = pyth::decimals(type_name::with_defining_ids<Y>());
+    let decimals_x = test_decimals<X>();
+    let decimals_y = test_decimals<Y>();
 
     let price_x64 = if (decimals_x > decimals_y) {
         ((price as u128) << 64) / 10_u128.pow(decimals_x - decimals_y) / 100
@@ -34,8 +48,8 @@ public fun price_mul_100_human_to_sqrt_x64<X, Y>(price: u64): u128 {
 }
 
 public fun sqrt_price_x64_to_price_human_mul_n<X, Y>(sqrt_price_x64: u128, n: u8): u64 {
-    let decimals_x = pyth::decimals(type_name::with_defining_ids<X>());
-    let decimals_y = pyth::decimals(type_name::with_defining_ids<Y>());
+    let decimals_x = test_decimals<X>();
+    let decimals_y = test_decimals<Y>();
 
     let price_x128 = (sqrt_price_x64 as u256) * (sqrt_price_x64 as u256);
     let price = (if (decimals_x > decimals_y) {
@@ -195,6 +209,24 @@ public fun initialize_config_for_testing(
         );
         request.admin_approve_request(package_admin);
         let request = config.pyth_config_allow_pio(
+            type_name::with_defining_ids<USDC>(),
+            object::id(&usdc_pio),
+            scenario.ctx(),
+        );
+        request.admin_approve_request(package_admin);
+
+        // add oracle price config (rail-agnostic; validates the `PriceCollection` flow)
+        let request = config.config_add_empty_oracle_price_config(scenario.ctx());
+        request.admin_approve_request(package_admin);
+        let request = config.set_oracle_price_config_max_age_secs(60, scenario.ctx());
+        request.admin_approve_request(package_admin);
+        let request = config.oracle_price_config_allow_price_object(
+            type_name::with_defining_ids<SUI>(),
+            object::id(&sui_pio),
+            scenario.ctx(),
+        );
+        request.admin_approve_request(package_admin);
+        let request = config.oracle_price_config_allow_price_object(
             type_name::with_defining_ids<USDC>(),
             object::id(&usdc_pio),
             scenario.ctx(),

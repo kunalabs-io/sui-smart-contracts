@@ -7,7 +7,6 @@ use kai_leverage::position_core_test_util::{
     price_mul_100_human_to_sqrt_x64,
     sqrt_price_x64_to_price_human_mul_n
 };
-use kai_leverage::pyth;
 use std::type_name;
 use std::u128;
 use sui::balance;
@@ -224,9 +223,7 @@ public macro fun deleverage_helper_standard_flow<$Setup>($setup: &mut $Setup): P
 
         let delta_l = 31467114902;
 
-        let mut price_info = pyth::create(setup.clock());
-        price_info.add(setup.sui_pio());
-        price_info.add(setup.usdc_pio());
+        let price_info = setup.price_info();
 
         let mut ticket = setup.create_position_ticket(
             &mut config,

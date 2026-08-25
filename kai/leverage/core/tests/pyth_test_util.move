@@ -1,11 +1,11 @@
 #[test_only]
 module kai_leverage::pyth_test_util;
 
-use pyth::i64::{Self, I64};
-use pyth::price;
-use pyth::price_feed;
-use pyth::price_identifier;
-use pyth::price_info::{Self, PriceInfoObject};
+use pyth_pro::i64::{Self, I64};
+use pyth_pro::price;
+use pyth_pro::price_feed;
+use pyth_pro::price_identifier;
+use pyth_pro::price_info::{Self, PriceInfoObject};
 use sui::bcs;
 use sui::clock::Clock;
 
