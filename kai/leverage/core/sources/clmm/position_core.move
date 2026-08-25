@@ -132,7 +132,7 @@ use fun kai_leverage::bluefin_spot::position_tick_range as
 
 /* ================= constants ================= */
 
-const CONFIG_VERSION: u16 = 4;
+const CONFIG_VERSION: u16 = 5;
 const POSITION_VERSION: u16 = 3;
 
 /* ================= errors ================= */
