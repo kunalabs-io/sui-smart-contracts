@@ -42,6 +42,12 @@ public struct DebtShareBalance<phantom T> has store {
 }
 
 /// Registry tracking total debt shares and liability value.
+///
+/// Note that `liability_value_x64` can be zero while `supply_x64` is not. `repay_lossy` rounds
+/// the repaid amount up and credits the overpayment to the remaining borrowers by reducing the
+/// total liability; when that overpayment exceeds what is left, the liability is pinned at zero
+/// while sub-unit shares are still outstanding. Code must not treat a zero liability as proof
+/// that the registry is empty -- `supply_x64` is the authoritative signal for that.
 public struct DebtRegistry<phantom T> has store {
     supply_x64: u128,
     liability_value_x64: u128,
@@ -148,7 +154,11 @@ public fun increase_liability_and_issue_x64<T>(
 ): DebtShareBalance<T> {
     if (registry.liability_value_x64 == 0) {
         registry.liability_value_x64 = value_x64;
-        registry.supply_x64 = value_x64;
+        // accumulate rather than assign: `supply_x64` can be non-zero here, holding sub-unit
+        // shares left outstanding by `repay_lossy` (see the note on `DebtRegistry`). Overwriting
+        // would drop them from the registry while they still exist in their holder's balance,
+        // leaving outstanding shares in excess of the supply and underflowing a later repayment.
+        registry.supply_x64 = registry.supply_x64 + value_x64;
         return DebtShareBalance { value_x64 }
     };
 
