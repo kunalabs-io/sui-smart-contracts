@@ -544,7 +544,7 @@ public macro fun liquidate_col_x_is_correct<$Setup>($setup: &mut $Setup) {
         );
 
         assert!(max_repayment_amt_y == 61782766);
-        assert!(max_reward_amt_x == 32435952475);
+        assert!(max_reward_amt_x == 32435952474);
         assert!(model.dy() == max_repayment_amt_y);
         assert!(position.col_x().value() > max_reward_amt_x);
         assert!(
@@ -639,7 +639,7 @@ public macro fun liquidate_col_x_is_correct<$Setup>($setup: &mut $Setup) {
         );
 
         assert!(max_repayment_amt_y == 47705034);
-        assert!(max_reward_amt_x == 25045143101);
+        assert!(max_reward_amt_x == 25045143100);
         assert!(position.col_x().value() > max_reward_amt_x);
         assert!(model.dy() == max_repayment_amt_y);
         assert!(
@@ -1148,7 +1148,7 @@ public macro fun liquidate_col_y_is_correct<$Setup>($setup: &mut $Setup) {
         );
 
         assert!(max_repayment_amt_x == 14418266918);
-        assert!(max_reward_amt_y == 83871059);
+        assert!(max_reward_amt_y == 83871058);
         assert!(model.dx() == max_repayment_amt_x);
         assert!(position.col_y().value() > max_reward_amt_y);
         assert!(
@@ -1243,7 +1243,7 @@ public macro fun liquidate_col_y_is_correct<$Setup>($setup: &mut $Setup) {
         );
 
         assert!(max_repayment_amt_x == 10813700189);
-        assert!(max_reward_amt_y == 62903294);
+        assert!(max_reward_amt_y == 62903293);
         assert!(position.col_y().value() > max_reward_amt_y);
         assert!(model.dx() == max_repayment_amt_x);
         assert!(

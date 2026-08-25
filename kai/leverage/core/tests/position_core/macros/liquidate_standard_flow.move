@@ -440,12 +440,12 @@ public macro fun liquidate_col_y_standard_flow<$Setup>($setup: &mut $Setup): Pos
             u64::max_value!(),
         );
         let exp_reward_amt_y = {
-            let debt_value_x64 = (initial_dx as u256) * (oracle_price_x128 >> 64);
+            let charged_value_x64 = (repayment_amt_x as u256) * (oracle_price_x128 >> 64);
             let liq_bonus_x64 = ((config.liq_bonus_bps() as u256) << 64) / 10000;
-            let repayment_value_with_bonus_x64 =
-                (debt_value_x64 * ((1 << 64) + liq_bonus_x64)) >> 64;
+            let charged_value_with_bonus_x64 =
+                (charged_value_x64 * ((1 << 64) + liq_bonus_x64)) >> 64;
 
-            repayment_value_with_bonus_x64.div_ceil(1 << 64) as u64
+            (charged_value_with_bonus_x64 >> 64) as u64
         };
         let exp_fee_amt_y = util::muldiv(
             exp_reward_amt_y,

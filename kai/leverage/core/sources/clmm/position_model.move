@@ -474,8 +474,10 @@ public fun margin_below_threshold(
 ///     - `cx == 0`
 /// - The position is liquidated so that the margin level is above the liquidation threshold after
 ///   the liquidation, if possible for the given `max_repayment_amt_y` and available collateral.
-/// - Always respects the liquidation bonus, even if there's not enough collateral to cover a full
-///   liquidation.
+/// - The reward never exceeds the bonus-adjusted value of the repayment actually charged. It is
+///   rounded down, so it can be up to 1 wei less than the exact amount (in the protocol's favor).
+/// - When there's not enough collateral to cover a full liquidation, the entire collateral amount
+///   is paid out.
 /// - Never aborts.
 ///
 /// See documentation for `calc_max_liq_factor_x64` for more details on how the liquidation factor
@@ -521,7 +523,6 @@ public fun calc_liquidate_col_x(
         ) as u256; // 64.64
     let liq_factor_x64 = util::min_u256(possible_repayment_factor_x64, max_liq_factor_x64); // 64.64
     let repayment_value_x64 = (liq_factor_x64 * debt_value_x64) >> 64; // 64.64
-    let repayment_value_with_bonus_x64 = (repayment_value_x64 * ((1 << 64) + liq_bonus_x64)) >> 64; // 81.64
 
     // calc repayment and reward amt
     let repayment_amt_y =
@@ -529,12 +530,15 @@ public fun calc_liquidate_col_x(
             util::divide_and_round_up_u256(repayment_value_x64, 1 << 64),
             max_repayment_amt_y as u256,
         ) as u64;
+    // The reward is derived from the repayment amount actually charged (rounded up) and is rounded
+    // down. This bounds it by the bonus-adjusted value of what the liquidator actually paid, while
+    // the rounding-up slack on the repayment is what lets the maximum liquidation case
+    // (`M < Mc`, see `calc_max_liq_factor_x64`) still pay out the full collateral amount.
+    let charged_value_with_bonus_x64 =
+        (((repayment_amt_y as u256) << 64) * ((1 << 64) + liq_bonus_x64)) >> 64; // 81.64
     let reward_amt_x =
         util::min_u256(
-            util::divide_and_round_up_u256(
-                repayment_value_with_bonus_x64 * (position.cx as u256),
-                asset_value_x64,
-            ),
+            (charged_value_with_bonus_x64 * (position.cx as u256)) / asset_value_x64,
             position.cx as u256,
         ) as u64;
 
@@ -553,8 +557,10 @@ public fun calc_liquidate_col_x(
 ///   - `cy == 0`
 /// - The position is liquidated so that the margin level is above the liquidation threshold after
 ///   the liquidation, if possible for the given `max_repayment_amt_x` and available collateral.
-/// - Always respects the liquidation bonus, even if there's not enough collateral to cover a full
-///   liquidation.
+/// - The reward never exceeds the bonus-adjusted value of the repayment actually charged. It is
+///   rounded down, so it can be up to 1 wei less than the exact amount (in the protocol's favor).
+/// - When there's not enough collateral to cover a full liquidation, the entire collateral amount
+///   is paid out.
 /// - Never aborts.
 ///
 /// See documentation for `calc_max_liq_factor_x64` for more details on how the liquidation factor
@@ -600,8 +606,6 @@ public fun calc_liquidate_col_y(
         ) as u256,
     ); // 64.64
     let liq_factor_x64 = util::min_u256(possible_repayment_factor_x64, max_liq_factor_x64); // 64.64
-    let repayment_value_x64 = (liq_factor_x64 * debt_value_x64) >> 64; // 64.64
-    let repayment_value_with_bonus_x64 = (repayment_value_x64 * ((1 << 64) + liq_bonus_x64)) >> 64; // 81.64
 
     // calc repayment and reward amt
     let repayment_amt_x =
@@ -609,9 +613,15 @@ public fun calc_liquidate_col_y(
             util::divide_and_round_up_u256(liq_factor_x64 * (position.dx as u256), 1 << 64),
             max_repayment_amt_x as u256,
         ) as u64;
+    // The reward is derived from the repayment amount actually charged (rounded up) and is rounded
+    // down. This bounds it by the bonus-adjusted value of what the liquidator actually paid, while
+    // the rounding-up slack on the repayment is what lets the maximum liquidation case
+    // (`M < Mc`, see `calc_max_liq_factor_x64`) still pay out the full collateral amount.
+    let charged_value_with_bonus_x64 =
+        (((repayment_amt_x as u256) * p_x64) * ((1 << 64) + liq_bonus_x64)) >> 64; // 81.64
     let reward_amt_y =
         util::min_u256(
-            util::divide_and_round_up_u256(repayment_value_with_bonus_x64, 1 << 64),
+            charged_value_with_bonus_x64 >> 64,
             position.cy as u256,
         ) as u64;
 
@@ -1189,7 +1199,7 @@ fun test_calc_liquidate_col_x() {
         base_liq_factor_bps,
     );
     assert!(repayment_amt_y == 5358, 0);
-    assert!(reward_amt_x == 4800, 0);
+    assert!(reward_amt_x == 4799, 0);
 
     // M < Ml, max_repayment_amt_y can't cover
     let position = PositionModel {
@@ -1212,7 +1222,7 @@ fun test_calc_liquidate_col_x() {
         base_liq_factor_bps,
     );
     assert!(repayment_amt_y == 3000, 0);
-    assert!(reward_amt_x == 2688, 0);
+    assert!(reward_amt_x == 2687, 0);
 
     // M < (Ml + Mc) / 2, max_repayment_amt_y can cover
     let position = PositionModel {
@@ -1235,7 +1245,7 @@ fun test_calc_liquidate_col_x() {
         base_liq_factor_bps,
     );
     assert!(repayment_amt_y == 10000, 0);
-    assert!(reward_amt_x == 9685, 0);
+    assert!(reward_amt_x == 9684, 0);
 
     // M < (Ml + Mc) / 2, max_repayment_amt_y can't cover
     let position = PositionModel {
@@ -1258,7 +1268,7 @@ fun test_calc_liquidate_col_x() {
         base_liq_factor_bps,
     );
     assert!(repayment_amt_y == 5000, 0);
-    assert!(reward_amt_x == 4843, 0);
+    assert!(reward_amt_x == 4842, 0);
 
     // M < Mc, max_repayment_amt_y can cover
     let position = PositionModel {
@@ -1304,7 +1314,7 @@ fun test_calc_liquidate_col_x() {
         base_liq_factor_bps,
     );
     assert!(repayment_amt_y == 5000, 0);
-    assert!(reward_amt_x == 5169, 0);
+    assert!(reward_amt_x == 5168, 0);
 }
 
 #[test]
@@ -1426,7 +1436,7 @@ fun test_calc_liquidate_col_y() {
         base_liq_factor_bps,
     );
     assert!(repayment_amt_x == 4633, 0);
-    assert!(reward_amt_y == 4084, 0);
+    assert!(reward_amt_y == 4083, 0);
 
     // M < Ml, max_repayment_amt_x can't cover
     let position = PositionModel {
@@ -1449,7 +1459,7 @@ fun test_calc_liquidate_col_y() {
         base_liq_factor_bps,
     );
     assert!(repayment_amt_x == 3000, 0);
-    assert!(reward_amt_y == 2645, 0);
+    assert!(reward_amt_y == 2644, 0);
 
     // M < (Ml + Mc) / 2, max_repayment_amt_x can cover
     let position = PositionModel {
@@ -1472,7 +1482,7 @@ fun test_calc_liquidate_col_y() {
         base_liq_factor_bps,
     );
     assert!(repayment_amt_x == 10000, 0);
-    assert!(reward_amt_y == 9675, 0);
+    assert!(reward_amt_y == 9674, 0);
 
     // M < (Ml + Mc) / 2, max_repayment_amt_x can't cover
     let position = PositionModel {
@@ -1495,7 +1505,7 @@ fun test_calc_liquidate_col_y() {
         base_liq_factor_bps,
     );
     assert!(repayment_amt_x == 5000, 0);
-    assert!(reward_amt_y == 4838, 0);
+    assert!(reward_amt_y == 4837, 0);
 
     // M < Mc, max_repayment_amt_x can cover
     let position = PositionModel {
@@ -1541,5 +1551,5 @@ fun test_calc_liquidate_col_y() {
         base_liq_factor_bps,
     );
     assert!(repayment_amt_x == 5000, 0);
-    assert!(reward_amt_y == 5375, 0);
+    assert!(reward_amt_y == 5374, 0);
 }
