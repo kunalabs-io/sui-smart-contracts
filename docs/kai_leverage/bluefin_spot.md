@@ -17,19 +17,30 @@ liquidity provision, fee collection, and reward distribution.
 -  [Function `remove_liquidity`](#kai_leverage_bluefin_spot_remove_liquidity)
 -  [Function `create_position_ticket`](#kai_leverage_bluefin_spot_create_position_ticket)
 -  [Function `create_position_ticket_v2`](#kai_leverage_bluefin_spot_create_position_ticket_v2)
+-  [Function `create_position_ticket_v3`](#kai_leverage_bluefin_spot_create_position_ticket_v3)
 -  [Function `borrow_for_position_x`](#kai_leverage_bluefin_spot_borrow_for_position_x)
 -  [Function `borrow_for_position_y`](#kai_leverage_bluefin_spot_borrow_for_position_y)
 -  [Function `create_position`](#kai_leverage_bluefin_spot_create_position)
 -  [Function `create_deleverage_ticket`](#kai_leverage_bluefin_spot_create_deleverage_ticket)
+-  [Function `create_deleverage_ticket_v2`](#kai_leverage_bluefin_spot_create_deleverage_ticket_v2)
 -  [Function `create_deleverage_ticket_for_liquidation`](#kai_leverage_bluefin_spot_create_deleverage_ticket_for_liquidation)
+-  [Function `create_deleverage_ticket_for_liquidation_v2`](#kai_leverage_bluefin_spot_create_deleverage_ticket_for_liquidation_v2)
 -  [Function `deleverage`](#kai_leverage_bluefin_spot_deleverage)
+-  [Function `deleverage_v2`](#kai_leverage_bluefin_spot_deleverage_v2)
 -  [Function `deleverage_for_liquidation`](#kai_leverage_bluefin_spot_deleverage_for_liquidation)
+-  [Function `deleverage_for_liquidation_v2`](#kai_leverage_bluefin_spot_deleverage_for_liquidation_v2)
 -  [Function `liquidate_col_x`](#kai_leverage_bluefin_spot_liquidate_col_x)
+-  [Function `liquidate_col_x_v2`](#kai_leverage_bluefin_spot_liquidate_col_x_v2)
 -  [Function `liquidate_col_y`](#kai_leverage_bluefin_spot_liquidate_col_y)
+-  [Function `liquidate_col_y_v2`](#kai_leverage_bluefin_spot_liquidate_col_y_v2)
 -  [Function `repay_bad_debt_x`](#kai_leverage_bluefin_spot_repay_bad_debt_x)
+-  [Function `repay_bad_debt_x_v2`](#kai_leverage_bluefin_spot_repay_bad_debt_x_v2)
 -  [Function `repay_bad_debt_y`](#kai_leverage_bluefin_spot_repay_bad_debt_y)
+-  [Function `repay_bad_debt_y_v2`](#kai_leverage_bluefin_spot_repay_bad_debt_y_v2)
 -  [Function `reduce`](#kai_leverage_bluefin_spot_reduce)
+-  [Function `reduce_v2`](#kai_leverage_bluefin_spot_reduce_v2)
 -  [Function `add_liquidity`](#kai_leverage_bluefin_spot_add_liquidity)
+-  [Function `add_liquidity_v2`](#kai_leverage_bluefin_spot_add_liquidity_v2)
 -  [Function `repay_debt_x`](#kai_leverage_bluefin_spot_repay_debt_x)
 -  [Function `repay_debt_y`](#kai_leverage_bluefin_spot_repay_debt_y)
 -  [Function `owner_collect_fee`](#kai_leverage_bluefin_spot_owner_collect_fee)
@@ -39,12 +50,25 @@ liquidity provision, fee collection, and reward distribution.
 -  [Function `rebalance_collect_fee`](#kai_leverage_bluefin_spot_rebalance_collect_fee)
 -  [Function `rebalance_collect_reward`](#kai_leverage_bluefin_spot_rebalance_collect_reward)
 -  [Function `rebalance_add_liquidity`](#kai_leverage_bluefin_spot_rebalance_add_liquidity)
+-  [Function `rebalance_add_liquidity_v2`](#kai_leverage_bluefin_spot_rebalance_add_liquidity_v2)
 -  [Function `position_model`](#kai_leverage_bluefin_spot_position_model)
 -  [Function `calc_liquidate_col_x`](#kai_leverage_bluefin_spot_calc_liquidate_col_x)
+-  [Function `calc_liquidate_col_x_v2`](#kai_leverage_bluefin_spot_calc_liquidate_col_x_v2)
 -  [Function `calc_liquidate_col_y`](#kai_leverage_bluefin_spot_calc_liquidate_col_y)
+-  [Function `calc_liquidate_col_y_v2`](#kai_leverage_bluefin_spot_calc_liquidate_col_y_v2)
 
 
-<pre><code><b>use</b> <a href="../../dependencies/access_management/access.md#access_management_access">access_management::access</a>;
+<pre><code><b>use</b> (pyth=0x55300367A2D40813727CCAC4ECEE977A39FB9CDB46F2E6B2C354B9798F5DE2C0)::i64;
+<b>use</b> (pyth=0x55300367A2D40813727CCAC4ECEE977A39FB9CDB46F2E6B2C354B9798F5DE2C0)::price;
+<b>use</b> (pyth=0x55300367A2D40813727CCAC4ECEE977A39FB9CDB46F2E6B2C354B9798F5DE2C0)::price_feed;
+<b>use</b> (pyth=0x55300367A2D40813727CCAC4ECEE977A39FB9CDB46F2E6B2C354B9798F5DE2C0)::price_identifier;
+<b>use</b> (pyth=0x55300367A2D40813727CCAC4ECEE977A39FB9CDB46F2E6B2C354B9798F5DE2C0)::price_info;
+<b>use</b> (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::i64;
+<b>use</b> (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::price;
+<b>use</b> (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::price_feed;
+<b>use</b> (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::price_identifier;
+<b>use</b> (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::price_info;
+<b>use</b> <a href="../../dependencies/access_management/access.md#access_management_access">access_management::access</a>;
 <b>use</b> <a href="../../dependencies/access_management/dynamic_map.md#access_management_dynamic_map">access_management::dynamic_map</a>;
 <b>use</b> bluefin_spot::bit_math;
 <b>use</b> bluefin_spot::clmm_math;
@@ -80,17 +104,14 @@ liquidity provision, fee collection, and reward distribution.
 <b>use</b> <a href="../../dependencies/kai_leverage/debt_bag.md#kai_leverage_debt_bag">kai_leverage::debt_bag</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info">kai_leverage::debt_info</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity">kai_leverage::equity</a>;
+<b>use</b> <a href="../../dependencies/kai_leverage/lp_shape.md#kai_leverage_lp_shape_clmm">kai_leverage::lp_shape_clmm</a>;
+<b>use</b> <a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price">kai_leverage::oracle_price</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/piecewise.md#kai_leverage_piecewise">kai_leverage::piecewise</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm">kai_leverage::position_core_clmm</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm">kai_leverage::position_model_clmm</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth">kai_leverage::pyth</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool">kai_leverage::supply_pool</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/util.md#kai_leverage_util">kai_leverage::util</a>;
-<b>use</b> pyth::i64;
-<b>use</b> pyth::price;
-<b>use</b> pyth::price_feed;
-<b>use</b> pyth::price_identifier;
-<b>use</b> pyth::price_info;
 <b>use</b> <a href="../../dependencies/rate_limiter/net_sliding_sum_limiter.md#rate_limiter_net_sliding_sum_limiter">rate_limiter::net_sliding_sum_limiter</a>;
 <b>use</b> <a href="../../dependencies/rate_limiter/ring_aggregator.md#rate_limiter_ring_aggregator">rate_limiter::ring_aggregator</a>;
 <b>use</b> <a href="../../dependencies/rate_limiter/sliding_sum_limiter.md#rate_limiter_sliding_sum_limiter">rate_limiter::sliding_sum_limiter</a>;
@@ -112,8 +133,10 @@ liquidity provision, fee collection, and reward distribution.
 <b>use</b> <a href="../../dependencies/sui/bcs.md#sui_bcs">sui::bcs</a>;
 <b>use</b> <a href="../../dependencies/sui/clock.md#sui_clock">sui::clock</a>;
 <b>use</b> <a href="../../dependencies/sui/coin.md#sui_coin">sui::coin</a>;
+<b>use</b> <a href="../../dependencies/sui/coin_registry.md#sui_coin_registry">sui::coin_registry</a>;
 <b>use</b> <a href="../../dependencies/sui/config.md#sui_config">sui::config</a>;
 <b>use</b> <a href="../../dependencies/sui/deny_list.md#sui_deny_list">sui::deny_list</a>;
+<b>use</b> <a href="../../dependencies/sui/derived_object.md#sui_derived_object">sui::derived_object</a>;
 <b>use</b> <a href="../../dependencies/sui/display.md#sui_display">sui::display</a>;
 <b>use</b> <a href="../../dependencies/sui/dynamic_field.md#sui_dynamic_field">sui::dynamic_field</a>;
 <b>use</b> <a href="../../dependencies/sui/dynamic_object_field.md#sui_dynamic_object_field">sui::dynamic_object_field</a>;
@@ -310,10 +333,9 @@ Remove liquidity from a Bluefin position and return token balances.
 
 ## Function `create_position_ticket_v2`
 
-Initialize position creation for a leveraged Bluefin position.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_position_ticket_v2">create_position_ticket_v2</a>&lt;X, Y&gt;(bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, tick_a: integer_mate::i32::I32, tick_b: integer_mate::i32::I32, principal_x: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, principal_y: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, delta_l: u128, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_CreatePositionTicket">kai_leverage::position_core_clmm::CreatePositionTicket</a>&lt;X, Y, integer_mate::i32::I32&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_position_ticket_v2">create_position_ticket_v2</a>&lt;X, Y&gt;(_bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, _config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _tick_a: integer_mate::i32::I32, _tick_b: integer_mate::i32::I32, _principal_x: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, _principal_y: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, _delta_l: u128, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, _ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_CreatePositionTicket">kai_leverage::position_core_clmm::CreatePositionTicket</a>&lt;X, Y, integer_mate::i32::I32&gt;
 </code></pre>
 
 
@@ -323,6 +345,42 @@ Initialize position creation for a leveraged Bluefin position.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_position_ticket_v2">create_position_ticket_v2</a>&lt;X, Y&gt;(
+    _bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
+    _config: &<b>mut</b> PositionConfig,
+    _tick_a: I32,
+    _tick_b: I32,
+    _principal_x: Balance&lt;X&gt;,
+    _principal_y: Balance&lt;Y&gt;,
+    _delta_l: u128,
+    _price_info: &PythPriceInfo,
+    _clock: &Clock,
+    _ctx: &<b>mut</b> TxContext,
+): CreatePositionTicket&lt;X, Y, I32&gt; {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_create_position_ticket_v3"></a>
+
+## Function `create_position_ticket_v3`
+
+Initialize position creation for a leveraged Bluefin position.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_position_ticket_v3">create_position_ticket_v3</a>&lt;X, Y&gt;(bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, tick_a: integer_mate::i32::I32, tick_b: integer_mate::i32::I32, principal_x: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, principal_y: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, delta_l: u128, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_CreatePositionTicket">kai_leverage::position_core_clmm::CreatePositionTicket</a>&lt;X, Y, integer_mate::i32::I32&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_position_ticket_v3">create_position_ticket_v3</a>&lt;X, Y&gt;(
     bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
     config: &<b>mut</b> PositionConfig,
     tick_a: I32,
@@ -330,7 +388,7 @@ Initialize position creation for a leveraged Bluefin position.
     principal_x: Balance&lt;X&gt;,
     principal_y: Balance&lt;Y&gt;,
     delta_l: u128,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     clock: &Clock,
     ctx: &<b>mut</b> TxContext,
 ): CreatePositionTicket&lt;X, Y, I32&gt; {
@@ -477,11 +535,9 @@ Create a leveraged position from a prepared ticket.
 
 ## Function `create_deleverage_ticket`
 
-Initialize deleveraging for a position that has fallen below
-the deleverage margin threshold (permissioned).
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket">create_deleverage_ticket</a>&lt;X, Y&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_global_config: &bluefin_spot::config::GlobalConfig, max_delta_l: u128, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): (<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_DeleverageTicket">kai_leverage::position_core_clmm::DeleverageTicket</a>, <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>)
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket">create_deleverage_ticket</a>&lt;X, Y&gt;(_position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, _config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, _bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, _bluefin_global_config: &bluefin_spot::config::GlobalConfig, _max_delta_l: u128, _clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, _ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): (<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_DeleverageTicket">kai_leverage::position_core_clmm::DeleverageTicket</a>, <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>)
 </code></pre>
 
 
@@ -491,9 +547,45 @@ the deleverage margin threshold (permissioned).
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket">create_deleverage_ticket</a>&lt;X, Y&gt;(
+    _position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
+    _config: &<b>mut</b> PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
+    _bluefin_global_config: &bluefin_config::GlobalConfig,
+    _max_delta_l: u128,
+    _clock: &Clock,
+    _ctx: &<b>mut</b> TxContext,
+): (DeleverageTicket, ActionRequest) {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_create_deleverage_ticket_v2"></a>
+
+## Function `create_deleverage_ticket_v2`
+
+Initialize deleveraging for a position that has fallen below
+the deleverage margin threshold (permissioned).
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket_v2">create_deleverage_ticket_v2</a>&lt;X, Y&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_global_config: &bluefin_spot::config::GlobalConfig, max_delta_l: u128, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): (<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_DeleverageTicket">kai_leverage::position_core_clmm::DeleverageTicket</a>, <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket_v2">create_deleverage_ticket_v2</a>&lt;X, Y&gt;(
     position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
     config: &<b>mut</b> PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
     bluefin_global_config: &bluefin_config::GlobalConfig,
@@ -526,11 +618,9 @@ the deleverage margin threshold (permissioned).
 
 ## Function `create_deleverage_ticket_for_liquidation`
 
-Initialize deleveraging for a position that has fallen below
-the liquidation margin threshold (permissionless).
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket_for_liquidation">create_deleverage_ticket_for_liquidation</a>&lt;X, Y&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_global_config: &bluefin_spot::config::GlobalConfig, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_DeleverageTicket">kai_leverage::position_core_clmm::DeleverageTicket</a>
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket_for_liquidation">create_deleverage_ticket_for_liquidation</a>&lt;X, Y&gt;(_position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, _config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, _bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, _bluefin_global_config: &bluefin_spot::config::GlobalConfig, _clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_DeleverageTicket">kai_leverage::position_core_clmm::DeleverageTicket</a>
 </code></pre>
 
 
@@ -540,9 +630,43 @@ the liquidation margin threshold (permissionless).
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket_for_liquidation">create_deleverage_ticket_for_liquidation</a>&lt;X, Y&gt;(
+    _position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
+    _config: &<b>mut</b> PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
+    _bluefin_global_config: &bluefin_config::GlobalConfig,
+    _clock: &Clock,
+): DeleverageTicket {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_create_deleverage_ticket_for_liquidation_v2"></a>
+
+## Function `create_deleverage_ticket_for_liquidation_v2`
+
+Initialize deleveraging for a position that has fallen below
+the liquidation margin threshold (permissionless).
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket_for_liquidation_v2">create_deleverage_ticket_for_liquidation_v2</a>&lt;X, Y&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_global_config: &bluefin_spot::config::GlobalConfig, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_DeleverageTicket">kai_leverage::position_core_clmm::DeleverageTicket</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket_for_liquidation_v2">create_deleverage_ticket_for_liquidation_v2</a>&lt;X, Y&gt;(
     position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
     config: &<b>mut</b> PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
     bluefin_global_config: &bluefin_config::GlobalConfig,
@@ -571,11 +695,9 @@ the liquidation margin threshold (permissionless).
 
 ## Function `deleverage`
 
-Execute deleveraging for a position that has fallen below
-the deleverage margin threshold (permissioned).
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_deleverage">deleverage</a>&lt;X, Y, SX, SY&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, supply_pool_x: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, supply_pool_y: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_global_config: &bluefin_spot::config::GlobalConfig, max_delta_l: u128, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_deleverage">deleverage</a>&lt;X, Y, SX, SY&gt;(_position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, _config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _supply_pool_x: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, _supply_pool_y: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, _bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, _bluefin_global_config: &bluefin_spot::config::GlobalConfig, _max_delta_l: u128, _clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, _ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
 </code></pre>
 
 
@@ -585,9 +707,46 @@ the deleverage margin threshold (permissioned).
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_deleverage">deleverage</a>&lt;X, Y, SX, SY&gt;(
+    _position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
+    _config: &<b>mut</b> PositionConfig,
+    _price_info: &PythPriceInfo,
+    _supply_pool_x: &<b>mut</b> SupplyPool&lt;X, SX&gt;,
+    _supply_pool_y: &<b>mut</b> SupplyPool&lt;Y, SY&gt;,
+    _bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
+    _bluefin_global_config: &bluefin_config::GlobalConfig,
+    _max_delta_l: u128,
+    _clock: &Clock,
+    _ctx: &<b>mut</b> TxContext,
+): ActionRequest {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_deleverage_v2"></a>
+
+## Function `deleverage_v2`
+
+Execute deleveraging for a position that has fallen below
+the deleverage margin threshold (permissioned).
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_deleverage_v2">deleverage_v2</a>&lt;X, Y, SX, SY&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, supply_pool_x: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, supply_pool_y: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_global_config: &bluefin_spot::config::GlobalConfig, max_delta_l: u128, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_deleverage_v2">deleverage_v2</a>&lt;X, Y, SX, SY&gt;(
     position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
     config: &<b>mut</b> PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     supply_pool_x: &<b>mut</b> SupplyPool&lt;X, SX&gt;,
     supply_pool_y: &<b>mut</b> SupplyPool&lt;Y, SY&gt;,
     bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
@@ -599,7 +758,7 @@ the deleverage margin threshold (permissioned).
     <b>let</b> <b>mut</b> debt_info = debt_info::empty(object::id(config.lend_facil_cap()));
     debt_info.add_from_supply_pool(supply_pool_x, clock);
     debt_info.add_from_supply_pool(supply_pool_y, clock);
-    <b>let</b> (<b>mut</b> ticket, request) = <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket">create_deleverage_ticket</a>(
+    <b>let</b> (<b>mut</b> ticket, request) = <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket_v2">create_deleverage_ticket_v2</a>(
         position,
         config,
         price_info,
@@ -625,11 +784,9 @@ the deleverage margin threshold (permissioned).
 
 ## Function `deleverage_for_liquidation`
 
-Execute deleveraging for a position that has fallen below
-the liquidation margin threshold (permissionless).
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_deleverage_for_liquidation">deleverage_for_liquidation</a>&lt;X, Y, SX, SY&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, supply_pool_x: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, supply_pool_y: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_global_config: &bluefin_spot::config::GlobalConfig, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>)
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_deleverage_for_liquidation">deleverage_for_liquidation</a>&lt;X, Y, SX, SY&gt;(_position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, _config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _supply_pool_x: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, _supply_pool_y: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, _bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, _bluefin_global_config: &bluefin_spot::config::GlobalConfig, _clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>)
 </code></pre>
 
 
@@ -639,9 +796,44 @@ the liquidation margin threshold (permissionless).
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_deleverage_for_liquidation">deleverage_for_liquidation</a>&lt;X, Y, SX, SY&gt;(
+    _position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
+    _config: &<b>mut</b> PositionConfig,
+    _price_info: &PythPriceInfo,
+    _supply_pool_x: &<b>mut</b> SupplyPool&lt;X, SX&gt;,
+    _supply_pool_y: &<b>mut</b> SupplyPool&lt;Y, SY&gt;,
+    _bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
+    _bluefin_global_config: &bluefin_config::GlobalConfig,
+    _clock: &Clock,
+) {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_deleverage_for_liquidation_v2"></a>
+
+## Function `deleverage_for_liquidation_v2`
+
+Execute deleveraging for a position that has fallen below
+the liquidation margin threshold (permissionless).
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_deleverage_for_liquidation_v2">deleverage_for_liquidation_v2</a>&lt;X, Y, SX, SY&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, supply_pool_x: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, supply_pool_y: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_global_config: &bluefin_spot::config::GlobalConfig, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_deleverage_for_liquidation_v2">deleverage_for_liquidation_v2</a>&lt;X, Y, SX, SY&gt;(
     position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
     config: &<b>mut</b> PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     supply_pool_x: &<b>mut</b> SupplyPool&lt;X, SX&gt;,
     supply_pool_y: &<b>mut</b> SupplyPool&lt;Y, SY&gt;,
     bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
@@ -651,7 +843,7 @@ the liquidation margin threshold (permissionless).
     <b>let</b> <b>mut</b> debt_info = debt_info::empty(object::id(config.lend_facil_cap()));
     debt_info.add_from_supply_pool(supply_pool_x, clock);
     debt_info.add_from_supply_pool(supply_pool_y, clock);
-    <b>let</b> <b>mut</b> ticket = <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket_for_liquidation">create_deleverage_ticket_for_liquidation</a>(
+    <b>let</b> <b>mut</b> ticket = <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_create_deleverage_ticket_for_liquidation_v2">create_deleverage_ticket_for_liquidation_v2</a>(
         position,
         config,
         price_info,
@@ -674,11 +866,9 @@ the liquidation margin threshold (permissionless).
 
 ## Function `liquidate_col_x`
 
-Liquidate X collateral by repaying Y debt. The position needs to be fully deleveraged and
-below the liquidation margin threshold.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_liquidate_col_x">liquidate_col_x</a>&lt;X, Y, SY&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_liquidate_col_x">liquidate_col_x</a>&lt;X, Y, SY&gt;(_position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, _config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, _repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, _supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, _clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;
 </code></pre>
 
 
@@ -688,15 +878,59 @@ below the liquidation margin threshold.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_liquidate_col_x">liquidate_col_x</a>&lt;X, Y, SY&gt;(
+    _position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
+    _config: &PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _repayment: &<b>mut</b> Balance&lt;Y&gt;,
+    _supply_pool: &<b>mut</b> SupplyPool&lt;Y, SY&gt;,
+    _clock: &Clock,
+): Balance&lt;X&gt; {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_liquidate_col_x_v2"></a>
+
+## Function `liquidate_col_x_v2`
+
+Liquidate X collateral by repaying Y debt. The position needs to be fully deleveraged and
+below the liquidation margin threshold.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_liquidate_col_x_v2">liquidate_col_x_v2</a>&lt;X, Y, SY&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_liquidate_col_x_v2">liquidate_col_x_v2</a>&lt;X, Y, SY&gt;(
     position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &<b>mut</b> Balance&lt;Y&gt;,
     supply_pool: &<b>mut</b> SupplyPool&lt;Y, SY&gt;,
     clock: &Clock,
 ): Balance&lt;X&gt; {
-    core::liquidate_col_x!(position, config, price_info, debt_info, repayment, supply_pool, clock)
+    <b>let</b> shape = core::lp_shape!(position);
+    core::liquidate_col_x(
+        position,
+        config,
+        price_info,
+        debt_info,
+        repayment,
+        supply_pool,
+        shape,
+        clock,
+    )
 }
 </code></pre>
 
@@ -708,11 +942,9 @@ below the liquidation margin threshold.
 
 ## Function `liquidate_col_y`
 
-Liquidate Y collateral by repaying X debt. The position needs to be fully deleveraged and
-below the liquidation margin threshold.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_liquidate_col_y">liquidate_col_y</a>&lt;X, Y, SX&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_liquidate_col_y">liquidate_col_y</a>&lt;X, Y, SX&gt;(_position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, _config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, _repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, _supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, _clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;
 </code></pre>
 
 
@@ -722,15 +954,59 @@ below the liquidation margin threshold.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_liquidate_col_y">liquidate_col_y</a>&lt;X, Y, SX&gt;(
+    _position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
+    _config: &PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _repayment: &<b>mut</b> Balance&lt;X&gt;,
+    _supply_pool: &<b>mut</b> SupplyPool&lt;X, SX&gt;,
+    _clock: &Clock,
+): Balance&lt;Y&gt; {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_liquidate_col_y_v2"></a>
+
+## Function `liquidate_col_y_v2`
+
+Liquidate Y collateral by repaying X debt. The position needs to be fully deleveraged and
+below the liquidation margin threshold.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_liquidate_col_y_v2">liquidate_col_y_v2</a>&lt;X, Y, SX&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_liquidate_col_y_v2">liquidate_col_y_v2</a>&lt;X, Y, SX&gt;(
     position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &<b>mut</b> Balance&lt;X&gt;,
     supply_pool: &<b>mut</b> SupplyPool&lt;X, SX&gt;,
     clock: &Clock,
 ): Balance&lt;Y&gt; {
-    core::liquidate_col_y!(position, config, price_info, debt_info, repayment, supply_pool, clock)
+    <b>let</b> shape = core::lp_shape!(position);
+    core::liquidate_col_y(
+        position,
+        config,
+        price_info,
+        debt_info,
+        repayment,
+        supply_pool,
+        shape,
+        clock,
+    )
 }
 </code></pre>
 
@@ -742,10 +1018,9 @@ below the liquidation margin threshold.
 
 ## Function `repay_bad_debt_x`
 
-Repay bad debt for X tokens.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_repay_bad_debt_x">repay_bad_debt_x</a>&lt;X, Y, SX&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_repay_bad_debt_x">repay_bad_debt_x</a>&lt;X, Y, SX&gt;(_position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, _config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, _supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, _repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, _clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, _ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
 </code></pre>
 
 
@@ -755,20 +1030,56 @@ Repay bad debt for X tokens.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_repay_bad_debt_x">repay_bad_debt_x</a>&lt;X, Y, SX&gt;(
+    _position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
+    _config: &PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _supply_pool: &<b>mut</b> SupplyPool&lt;X, SX&gt;,
+    _repayment: &<b>mut</b> Balance&lt;X&gt;,
+    _clock: &Clock,
+    _ctx: &<b>mut</b> TxContext,
+): ActionRequest {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_repay_bad_debt_x_v2"></a>
+
+## Function `repay_bad_debt_x_v2`
+
+Repay bad debt for X tokens.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_repay_bad_debt_x_v2">repay_bad_debt_x_v2</a>&lt;X, Y, SX&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_repay_bad_debt_x_v2">repay_bad_debt_x_v2</a>&lt;X, Y, SX&gt;(
     position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
     config: &PositionConfig,
-    _price_info: &PythPriceInfo,
+    _price_info: &PriceCollection,
     _debt_info: &DebtInfo,
     supply_pool: &<b>mut</b> SupplyPool&lt;X, SX&gt;,
     repayment: &<b>mut</b> Balance&lt;X&gt;,
     clock: &Clock,
     ctx: &<b>mut</b> TxContext,
 ): ActionRequest {
-    core::repay_bad_debt!(
+    <b>let</b> shape = core::lp_shape!(position);
+    core::repay_bad_debt(
         position,
         config,
         supply_pool,
         repayment,
+        shape,
         clock,
         ctx,
     )
@@ -783,10 +1094,9 @@ Repay bad debt for X tokens.
 
 ## Function `repay_bad_debt_y`
 
-Repay bad debt for Y tokens.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_repay_bad_debt_y">repay_bad_debt_y</a>&lt;X, Y, SY&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_repay_bad_debt_y">repay_bad_debt_y</a>&lt;X, Y, SY&gt;(_position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, _config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, _supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, _repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, _clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, _ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
 </code></pre>
 
 
@@ -796,20 +1106,56 @@ Repay bad debt for Y tokens.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_repay_bad_debt_y">repay_bad_debt_y</a>&lt;X, Y, SY&gt;(
+    _position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
+    _config: &PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _supply_pool: &<b>mut</b> SupplyPool&lt;Y, SY&gt;,
+    _repayment: &<b>mut</b> Balance&lt;Y&gt;,
+    _clock: &Clock,
+    _ctx: &<b>mut</b> TxContext,
+): ActionRequest {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_repay_bad_debt_y_v2"></a>
+
+## Function `repay_bad_debt_y_v2`
+
+Repay bad debt for Y tokens.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_repay_bad_debt_y_v2">repay_bad_debt_y_v2</a>&lt;X, Y, SY&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_repay_bad_debt_y_v2">repay_bad_debt_y_v2</a>&lt;X, Y, SY&gt;(
     position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
     config: &PositionConfig,
-    _price_info: &PythPriceInfo,
+    _price_info: &PriceCollection,
     _debt_info: &DebtInfo,
     supply_pool: &<b>mut</b> SupplyPool&lt;Y, SY&gt;,
     repayment: &<b>mut</b> Balance&lt;Y&gt;,
     clock: &Clock,
     ctx: &<b>mut</b> TxContext,
 ): ActionRequest {
-    core::repay_bad_debt!(
+    <b>let</b> shape = core::lp_shape!(position);
+    core::repay_bad_debt(
         position,
         config,
         supply_pool,
         repayment,
+        shape,
         clock,
         ctx,
     )
@@ -824,11 +1170,9 @@ Repay bad debt for Y tokens.
 
 ## Function `reduce`
 
-Initialize position size reduction (withdraw), while preserving mathematical safety guarantees.
-A factor_x64 percentage of the position is withdrawn and the same percentage of debt is repaid.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_reduce">reduce</a>&lt;X, Y, SX, SY&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">kai_leverage::position_core_clmm::PositionCap</a>, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, supply_pool_x: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, supply_pool_y: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_global_config: &bluefin_spot::config::GlobalConfig, factor_x64: u128, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ReductionRepaymentTicket">kai_leverage::position_core_clmm::ReductionRepaymentTicket</a>&lt;SX, SY&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_reduce">reduce</a>&lt;X, Y, SX, SY&gt;(_position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, _config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">kai_leverage::position_core_clmm::PositionCap</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _supply_pool_x: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, _supply_pool_y: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, _bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, _bluefin_global_config: &bluefin_spot::config::GlobalConfig, _factor_x64: u128, _clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ReductionRepaymentTicket">kai_leverage::position_core_clmm::ReductionRepaymentTicket</a>&lt;SX, SY&gt;)
 </code></pre>
 
 
@@ -838,10 +1182,47 @@ A factor_x64 percentage of the position is withdrawn and the same percentage of 
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_reduce">reduce</a>&lt;X, Y, SX, SY&gt;(
+    _position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
+    _config: &<b>mut</b> PositionConfig,
+    _cap: &PositionCap,
+    _price_info: &PythPriceInfo,
+    _supply_pool_x: &<b>mut</b> SupplyPool&lt;X, SX&gt;,
+    _supply_pool_y: &<b>mut</b> SupplyPool&lt;Y, SY&gt;,
+    _bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
+    _bluefin_global_config: &bluefin_config::GlobalConfig,
+    _factor_x64: u128,
+    _clock: &Clock,
+): (Balance&lt;X&gt;, Balance&lt;Y&gt;, ReductionRepaymentTicket&lt;SX, SY&gt;) {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_reduce_v2"></a>
+
+## Function `reduce_v2`
+
+Initialize position size reduction (withdraw), while preserving mathematical safety guarantees.
+A factor_x64 percentage of the position is withdrawn and the same percentage of debt is repaid.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_reduce_v2">reduce_v2</a>&lt;X, Y, SX, SY&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">kai_leverage::position_core_clmm::PositionCap</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, supply_pool_x: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, supply_pool_y: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_global_config: &bluefin_spot::config::GlobalConfig, factor_x64: u128, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ReductionRepaymentTicket">kai_leverage::position_core_clmm::ReductionRepaymentTicket</a>&lt;SX, SY&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_reduce_v2">reduce_v2</a>&lt;X, Y, SX, SY&gt;(
     position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
     config: &<b>mut</b> PositionConfig,
     cap: &PositionCap,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     supply_pool_x: &<b>mut</b> SupplyPool&lt;X, SX&gt;,
     supply_pool_y: &<b>mut</b> SupplyPool&lt;Y, SY&gt;,
     bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
@@ -876,10 +1257,9 @@ A factor_x64 percentage of the position is withdrawn and the same percentage of 
 
 ## Function `add_liquidity`
 
-Add liquidity to the inner LP position.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_add_liquidity">add_liquidity</a>&lt;X, Y&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">kai_leverage::position_core_clmm::PositionCap</a>, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_config: &bluefin_spot::config::GlobalConfig, delta_l: u128, balance_x: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, balance_y: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>)
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_add_liquidity">add_liquidity</a>&lt;X, Y&gt;(_position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, _config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">kai_leverage::position_core_clmm::PositionCap</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, _bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, _bluefin_config: &bluefin_spot::config::GlobalConfig, _delta_l: u128, _balance_x: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, _balance_y: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, _clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>)
 </code></pre>
 
 
@@ -889,10 +1269,47 @@ Add liquidity to the inner LP position.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_add_liquidity">add_liquidity</a>&lt;X, Y&gt;(
+    _position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
+    _config: &<b>mut</b> PositionConfig,
+    _cap: &PositionCap,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
+    _bluefin_config: &bluefin_config::GlobalConfig,
+    _delta_l: u128,
+    _balance_x: Balance&lt;X&gt;,
+    _balance_y: Balance&lt;Y&gt;,
+    _clock: &Clock,
+) {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_add_liquidity_v2"></a>
+
+## Function `add_liquidity_v2`
+
+Add liquidity to the inner LP position.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_add_liquidity_v2">add_liquidity_v2</a>&lt;X, Y&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">kai_leverage::position_core_clmm::PositionCap</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_config: &bluefin_spot::config::GlobalConfig, delta_l: u128, balance_x: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, balance_y: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_add_liquidity_v2">add_liquidity_v2</a>&lt;X, Y&gt;(
     position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
     config: &<b>mut</b> PositionConfig,
     cap: &PositionCap,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
     bluefin_config: &bluefin_config::GlobalConfig,
@@ -1263,10 +1680,9 @@ applies protocol fee, and updates the <code>RebalanceReceipt</code>.
 
 ## Function `rebalance_add_liquidity`
 
-Adds liquidity to a the underlying LP position during rebalancing.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_rebalance_add_liquidity">rebalance_add_liquidity</a>&lt;X, Y&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, receipt: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_RebalanceReceipt">kai_leverage::position_core_clmm::RebalanceReceipt</a>, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_config: &bluefin_spot::config::GlobalConfig, delta_l: u128, balance_x: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, balance_y: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>)
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_rebalance_add_liquidity">rebalance_add_liquidity</a>&lt;X, Y&gt;(_position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, _config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _receipt: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_RebalanceReceipt">kai_leverage::position_core_clmm::RebalanceReceipt</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, _bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, _bluefin_config: &bluefin_spot::config::GlobalConfig, _delta_l: u128, _balance_x: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, _balance_y: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, _clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>)
 </code></pre>
 
 
@@ -1276,10 +1692,47 @@ Adds liquidity to a the underlying LP position during rebalancing.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_rebalance_add_liquidity">rebalance_add_liquidity</a>&lt;X, Y&gt;(
+    _position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
+    _config: &<b>mut</b> PositionConfig,
+    _receipt: &<b>mut</b> RebalanceReceipt,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
+    _bluefin_config: &bluefin_config::GlobalConfig,
+    _delta_l: u128,
+    _balance_x: Balance&lt;X&gt;,
+    _balance_y: Balance&lt;Y&gt;,
+    _clock: &Clock,
+) {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_rebalance_add_liquidity_v2"></a>
+
+## Function `rebalance_add_liquidity_v2`
+
+Adds liquidity to a the underlying LP position during rebalancing.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_rebalance_add_liquidity_v2">rebalance_add_liquidity_v2</a>&lt;X, Y&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, receipt: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_RebalanceReceipt">kai_leverage::position_core_clmm::RebalanceReceipt</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, bluefin_pool: &<b>mut</b> bluefin_spot::pool::Pool&lt;X, Y&gt;, bluefin_config: &bluefin_spot::config::GlobalConfig, delta_l: u128, balance_x: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, balance_y: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_rebalance_add_liquidity_v2">rebalance_add_liquidity_v2</a>&lt;X, Y&gt;(
     position: &<b>mut</b> Position&lt;X, Y, BluefinPosition&gt;,
     config: &<b>mut</b> PositionConfig,
     receipt: &<b>mut</b> RebalanceReceipt,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     bluefin_pool: &<b>mut</b> bluefin_pool::Pool&lt;X, Y&gt;,
     bluefin_config: &bluefin_config::GlobalConfig,
@@ -1360,10 +1813,9 @@ liquidation calculations, and other analytical operations.
 
 ## Function `calc_liquidate_col_x`
 
-Calculate the required amounts to liquidate X collateral by repaying Y debt.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_calc_liquidate_col_x">calc_liquidate_col_x</a>&lt;X, Y&gt;(position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, max_repayment_amt_y: u64): (u64, u64)
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_calc_liquidate_col_x">calc_liquidate_col_x</a>&lt;X, Y&gt;(_position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, _config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, _max_repayment_amt_y: u64): (u64, u64)
 </code></pre>
 
 
@@ -1373,13 +1825,52 @@ Calculate the required amounts to liquidate X collateral by repaying Y debt.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_calc_liquidate_col_x">calc_liquidate_col_x</a>&lt;X, Y&gt;(
+    _position: &Position&lt;X, Y, BluefinPosition&gt;,
+    _config: &PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _max_repayment_amt_y: u64,
+): (u64, u64) {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_calc_liquidate_col_x_v2"></a>
+
+## Function `calc_liquidate_col_x_v2`
+
+Calculate the required amounts to liquidate X collateral by repaying Y debt.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_calc_liquidate_col_x_v2">calc_liquidate_col_x_v2</a>&lt;X, Y&gt;(position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, max_repayment_amt_y: u64): (u64, u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_calc_liquidate_col_x_v2">calc_liquidate_col_x_v2</a>&lt;X, Y&gt;(
     position: &Position&lt;X, Y, BluefinPosition&gt;,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_repayment_amt_y: u64,
 ): (u64, u64) {
-    core::calc_liquidate_col_x!(position, config, price_info, debt_info, max_repayment_amt_y)
+    <b>let</b> shape = core::lp_shape!(position);
+    core::calc_liquidate_col_x(
+        position,
+        config,
+        price_info,
+        debt_info,
+        max_repayment_amt_y,
+        shape,
+    )
 }
 </code></pre>
 
@@ -1391,10 +1882,9 @@ Calculate the required amounts to liquidate X collateral by repaying Y debt.
 
 ## Function `calc_liquidate_col_y`
 
-Calculate the required amounts to liquidate Y collateral by repaying X debt.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_calc_liquidate_col_y">calc_liquidate_col_y</a>&lt;X, Y&gt;(position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, max_repayment_amt_x: u64): (u64, u64)
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_calc_liquidate_col_y">calc_liquidate_col_y</a>&lt;X, Y&gt;(_position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, _config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, _price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, _debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, _max_repayment_amt_x: u64): (u64, u64)
 </code></pre>
 
 
@@ -1404,13 +1894,52 @@ Calculate the required amounts to liquidate Y collateral by repaying X debt.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_calc_liquidate_col_y">calc_liquidate_col_y</a>&lt;X, Y&gt;(
+    _position: &Position&lt;X, Y, BluefinPosition&gt;,
+    _config: &PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _max_repayment_amt_x: u64,
+): (u64, u64) {
+    <b>abort</b> e_function_deprecated!()
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_bluefin_spot_calc_liquidate_col_y_v2"></a>
+
+## Function `calc_liquidate_col_y_v2`
+
+Calculate the required amounts to liquidate Y collateral by repaying X debt.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_calc_liquidate_col_y_v2">calc_liquidate_col_y_v2</a>&lt;X, Y&gt;(position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, bluefin_spot::position::Position&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, max_repayment_amt_x: u64): (u64, u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/bluefin_spot.md#kai_leverage_bluefin_spot_calc_liquidate_col_y_v2">calc_liquidate_col_y_v2</a>&lt;X, Y&gt;(
     position: &Position&lt;X, Y, BluefinPosition&gt;,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_repayment_amt_x: u64,
 ): (u64, u64) {
-    core::calc_liquidate_col_y!(position, config, price_info, debt_info, max_repayment_amt_x)
+    <b>let</b> shape = core::lp_shape!(position);
+    core::calc_liquidate_col_y(
+        position,
+        config,
+        price_info,
+        debt_info,
+        max_repayment_amt_x,
+        shape,
+    )
 }
 </code></pre>
 

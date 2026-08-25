@@ -23,11 +23,11 @@ Pyth price feed integration for Kai Leverage.
 -  [Function `div_ema_price_numeric_x128`](#kai_leverage_pyth_div_ema_price_numeric_x128)
 
 
-<pre><code><b>use</b> pyth::i64;
-<b>use</b> pyth::price;
-<b>use</b> pyth::price_feed;
-<b>use</b> pyth::price_identifier;
-<b>use</b> pyth::price_info;
+<pre><code><b>use</b> (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::i64;
+<b>use</b> (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::price;
+<b>use</b> (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::price_feed;
+<b>use</b> (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::price_identifier;
+<b>use</b> (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::price_info;
 <b>use</b> <a href="../../dependencies/std/address.md#std_address">std::address</a>;
 <b>use</b> <a href="../../dependencies/std/ascii.md#std_ascii">std::ascii</a>;
 <b>use</b> <a href="../../dependencies/std/bcs.md#std_bcs">std::bcs</a>;
@@ -87,7 +87,7 @@ Collection of Pyth price information objects.
 
 <dl>
 <dt>
-<code>pio_map: <a href="../../dependencies/sui/vec_map.md#sui_vec_map_VecMap">sui::vec_map::VecMap</a>&lt;<a href="../../dependencies/sui/object.md#sui_object_ID">sui::object::ID</a>, pyth::price_info::PriceInfo&gt;</code>
+<code>pio_map: <a href="../../dependencies/sui/vec_map.md#sui_vec_map_VecMap">sui::vec_map::VecMap</a>&lt;<a href="../../dependencies/sui/object.md#sui_object_ID">sui::object::ID</a>, (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::price_info::PriceInfo&gt;</code>
 </dt>
 <dd>
 </dd>
@@ -124,7 +124,7 @@ Validated Pyth price information ready for calculations.
 
 <dl>
 <dt>
-<code>map: <a href="../../dependencies/sui/vec_map.md#sui_vec_map_VecMap">sui::vec_map::VecMap</a>&lt;<a href="../../dependencies/std/type_name.md#std_type_name_TypeName">std::type_name::TypeName</a>, pyth::price_info::PriceInfo&gt;</code>
+<code>map: <a href="../../dependencies/sui/vec_map.md#sui_vec_map_VecMap">sui::vec_map::VecMap</a>&lt;<a href="../../dependencies/std/type_name.md#std_type_name_TypeName">std::type_name::TypeName</a>, (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::price_info::PriceInfo&gt;</code>
 </dt>
 <dd>
 </dd>
@@ -171,6 +171,39 @@ Validated Pyth price information ready for calculations.
 
 
 <pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_EPriceUndefined">EPriceUndefined</a>: u64 = 2;
+</code></pre>
+
+
+
+<a name="kai_leverage_pyth_EPriceTimestampInFuture"></a>
+
+
+
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_EPriceTimestampInFuture">EPriceTimestampInFuture</a>: u64 = 3;
+</code></pre>
+
+
+
+<a name="kai_leverage_pyth_MAX_FUTURE_SKEW_SECS"></a>
+
+Upper bound on how far a price timestamp may lead the clock snapshot
+before the timestamp is treated as nonsense rather than as skew.
+
+A price can legitimately be a little ahead of <code>current_ts_sec</code>: the
+snapshot floors milliseconds to whole seconds, and during simulation the
+<code>Clock</code> reflects the last executed checkpoint rather than wall time.
+Beyond this bound the timestamp is not skew but garbage, and accepting it
+is dangerous: Pyth only caches strictly newer updates, so a feed stamped
+far in the future rejects every legitimate update until real time catches
+up, freezing the price while the market moves.
+
+Deliberately a constant rather than a function of <code><a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_max_age_secs">max_age_secs</a></code>. That
+value is a risk-policy knob (how much price drift to tolerate); this one
+is an infrastructure sanity check (clock and oracle skew). Tightening the
+former must not silently tighten the latter.
+
+
+<pre><code><b>const</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_MAX_FUTURE_SKEW_SECS">MAX_FUTURE_SKEW_SECS</a>: u64 = 60;
 </code></pre>
 
 
@@ -310,7 +343,7 @@ Create a new Pyth price info collection.
 Add a price info object to the collection.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_add">add</a>(self: &<b>mut</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, info: &pyth::price_info::PriceInfoObject)
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_add">add</a>(self: &<b>mut</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, info: &(pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::price_info::PriceInfoObject)
 </code></pre>
 
 
@@ -326,7 +359,9 @@ Add a price info object to the collection.
     <b>if</b> (!self.pio_map.contains(&key)) {
         self.pio_map.insert(key, price_info);
     };
-    <b>let</b> age = self.current_ts_sec - price.get_timestamp();
+    <b>let</b> price_ts = price.get_timestamp();
+    <b>assert</b>!(price_ts &lt;= self.current_ts_sec + <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_MAX_FUTURE_SKEW_SECS">MAX_FUTURE_SKEW_SECS</a>, <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_EPriceTimestampInFuture">EPriceTimestampInFuture</a>);
+    <b>let</b> age = u64::saturating_sub(self.current_ts_sec, price_ts);
     self.<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_max_age_secs">max_age_secs</a> = u64::max(self.<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_max_age_secs">max_age_secs</a>, age);
 }
 </code></pre>
@@ -460,7 +495,7 @@ Get the decimal places for a supported token type.
 Get the current price for a token type.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_get_price">get_price</a>(self: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_ValidatedPythPriceInfo">kai_leverage::pyth::ValidatedPythPriceInfo</a>, type: <a href="../../dependencies/std/type_name.md#std_type_name_TypeName">std::type_name::TypeName</a>): pyth::price::Price
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_get_price">get_price</a>(self: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_ValidatedPythPriceInfo">kai_leverage::pyth::ValidatedPythPriceInfo</a>, type: <a href="../../dependencies/std/type_name.md#std_type_name_TypeName">std::type_name::TypeName</a>): (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::price::Price
 </code></pre>
 
 
@@ -486,7 +521,7 @@ Get the current price for a token type.
 Get the EMA price for a token type.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_get_ema_price">get_ema_price</a>(self: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_ValidatedPythPriceInfo">kai_leverage::pyth::ValidatedPythPriceInfo</a>, type: <a href="../../dependencies/std/type_name.md#std_type_name_TypeName">std::type_name::TypeName</a>): pyth::price::Price
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_get_ema_price">get_ema_price</a>(self: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_ValidatedPythPriceInfo">kai_leverage::pyth::ValidatedPythPriceInfo</a>, type: <a href="../../dependencies/std/type_name.md#std_type_name_TypeName">std::type_name::TypeName</a>): (pyth=0x8D97F1CD6AC663735BE08D1D2B6D02A159E711586461306CE60A2B7A6A565A9E)::price::Price
 </code></pre>
 
 

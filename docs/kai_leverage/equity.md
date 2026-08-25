@@ -512,7 +512,11 @@ Increase the underlying value and issue corresponding shares. Input value is in 
     registry: &<b>mut</b> <a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_EquityRegistry">EquityRegistry</a>&lt;T&gt;,
     <a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_value_x64">value_x64</a>: u128,
 ): <a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_EquityShareBalance">EquityShareBalance</a>&lt;T&gt; {
-    <b>if</b> (registry.<a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_underlying_value_x64">underlying_value_x64</a> == 0) {
+    // `<a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_supply_x64">supply_x64</a>` is the authoritative signal <b>for</b> an empty registry. `<a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_underlying_value_x64">underlying_value_x64</a>`
+    // can be non-<a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_zero">zero</a> with no shares outstanding: `<a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_redeem_lossy">redeem_lossy</a>` adds the rounding fraction
+    // back after the final redemption, leaving sub-unit dust behind. That dust is ownerless
+    // and <b>has</b> no backing balance, so it is discarded here rather than carried over.
+    <b>if</b> (registry.<a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_supply_x64">supply_x64</a> == 0) {
         registry.<a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_underlying_value_x64">underlying_value_x64</a> = <a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_value_x64">value_x64</a>;
         registry.<a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_supply_x64">supply_x64</a> = <a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_value_x64">value_x64</a>;
         <b>return</b> <a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_EquityShareBalance">EquityShareBalance</a> { <a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity_value_x64">value_x64</a> }
