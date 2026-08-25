@@ -67,8 +67,8 @@ deps = { std = "MoveStdlib", sui = "Sui" }
 [pinned.mainnet.kai_leverage]
 source = { local = "../../leverage/core" }
 use_environment = "mainnet"
-manifest_digest = "BFEC831406228189DAB6CD8C2AF79373789E74562A926A2EBF5BBAA9AD21A6BA"
-deps = { access_management = "access_management", bluefin_spot = "bluefin_spot", cetus_clmm = "cetus_clmm", deep = "deep", integer_mate = "integer_mate_1", lbtc = "lbtc", pyth = "pyth", rate_limiter = "rate_limiter", std = "MoveStdlib", sui = "Sui", suiusdt = "suiusdt", usdc = "usdc", usdy = "usdy", wal = "wal", wbtc = "wbtc", whusdce = "whusdce", whusdte = "whusdte", xbtc = "xbtc" }
+manifest_digest = "9AB93C6AD3E4A119A20F9755C2972498AE2A09475861DA1D95C30540048D3931"
+deps = { access_management = "access_management", bluefin_spot = "bluefin_spot", cetus_clmm = "cetus_clmm", deep = "deep", integer_mate = "integer_mate_1", lbtc = "lbtc", pyth = "pyth", pyth_pro = "pyth_1", rate_limiter = "rate_limiter", std = "MoveStdlib", sui = "Sui", suiusdt = "suiusdt", usdc = "usdc", usdy = "usdy", wal = "wal", wbtc = "wbtc", whusdce = "whusdce", whusdte = "whusdte", xbtc = "xbtc" }
 
 [pinned.mainnet.kai_sav]
 source = { root = true }
@@ -111,6 +111,12 @@ source = { local = "../../../_vendor/Pyth/core-v2" }
 use_environment = "mainnet"
 manifest_digest = "D18B34940467015EBF096EC1C7CBBBD67BF5B04CC3C057DB2B0AD351272DACFE"
 deps = { std = "MoveStdlib", sui = "Sui", wormhole = "wormhole" }
+
+[pinned.mainnet.pyth_1]
+source = { local = "../../../_vendor/Pyth/pro-compatible-v1" }
+use_environment = "mainnet"
+manifest_digest = "257B1724118E38157B99AD94ACCC62AA9F68F150CB4C45A735A6A75172F7FEE1"
+deps = { std = "MoveStdlib", sui = "Sui", wormhole = "wormhole_1" }
 
 [pinned.mainnet.rate_limiter]
 source = { local = "../../../rate-limiter" }
@@ -196,6 +202,12 @@ use_environment = "mainnet"
 manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
 deps = { std = "MoveStdlib", sui = "Sui" }
 
+[pinned.mainnet.wormhole_1]
+source = { local = "../../../_vendor/Pyth/wormhole-simple-majority-v1" }
+use_environment = "mainnet"
+manifest_digest = "E41BBD67BE8940D26C79D78B028477EF5B33BA217A1282C78ACB344CF8A5ECF6"
+deps = { std = "MoveStdlib", sui = "Sui" }
+
 [pinned.mainnet.x]
 source = { local = "../../../_vendor/Scallop/x-v1" }
 use_environment = "mainnet"
@@ -277,8 +289,8 @@ deps = { std = "MoveStdlib", sui = "Sui" }
 [pinned.testnet.kai_leverage]
 source = { local = "../../leverage/core" }
 use_environment = "testnet"
-manifest_digest = "6C10676793518B7C45ECF7E94BD1E5D4AA93573FA98B441BB266CDA189137361"
-deps = { access_management = "access_management", bluefin_spot = "bluefin_spot", cetus_clmm = "cetus_clmm", deep = "deep", integer_mate = "integer_mate_1", lbtc = "lbtc", pyth = "pyth", rate_limiter = "rate_limiter", std = "MoveStdlib", sui = "Sui", suiusdt = "suiusdt", usdc = "usdc", usdy = "usdy", wal = "wal", wbtc = "wbtc", whusdce = "whusdce", whusdte = "whusdte", xbtc = "xbtc" }
+manifest_digest = "65CCF283F0D558619BECB7C5FD781BA6D1A9140AA9823028562B79AB710C41D0"
+deps = { access_management = "access_management", bluefin_spot = "bluefin_spot", cetus_clmm = "cetus_clmm", deep = "deep", integer_mate = "integer_mate_1", lbtc = "lbtc", pyth = "pyth", pyth_pro = "pyth_1", rate_limiter = "rate_limiter", std = "MoveStdlib", sui = "Sui", suiusdt = "suiusdt", usdc = "usdc", usdy = "usdy", wal = "wal", wbtc = "wbtc", whusdce = "whusdce", whusdte = "whusdte", xbtc = "xbtc" }
 
 [pinned.testnet.kai_sav]
 source = { root = true }
@@ -321,6 +333,12 @@ source = { local = "../../../_vendor/Pyth/core-v2" }
 use_environment = "testnet"
 manifest_digest = "60D9BA538AAD24D3181112C5BBA76EE2BBA122176633C60B7546736160F60B66"
 deps = { std = "MoveStdlib", sui = "Sui", wormhole = "wormhole" }
+
+[pinned.testnet.pyth_1]
+source = { local = "../../../_vendor/Pyth/pro-compatible-v1" }
+use_environment = "testnet"
+manifest_digest = "F9AA8D8F8169DFE1DD5C96BC65F7D133BFB333F55C82146F48BE28C056D12632"
+deps = { std = "MoveStdlib", sui = "Sui", wormhole = "wormhole_1" }
 
 [pinned.testnet.rate_limiter]
 source = { local = "../../../rate-limiter" }
@@ -402,6 +420,12 @@ deps = { std = "MoveStdlib", sui = "Sui", token_bridge = "token_bridge" }
 
 [pinned.testnet.wormhole]
 source = { local = "../../../_vendor/Wormhole/core-v1" }
+use_environment = "testnet"
+manifest_digest = "5745706258F61D6CE210904B3E6AE87A73CE9D31A6F93BE4718C442529332A87"
+deps = { std = "MoveStdlib", sui = "Sui" }
+
+[pinned.testnet.wormhole_1]
+source = { local = "../../../_vendor/Pyth/wormhole-simple-majority-v1" }
 use_environment = "testnet"
 manifest_digest = "5745706258F61D6CE210904B3E6AE87A73CE9D31A6F93BE4718C442529332A87"
 deps = { std = "MoveStdlib", sui = "Sui" }
