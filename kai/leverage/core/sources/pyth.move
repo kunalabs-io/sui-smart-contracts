@@ -15,6 +15,24 @@ use sui::vec_map::{Self, VecMap};
 const EUnsupportedCoinType: u64 = 0;
 const EStalePrice: u64 = 1;
 const EPriceUndefined: u64 = 2;
+const EPriceTimestampInFuture: u64 = 3;
+
+/// Upper bound on how far a price timestamp may lead the clock snapshot
+/// before the timestamp is treated as nonsense rather than as skew.
+///
+/// A price can legitimately be a little ahead of `current_ts_sec`: the
+/// snapshot floors milliseconds to whole seconds, and during simulation the
+/// `Clock` reflects the last executed checkpoint rather than wall time.
+/// Beyond this bound the timestamp is not skew but garbage, and accepting it
+/// is dangerous: Pyth only caches strictly newer updates, so a feed stamped
+/// far in the future rejects every legitimate update until real time catches
+/// up, freezing the price while the market moves.
+///
+/// Deliberately a constant rather than a function of `max_age_secs`. That
+/// value is a risk-policy knob (how much price drift to tolerate); this one
+/// is an infrastructure sanity check (clock and oracle skew). Tightening the
+/// former must not silently tighten the latter.
+const MAX_FUTURE_SKEW_SECS: u64 = 60;
 
 const SUI_TYPE_NAME: vector<u8> = b"0000000000000000000000000000000000000000000000000000000000000002::sui::SUI";
 const WHUSDCE_TYPE_NAME: vector<u8> = b"5d4b302506645c37ff133b98c4b50a5ae14841659738d6d733d59d0d217a93bf::coin::COIN";
@@ -61,7 +79,9 @@ public fun add(self: &mut PythPriceInfo, info: &PriceInfoObject) {
         self.pio_map.insert(key, price_info);
     };
 
-    let age = self.current_ts_sec - price.get_timestamp();
+    let price_ts = price.get_timestamp();
+    assert!(price_ts <= self.current_ts_sec + MAX_FUTURE_SKEW_SECS, EPriceTimestampInFuture);
+    let age = u64::saturating_sub(self.current_ts_sec, price_ts);
     self.max_age_secs = u64::max(self.max_age_secs, age);
 }
 
