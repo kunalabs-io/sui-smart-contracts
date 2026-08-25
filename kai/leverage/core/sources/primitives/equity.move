@@ -144,7 +144,11 @@ public fun increase_value_and_issue_x64<T>(
     registry: &mut EquityRegistry<T>,
     value_x64: u128,
 ): EquityShareBalance<T> {
-    if (registry.underlying_value_x64 == 0) {
+    // `supply_x64` is the authoritative signal for an empty registry. `underlying_value_x64`
+    // can be non-zero with no shares outstanding: `redeem_lossy` adds the rounding fraction
+    // back after the final redemption, leaving sub-unit dust behind. That dust is ownerless
+    // and has no backing balance, so it is discarded here rather than carried over.
+    if (registry.supply_x64 == 0) {
         registry.underlying_value_x64 = value_x64;
         registry.supply_x64 = value_x64;
         return EquityShareBalance { value_x64 }
