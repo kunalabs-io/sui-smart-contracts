@@ -55,7 +55,7 @@ public use fun fdb_length as FacilDebtBag.length;
 // Seconds in a year
 const SECONDS_IN_YEAR: u128 = 365 * 24 * 60 * 60;
 
-const MODULE_VERSION: u16 = 1;
+const MODULE_VERSION: u16 = 2;
 
 /* ================= errors ================= */
 
