@@ -10,6 +10,7 @@ use bluefin_spot::tick_bitmap;
 use bluefin_spot::tick_math;
 use integer_mate::i32::{Self, I32};
 use kai_leverage::bluefin_spot;
+use kai_leverage::coin_registry_test_util;
 use kai_leverage::debt_info::{Self, DebtInfo, ValidatedDebtInfo};
 use kai_leverage::mock_dex_math;
 use kai_leverage::position_core_clmm::{
@@ -29,17 +30,18 @@ use kai_leverage::position_core_test_util::{
 };
 use kai_leverage::position_core_test_util_macros;
 use kai_leverage::position_model_clmm::PositionModel;
-use kai_leverage::pyth::{Self, PythPriceInfo};
+use kai_leverage::oracle_price::{Self, PriceCollection};
 use kai_leverage::pyth_test_util;
 use kai_leverage::supply_pool::SupplyPool;
 use kai_leverage::supply_pool_tests::{Self, SSUI, SUSDC};
 use kai_leverage::util;
-use pyth::price_info::PriceInfoObject;
+use pyth_pro::price_info::PriceInfoObject;
 use std::u128;
 use std::string;
 use sui::balance::{Self, Balance};
 use sui::clock::{Self, Clock};
 use sui::coin;
+use sui::coin_registry::Currency;
 use sui::sui::SUI;
 use sui::test_scenario::{Self, Scenario, TransactionEffects};
 use std::unit_test::destroy as destroy_;
@@ -53,6 +55,8 @@ public struct Setup {
     clock: Clock,
     sui_pio: PriceInfoObject,
     usdc_pio: PriceInfoObject,
+    currency_x: Currency<SUI>,
+    currency_y: Currency<USDC>,
     supply_pool_x: SupplyPool<SUI, SSUI>,
     supply_pool_y: SupplyPool<USDC, SUSDC>,
     bluefin_pool: BluefinPool<SUI, USDC>,
@@ -150,6 +154,20 @@ public fun new_setup(): Setup {
     let package_admin = position_core_test_util::create_admin_for_testing(scenario.ctx());
     let mut clock = clock::create_for_testing(scenario.ctx());
     clock.set_for_testing(INITIAL_CLOCK_TIMESTAMP_MS);
+
+    // registry-backed decimals evidence for the market pair
+    let mut coin_registry = coin_registry_test_util::create_registry_for_testing(scenario.ctx());
+    let currency_x = coin_registry_test_util::create_currency_for_testing<SUI>(
+        &mut coin_registry,
+        9,
+        scenario.ctx(),
+    );
+    let currency_y = coin_registry_test_util::create_currency_for_testing<USDC>(
+        &mut coin_registry,
+        6,
+        scenario.ctx(),
+    );
+    destroy_(coin_registry);
 
     let bluefin_admin_cap = bluefin_admin::get_admin_cap(scenario.ctx());
 
@@ -250,6 +268,8 @@ public fun new_setup(): Setup {
         clock,
         sui_pio,
         usdc_pio,
+        currency_x,
+        currency_y,
         supply_pool_x,
         supply_pool_y,
         bluefin_pool: pool,
@@ -274,9 +294,9 @@ public fun create_position_ticket(
     principal_x: Balance<SUI>,
     principal_y: Balance<USDC>,
     delta_l: u128,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
 ): CreatePositionTicket<SUI, USDC, I32> {
-    bluefin_spot::create_position_ticket_v2(
+    bluefin_spot::create_position_ticket_v3(
         &mut self.bluefin_pool,
         config,
         tick_a,
@@ -298,7 +318,7 @@ public fun create_position_ticket_with_different_pool(
     principal_x: Balance<SUI>,
     principal_y: Balance<USDC>,
     delta_l: u128,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
 ): CreatePositionTicket<SUI, USDC, I32> {
     let mut different_pool = create_bluefin_pool_for_testing(
         self.bluefin_pool.current_sqrt_price(),
@@ -308,7 +328,7 @@ public fun create_position_ticket_with_different_pool(
     );
 
     // This should abort with e_invalid_pool
-    let ticket = bluefin_spot::create_position_ticket_v2(
+    let ticket = bluefin_spot::create_position_ticket_v3(
         &mut different_pool,
         config,
         tick_a,
@@ -458,10 +478,12 @@ public fun rebalance_collect_reward<R>(
     )
 }
 
-public fun price_info(self: &mut Setup): PythPriceInfo {
-    let mut price_info = pyth::create(&self.clock);
-    price_info.add(&self.sui_pio);
-    price_info.add(&self.usdc_pio);
+public fun price_info(self: &mut Setup): PriceCollection {
+    let mut price_info = oracle_price::create(&self.clock);
+    price_info.add_pyth_pro(&self.sui_pio);
+    price_info.add_pyth_pro(&self.usdc_pio);
+    price_info.add_currency(&self.currency_x);
+    price_info.add_currency(&self.currency_y);
     price_info
 }
 
@@ -475,7 +497,7 @@ public fun rebalance_add_liquidity(
     balance_y: Balance<USDC>,
 ) {
     let debt_info = self.debt_info(config);
-    bluefin_spot::rebalance_add_liquidity(
+    bluefin_spot::rebalance_add_liquidity_v2(
         position,
         config,
         rebalance_receipt,
@@ -580,7 +602,7 @@ public fun reduce(
     cap: &PositionCap,
     factor_x64: u128,
 ): (Balance<SUI>, Balance<USDC>, ReductionRepaymentTicket<SSUI, SUSDC>) {
-    bluefin_spot::reduce(
+    bluefin_spot::reduce_v2(
         position,
         config,
         cap,
@@ -629,13 +651,13 @@ public fun add_liquidity(
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &mut PositionConfig,
     cap: &PositionCap,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     delta_l: u128,
     balance_x: Balance<SUI>,
     balance_y: Balance<USDC>,
 ) {
-    bluefin_spot::add_liquidity(
+    bluefin_spot::add_liquidity_v2(
         position,
         config,
         cap,
@@ -655,7 +677,7 @@ public fun add_liquidity_with_receipt(
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &mut PositionConfig,
     cap: &PositionCap,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     delta_l: u128,
 ) {
@@ -665,7 +687,7 @@ public fun add_liquidity_with_receipt(
         position.lp_position().upper_tick(),
         delta_l,
     );
-    bluefin_spot::add_liquidity(
+    bluefin_spot::add_liquidity_v2(
         position,
         config,
         cap,
@@ -736,6 +758,8 @@ public fun destroy(setup: Setup) {
         clock,
         sui_pio,
         usdc_pio,
+        currency_x,
+        currency_y,
         supply_pool_x,
         supply_pool_y,
         bluefin_pool,
@@ -747,6 +771,8 @@ public fun destroy(setup: Setup) {
     destroy_(clock);
     destroy_(sui_pio);
     destroy_(usdc_pio);
+    destroy_(currency_x);
+    destroy_(currency_y);
     destroy_(supply_pool_x);
     destroy_(supply_pool_y);
     destroy_(bluefin_pool);
@@ -901,11 +927,11 @@ public fun create_deleverage_ticket(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_delta_l: u128,
 ): (DeleverageTicket, ActionRequest) {
-    bluefin_spot::create_deleverage_ticket(
+    bluefin_spot::create_deleverage_ticket_v2(
         position,
         config,
         price_info,
@@ -922,10 +948,10 @@ public fun deleverage(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     max_delta_l: u128,
 ): ActionRequest {
-    bluefin_spot::deleverage(
+    bluefin_spot::deleverage_v2(
         position,
         config,
         price_info,
@@ -975,10 +1001,10 @@ public fun create_deleverage_ticket_for_liquidation(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
 ): DeleverageTicket {
-    bluefin_spot::create_deleverage_ticket_for_liquidation(
+    bluefin_spot::create_deleverage_ticket_for_liquidation_v2(
         position,
         config,
         price_info,
@@ -993,9 +1019,9 @@ public fun deleverage_for_liquidation(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
 ) {
-    bluefin_spot::deleverage_for_liquidation(
+    bluefin_spot::deleverage_for_liquidation_v2(
         position,
         config,
         price_info,
@@ -1011,11 +1037,11 @@ public fun calc_liquidate_col_x(
     _: &Setup,
     position: &Position<SUI, USDC, BluefinPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_amount: u64,
 ): (u64, u64) {
-    bluefin_spot::calc_liquidate_col_x(
+    bluefin_spot::calc_liquidate_col_x_v2(
         position,
         config,
         price_info,
@@ -1028,11 +1054,11 @@ public fun calc_liquidate_col_y(
     _: &Setup,
     position: &Position<SUI, USDC, BluefinPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_amount: u64,
 ): (u64, u64) {
-    bluefin_spot::calc_liquidate_col_y(
+    bluefin_spot::calc_liquidate_col_y_v2(
         position,
         config,
         price_info,
@@ -1045,11 +1071,11 @@ public fun liquidate_col_x(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment_y: &mut Balance<USDC>,
 ): Balance<SUI> {
-    bluefin_spot::liquidate_col_x(
+    bluefin_spot::liquidate_col_x_v2(
         position,
         config,
         price_info,
@@ -1064,11 +1090,11 @@ public fun liquidate_col_y(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment_x: &mut Balance<SUI>,
 ): Balance<USDC> {
-    bluefin_spot::liquidate_col_y(
+    bluefin_spot::liquidate_col_y_v2(
         position,
         config,
         price_info,
@@ -1083,14 +1109,14 @@ public fun liquidate_col_x_with_wrong_supply_pool(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment_y: &mut Balance<USDC>,
 ): Balance<SUI> {
     let mut wrong_supply_pool = supply_pool_tests::create_wrong_usdc_supply_pool_for_testing();
 
     // This should abort with e_supply_pool_mismatch
-    let reward_x = bluefin_spot::liquidate_col_x(
+    let reward_x = bluefin_spot::liquidate_col_x_v2(
         position,
         config,
         price_info,
@@ -1107,14 +1133,14 @@ public fun liquidate_col_y_with_wrong_supply_pool(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment_x: &mut Balance<SUI>,
 ): Balance<USDC> {
     let mut wrong_supply_pool = supply_pool_tests::create_wrong_sui_supply_pool_for_testing();
 
     // This should abort with e_supply_pool_mismatch
-    let reward_y = bluefin_spot::liquidate_col_y(
+    let reward_y = bluefin_spot::liquidate_col_y_v2(
         position,
         config,
         price_info,
@@ -1133,7 +1159,7 @@ public fun create_deleverage_ticket_with_different_pool(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_delta_l: u128,
 ): (DeleverageTicket, ActionRequest) {
@@ -1145,7 +1171,7 @@ public fun create_deleverage_ticket_with_different_pool(
     );
 
     // This should abort with e_invalid_pool
-    let (ticket, request) = bluefin_spot::create_deleverage_ticket(
+    let (ticket, request) = bluefin_spot::create_deleverage_ticket_v2(
         position,
         config,
         price_info,
@@ -1165,7 +1191,7 @@ public fun create_deleverage_ticket_for_liquidation_with_different_pool(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
 ): DeleverageTicket {
     let mut different_pool = create_bluefin_pool_for_testing(
@@ -1176,7 +1202,7 @@ public fun create_deleverage_ticket_for_liquidation_with_different_pool(
     );
 
     // This should abort with e_invalid_pool
-    let ticket = bluefin_spot::create_deleverage_ticket_for_liquidation(
+    let ticket = bluefin_spot::create_deleverage_ticket_for_liquidation_v2(
         position,
         config,
         price_info,
@@ -1242,11 +1268,11 @@ public fun repay_bad_debt_x(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &mut Balance<SUI>,
 ): ActionRequest {
-    bluefin_spot::repay_bad_debt_x(
+    bluefin_spot::repay_bad_debt_x_v2(
         position,
         config,
         price_info,
@@ -1262,11 +1288,11 @@ public fun repay_bad_debt_y(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &mut Balance<USDC>,
 ): ActionRequest {
-    bluefin_spot::repay_bad_debt_y(
+    bluefin_spot::repay_bad_debt_y_v2(
         position,
         config,
         price_info,
@@ -1282,14 +1308,14 @@ public fun repay_bad_debt_x_with_wrong_supply_pool(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &mut Balance<SUI>,
 ): ActionRequest {
     let mut wrong_supply_pool = supply_pool_tests::create_wrong_sui_supply_pool_for_testing();
 
     // This should abort with e_supply_pool_mismatch
-    let request = bluefin_spot::repay_bad_debt_x(
+    let request = bluefin_spot::repay_bad_debt_x_v2(
         position,
         config,
         price_info,
@@ -1307,14 +1333,14 @@ public fun repay_bad_debt_y_with_wrong_supply_pool(
     self: &mut Setup,
     position: &mut Position<SUI, USDC, BluefinPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &mut Balance<USDC>,
 ): ActionRequest {
     let mut wrong_supply_pool = supply_pool_tests::create_wrong_usdc_supply_pool_for_testing();
 
     // This should abort with e_supply_pool_mismatch
-    let request = bluefin_spot::repay_bad_debt_y(
+    let request = bluefin_spot::repay_bad_debt_y_v2(
         position,
         config,
         price_info,

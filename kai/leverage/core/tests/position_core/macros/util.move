@@ -8,7 +8,7 @@ use kai_leverage::position_core_test_util;
 use kai_leverage::pyth_test_util;
 use kai_leverage::supply_pool::SupplyPool;
 use kai_leverage::supply_pool_tests::{Self, SSUI, SUSDC};
-use pyth::price_info::PriceInfoObject;
+use pyth_pro::price_info::PriceInfoObject;
 use rate_limiter::net_sliding_sum_limiter;
 use std::type_name;
 use std::u128;
@@ -169,6 +169,24 @@ public macro fun initialize_config_for_testing<$Pool>(
         );
         request.admin_approve_request(package_admin);
         let request = config.pyth_config_allow_pio(
+            type_name::with_defining_ids<USDC>(),
+            object::id(&usdc_pio),
+            scenario.ctx(),
+        );
+        request.admin_approve_request(package_admin);
+
+        // add oracle price config (rail-agnostic; validates the `PriceCollection` flow)
+        let request = config.config_add_empty_oracle_price_config(scenario.ctx());
+        request.admin_approve_request(package_admin);
+        let request = config.set_oracle_price_config_max_age_secs(60, scenario.ctx());
+        request.admin_approve_request(package_admin);
+        let request = config.oracle_price_config_allow_price_object(
+            type_name::with_defining_ids<SUI>(),
+            object::id(&sui_pio),
+            scenario.ctx(),
+        );
+        request.admin_approve_request(package_admin);
+        let request = config.oracle_price_config_allow_price_object(
             type_name::with_defining_ids<USDC>(),
             object::id(&usdc_pio),
             scenario.ctx(),

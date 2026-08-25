@@ -1,10 +1,11 @@
 #[test_only]
 module kai_leverage::get_balance_ema_usd_value_6_decimals_tests;
 
+use kai_leverage::coin_registry_test_util;
+use kai_leverage::oracle_price::{Self, ValidatedPrices};
 use kai_leverage::position_core_clmm as core;
-use kai_leverage::pyth::{Self, ValidatedPythPriceInfo};
 use kai_leverage::pyth_test_util;
-use pyth::price_info::PriceInfoObject;
+use pyth_pro::price_info::PriceInfoObject;
 use std::type_name::{Self, TypeName};
 use sui::balance;
 use sui::clock::{Self, Clock};
@@ -13,15 +14,34 @@ use std::unit_test::destroy;
 use sui::vec_map;
 use usdc::usdc::USDC;
 
-// Helper function to create ValidatedPythPriceInfo for testing
+// Helper function to create ValidatedPrices for testing
 fun create_validated_pyth_price_info_for_testing(
     sui_pio: &PriceInfoObject,
     usdc_pio: &PriceInfoObject,
     clock: &Clock,
-): ValidatedPythPriceInfo {
-    let mut price_info = pyth::create(clock);
-    price_info.add(sui_pio);
-    price_info.add(usdc_pio);
+    ctx: &mut TxContext,
+): ValidatedPrices {
+    let mut price_info = oracle_price::create(clock);
+    price_info.add_pyth_pro(sui_pio);
+    price_info.add_pyth_pro(usdc_pio);
+
+    // registry-backed decimals evidence (tx sender is @0x0 via `tx_context::dummy`)
+    let mut registry = coin_registry_test_util::create_registry_for_testing(ctx);
+    let currency_sui = coin_registry_test_util::create_currency_for_testing<SUI>(
+        &mut registry,
+        9,
+        ctx,
+    );
+    let currency_usdc = coin_registry_test_util::create_currency_for_testing<USDC>(
+        &mut registry,
+        6,
+        ctx,
+    );
+    price_info.add_currency(&currency_sui);
+    price_info.add_currency(&currency_usdc);
+    destroy(registry);
+    destroy(currency_sui);
+    destroy(currency_usdc);
 
     // Create allowlist
     let mut allowlist = vec_map::empty<TypeName, ID>();
@@ -29,7 +49,7 @@ fun create_validated_pyth_price_info_for_testing(
     vec_map::insert(&mut allowlist, type_name::with_defining_ids<USDC>(), object::id(usdc_pio));
 
     // Validate the price info
-    pyth::validate(&price_info, 3600, &allowlist) // 1 hour max age
+    oracle_price::validate(&price_info, 3600, &allowlist) // 1 hour max age
 }
 
 #[test]
@@ -51,7 +71,7 @@ fun test_get_balance_ema_usd_value_6_decimals_sui() {
     );
 
     // Create ValidatedPythPriceInfo
-    let price_info = create_validated_pyth_price_info_for_testing(&sui_pio, &usdc_pio, &clock);
+    let price_info = create_validated_pyth_price_info_for_testing(&sui_pio, &usdc_pio, &clock, &mut ctx);
 
     // Test 1 SUI (9 decimals) = 1_000000000
     let balance_1_sui = balance::create_for_testing(1_000000000);
@@ -121,7 +141,7 @@ fun test_get_balance_ema_usd_value_6_decimals_usdc() {
     );
 
     // Create ValidatedPythPriceInfo
-    let price_info = create_validated_pyth_price_info_for_testing(&sui_pio, &usdc_pio, &clock);
+    let price_info = create_validated_pyth_price_info_for_testing(&sui_pio, &usdc_pio, &clock, &mut ctx);
 
     // Test 1 USDC (6 decimals) = 1_000000
     let balance_1_usdc = balance::create_for_testing(1_000000);
@@ -191,7 +211,7 @@ fun test_get_balance_ema_usd_value_6_decimals_round_up() {
     );
 
     // Create ValidatedPythPriceInfo
-    let price_info = create_validated_pyth_price_info_for_testing(&sui_pio, &usdc_pio, &clock);
+    let price_info = create_validated_pyth_price_info_for_testing(&sui_pio, &usdc_pio, &clock, &mut ctx);
 
     // Test with amount that results in fractional USD value
     let balance_fractional = balance::create_for_testing(333333333); // 0.333333333 SUI

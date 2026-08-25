@@ -28,6 +28,7 @@ use kai_leverage::position_core_clmm::{
     ReductionRepaymentTicket,
     e_function_deprecated
 };
+use kai_leverage::oracle_price::PriceCollection;
 use kai_leverage::position_model_clmm::PositionModel;
 use kai_leverage::pyth::PythPriceInfo;
 use kai_leverage::supply_pool::SupplyPool;
@@ -101,8 +102,24 @@ public fun create_position_ticket<X, Y>(
     abort e_function_deprecated!()
 }
 
-/// Initialize position creation for a leveraged Cetus position.
+#[deprecated(note = b"Use `create_position_ticket_v3` instead.")]
 public fun create_position_ticket_v2<X, Y>(
+    _cetus_pool: &mut cetus_pool::Pool<X, Y>,
+    _config: &mut PositionConfig,
+    _tick_a: I32,
+    _tick_b: I32,
+    _principal_x: Balance<X>,
+    _principal_y: Balance<Y>,
+    _delta_l: u128,
+    _price_info: &PythPriceInfo,
+    _clock: &Clock,
+    _ctx: &mut TxContext,
+): CreatePositionTicket<X, Y, I32> {
+    abort e_function_deprecated!()
+}
+
+/// Like [create_position_ticket_v2], taking the rail-agnostic price collection.
+public fun create_position_ticket_v3<X, Y>(
     cetus_pool: &mut cetus_pool::Pool<X, Y>,
     config: &mut PositionConfig,
     tick_a: I32,
@@ -110,7 +127,7 @@ public fun create_position_ticket_v2<X, Y>(
     principal_x: Balance<X>,
     principal_y: Balance<Y>,
     delta_l: u128,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     clock: &Clock,
     ctx: &mut TxContext,
 ): CreatePositionTicket<X, Y, I32> {
@@ -194,12 +211,26 @@ public fun create_position<X, Y>(
 
 /* ================= deleverage and liquidation ================= */
 
-/// Initialize deleveraging for a position that has fallen below
-/// the deleverage margin threshold (permissioned).
+#[deprecated(note = b"Use `create_deleverage_ticket_v2` instead.")]
 public fun create_deleverage_ticket<X, Y>(
+    _position: &mut Position<X, Y, CetusPosition>,
+    _config: &mut PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _cetus_pool: &mut cetus_pool::Pool<X, Y>,
+    _cetus_global_config: &cetus_config::GlobalConfig,
+    _max_delta_l: u128,
+    _clock: &Clock,
+    _ctx: &mut TxContext,
+): (DeleverageTicket, ActionRequest) {
+    abort e_function_deprecated!()
+}
+
+/// Like [create_deleverage_ticket], taking the rail-agnostic price collection.
+public fun create_deleverage_ticket_v2<X, Y>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     cetus_pool: &mut cetus_pool::Pool<X, Y>,
     cetus_global_config: &cetus_config::GlobalConfig,
@@ -223,12 +254,24 @@ public fun create_deleverage_ticket<X, Y>(
     )
 }
 
-/// Initialize deleveraging for a position that has fallen below
-/// the liquidation margin threshold (permissionless).
+#[deprecated(note = b"Use `create_deleverage_ticket_for_liquidation_v2` instead.")]
 public fun create_deleverage_ticket_for_liquidation<X, Y>(
+    _position: &mut Position<X, Y, CetusPosition>,
+    _config: &mut PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _cetus_pool: &mut cetus_pool::Pool<X, Y>,
+    _cetus_global_config: &cetus_config::GlobalConfig,
+    _clock: &Clock,
+): DeleverageTicket {
+    abort e_function_deprecated!()
+}
+
+/// Like [create_deleverage_ticket_for_liquidation], taking the rail-agnostic price collection.
+public fun create_deleverage_ticket_for_liquidation_v2<X, Y>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     cetus_pool: &mut cetus_pool::Pool<X, Y>,
     cetus_global_config: &cetus_config::GlobalConfig,
@@ -248,12 +291,27 @@ public fun create_deleverage_ticket_for_liquidation<X, Y>(
     )
 }
 
-/// Execute deleveraging for a position that has fallen below
-/// the deleverage margin threshold (permissioned).
+#[deprecated(note = b"Use `deleverage_v2` instead.")]
 public fun deleverage<X, Y, SX, SY>(
+    _position: &mut Position<X, Y, CetusPosition>,
+    _config: &mut PositionConfig,
+    _price_info: &PythPriceInfo,
+    _supply_pool_x: &mut SupplyPool<X, SX>,
+    _supply_pool_y: &mut SupplyPool<Y, SY>,
+    _cetus_pool: &mut cetus_pool::Pool<X, Y>,
+    _cetus_global_config: &cetus_config::GlobalConfig,
+    _max_delta_l: u128,
+    _clock: &Clock,
+    _ctx: &mut TxContext,
+): ActionRequest {
+    abort e_function_deprecated!()
+}
+
+/// Like [deleverage], taking the rail-agnostic price collection.
+public fun deleverage_v2<X, Y, SX, SY>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     supply_pool_x: &mut SupplyPool<X, SX>,
     supply_pool_y: &mut SupplyPool<Y, SY>,
     cetus_pool: &mut cetus_pool::Pool<X, Y>,
@@ -266,7 +324,7 @@ public fun deleverage<X, Y, SX, SY>(
     debt_info.add_from_supply_pool(supply_pool_x, clock);
     debt_info.add_from_supply_pool(supply_pool_y, clock);
 
-    let (mut ticket, request) = create_deleverage_ticket(
+    let (mut ticket, request) = create_deleverage_ticket_v2(
         position,
         config,
         price_info,
@@ -284,12 +342,25 @@ public fun deleverage<X, Y, SX, SY>(
     request
 }
 
-/// Execute deleveraging for a position that has fallen below
-/// the liquidation margin threshold (permissionless).
+#[deprecated(note = b"Use `deleverage_for_liquidation_v2` instead.")]
 public fun deleverage_for_liquidation<X, Y, SX, SY>(
+    _position: &mut Position<X, Y, CetusPosition>,
+    _config: &mut PositionConfig,
+    _price_info: &PythPriceInfo,
+    _supply_pool_x: &mut SupplyPool<X, SX>,
+    _supply_pool_y: &mut SupplyPool<Y, SY>,
+    _cetus_pool: &mut cetus_pool::Pool<X, Y>,
+    _cetus_global_config: &cetus_config::GlobalConfig,
+    _clock: &Clock,
+) {
+    abort e_function_deprecated!()
+}
+
+/// Like [deleverage_for_liquidation], taking the rail-agnostic price collection.
+public fun deleverage_for_liquidation_v2<X, Y, SX, SY>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     supply_pool_x: &mut SupplyPool<X, SX>,
     supply_pool_y: &mut SupplyPool<Y, SY>,
     cetus_pool: &mut cetus_pool::Pool<X, Y>,
@@ -300,7 +371,7 @@ public fun deleverage_for_liquidation<X, Y, SX, SY>(
     debt_info.add_from_supply_pool(supply_pool_x, clock);
     debt_info.add_from_supply_pool(supply_pool_y, clock);
 
-    let mut ticket = create_deleverage_ticket_for_liquidation(
+    let mut ticket = create_deleverage_ticket_for_liquidation_v2(
         position,
         config,
         price_info,
@@ -314,83 +385,177 @@ public fun deleverage_for_liquidation<X, Y, SX, SY>(
     core::destroy_deleverage_ticket(position, ticket);
 }
 
+#[deprecated(note = b"Use `liquidate_col_x_v2` instead.")]
+public fun liquidate_col_x<X, Y, SY>(
+    _position: &mut Position<X, Y, CetusPosition>,
+    _config: &PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _repayment: &mut Balance<Y>,
+    _supply_pool: &mut SupplyPool<Y, SY>,
+    _clock: &Clock,
+): Balance<X> {
+    abort e_function_deprecated!()
+}
+
 /// Liquidate X collateral by repaying Y debt. The position needs to be fully deleveraged and
 /// below the liquidation margin threshold.
-public fun liquidate_col_x<X, Y, SY>(
+public fun liquidate_col_x_v2<X, Y, SY>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &mut Balance<Y>,
     supply_pool: &mut SupplyPool<Y, SY>,
     clock: &Clock,
 ): Balance<X> {
-    core::liquidate_col_x!(position, config, price_info, debt_info, repayment, supply_pool, clock)
+    let shape = core::lp_shape!(position);
+    core::liquidate_col_x(
+        position,
+        config,
+        price_info,
+        debt_info,
+        repayment,
+        supply_pool,
+        shape,
+        clock,
+    )
+}
+
+#[deprecated(note = b"Use `liquidate_col_y_v2` instead.")]
+public fun liquidate_col_y<X, Y, SX>(
+    _position: &mut Position<X, Y, CetusPosition>,
+    _config: &PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _repayment: &mut Balance<X>,
+    _supply_pool: &mut SupplyPool<X, SX>,
+    _clock: &Clock,
+): Balance<Y> {
+    abort e_function_deprecated!()
 }
 
 /// Liquidate Y collateral by repaying X debt. The position needs to be fully deleveraged and
 /// below the liquidation margin threshold.
-public fun liquidate_col_y<X, Y, SX>(
+public fun liquidate_col_y_v2<X, Y, SX>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     repayment: &mut Balance<X>,
     supply_pool: &mut SupplyPool<X, SX>,
     clock: &Clock,
 ): Balance<Y> {
-    core::liquidate_col_y!(position, config, price_info, debt_info, repayment, supply_pool, clock)
+    let shape = core::lp_shape!(position);
+    core::liquidate_col_y(
+        position,
+        config,
+        price_info,
+        debt_info,
+        repayment,
+        supply_pool,
+        shape,
+        clock,
+    )
+}
+
+#[deprecated(note = b"Use `repay_bad_debt_x_v2` instead.")]
+public fun repay_bad_debt_x<X, Y, SX>(
+    _position: &mut Position<X, Y, CetusPosition>,
+    _config: &PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _supply_pool: &mut SupplyPool<X, SX>,
+    _repayment: &mut Balance<X>,
+    _clock: &Clock,
+    _ctx: &mut TxContext,
+): ActionRequest {
+    abort e_function_deprecated!()
 }
 
 /// Repay bad debt for X tokens.
-public fun repay_bad_debt_x<X, Y, SX>(
+public fun repay_bad_debt_x_v2<X, Y, SX>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &PositionConfig,
-    _price_info: &PythPriceInfo,
+    _price_info: &PriceCollection,
     _debt_info: &DebtInfo,
     supply_pool: &mut SupplyPool<X, SX>,
     repayment: &mut Balance<X>,
     clock: &Clock,
     ctx: &mut TxContext,
 ): ActionRequest {
-    core::repay_bad_debt!(
+    let shape = core::lp_shape!(position);
+    core::repay_bad_debt(
         position,
         config,
         supply_pool,
         repayment,
+        shape,
         clock,
         ctx,
     )
 }
 
-/// Repay bad debt for Y tokens.
+#[deprecated(note = b"Use `repay_bad_debt_y_v2` instead.")]
 public fun repay_bad_debt_y<X, Y, SY>(
+    _position: &mut Position<X, Y, CetusPosition>,
+    _config: &PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _supply_pool: &mut SupplyPool<Y, SY>,
+    _repayment: &mut Balance<Y>,
+    _clock: &Clock,
+    _ctx: &mut TxContext,
+): ActionRequest {
+    abort e_function_deprecated!()
+}
+
+/// Repay bad debt for Y tokens.
+public fun repay_bad_debt_y_v2<X, Y, SY>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &PositionConfig,
-    _price_info: &PythPriceInfo,
+    _price_info: &PriceCollection,
     _debt_info: &DebtInfo,
     supply_pool: &mut SupplyPool<Y, SY>,
     repayment: &mut Balance<Y>,
     clock: &Clock,
     ctx: &mut TxContext,
 ): ActionRequest {
-    core::repay_bad_debt!(
+    let shape = core::lp_shape!(position);
+    core::repay_bad_debt(
         position,
         config,
         supply_pool,
         repayment,
+        shape,
         clock,
         ctx,
     )
 }
 
+#[deprecated(note = b"Use `reduce_v2` instead.")]
+public fun reduce<X, Y, SX, SY>(
+    _position: &mut Position<X, Y, CetusPosition>,
+    _config: &mut PositionConfig,
+    _cap: &PositionCap,
+    _price_info: &PythPriceInfo,
+    _supply_pool_x: &mut SupplyPool<X, SX>,
+    _supply_pool_y: &mut SupplyPool<Y, SY>,
+    _cetus_pool: &mut cetus_pool::Pool<X, Y>,
+    _cetus_global_config: &cetus_config::GlobalConfig,
+    _factor_x64: u128,
+    _clock: &Clock,
+): (Balance<X>, Balance<Y>, ReductionRepaymentTicket<SX, SY>) {
+    abort e_function_deprecated!()
+}
+
 /// Initialize position size reduction (withdraw), while preserving mathematical safety guarantees.
 /// A factor_x64 percentage of the position is withdrawn and the same percentage of debt is repaid.
-public fun reduce<X, Y, SX, SY>(
+public fun reduce_v2<X, Y, SX, SY>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
     cap: &PositionCap,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     supply_pool_x: &mut SupplyPool<X, SX>,
     supply_pool_y: &mut SupplyPool<Y, SY>,
     cetus_pool: &mut cetus_pool::Pool<X, Y>,
@@ -416,12 +581,27 @@ public fun reduce<X, Y, SX, SY>(
     )
 }
 
-/// Add liquidity to the inner LP position.
+#[deprecated(note = b"Use `add_liquidity_v2` instead.")]
 public fun add_liquidity<X, Y>(
+    _position: &mut Position<X, Y, CetusPosition>,
+    _config: &mut PositionConfig,
+    _cap: &PositionCap,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _cetus_pool: &mut cetus_pool::Pool<X, Y>,
+    _cetus_config: &cetus_config::GlobalConfig,
+    _delta_l: u128,
+    _clock: &Clock,
+): cetus_pool::AddLiquidityReceipt<X, Y> {
+    abort e_function_deprecated!()
+}
+
+/// Add liquidity to the inner LP position.
+public fun add_liquidity_v2<X, Y>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
     cap: &PositionCap,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     cetus_pool: &mut cetus_pool::Pool<X, Y>,
     cetus_config: &cetus_config::GlobalConfig,
@@ -604,12 +784,27 @@ public fun rebalance_collect_reward<X, Y, T>(
     )
 }
 
-/// Adds liquidity to a the underlying LP position during rebalancing.
+#[deprecated(note = b"Use `rebalance_add_liquidity_v2` instead.")]
 public fun rebalance_add_liquidity<X, Y>(
+    _position: &mut Position<X, Y, CetusPosition>,
+    _config: &mut PositionConfig,
+    _receipt: &mut RebalanceReceipt,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _cetus_pool: &mut cetus_pool::Pool<X, Y>,
+    _cetus_config: &cetus_config::GlobalConfig,
+    _delta_l: u128,
+    _clock: &Clock,
+): cetus_pool::AddLiquidityReceipt<X, Y> {
+    abort e_function_deprecated!()
+}
+
+/// Adds liquidity to a the underlying LP position during rebalancing.
+public fun rebalance_add_liquidity_v2<X, Y>(
     position: &mut Position<X, Y, CetusPosition>,
     config: &mut PositionConfig,
     receipt: &mut RebalanceReceipt,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     cetus_pool: &mut cetus_pool::Pool<X, Y>,
     cetus_config: &cetus_config::GlobalConfig,
@@ -766,24 +961,62 @@ public fun position_model<X, Y>(
     core::validated_model_for_position!(position, config, debt_info)
 }
 
-/// Calculate the required amounts to liquidate X collateral by repaying Y debt.
+#[deprecated(note = b"Use `calc_liquidate_col_x_v2` instead.")]
 public fun calc_liquidate_col_x<X, Y>(
+    _position: &Position<X, Y, CetusPosition>,
+    _config: &PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _max_repayment_amt_y: u64,
+): (u64, u64) {
+    abort e_function_deprecated!()
+}
+
+/// Calculate the required amounts to liquidate X collateral by repaying Y debt.
+public fun calc_liquidate_col_x_v2<X, Y>(
     position: &Position<X, Y, CetusPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_repayment_amt_y: u64,
 ): (u64, u64) {
-    core::calc_liquidate_col_x!(position, config, price_info, debt_info, max_repayment_amt_y)
+    let shape = core::lp_shape!(position);
+    core::calc_liquidate_col_x(
+        position,
+        config,
+        price_info,
+        debt_info,
+        max_repayment_amt_y,
+        shape,
+    )
+}
+
+#[deprecated(note = b"Use `calc_liquidate_col_y_v2` instead.")]
+public fun calc_liquidate_col_y<X, Y>(
+    _position: &Position<X, Y, CetusPosition>,
+    _config: &PositionConfig,
+    _price_info: &PythPriceInfo,
+    _debt_info: &DebtInfo,
+    _max_repayment_amt_x: u64,
+): (u64, u64) {
+    abort e_function_deprecated!()
 }
 
 /// Calculate the required amounts to liquidate Y collateral by repaying X debt.
-public fun calc_liquidate_col_y<X, Y>(
+public fun calc_liquidate_col_y_v2<X, Y>(
     position: &Position<X, Y, CetusPosition>,
     config: &PositionConfig,
-    price_info: &PythPriceInfo,
+    price_info: &PriceCollection,
     debt_info: &DebtInfo,
     max_repayment_amt_x: u64,
 ): (u64, u64) {
-    core::calc_liquidate_col_y!(position, config, price_info, debt_info, max_repayment_amt_x)
+    let shape = core::lp_shape!(position);
+    core::calc_liquidate_col_y(
+        position,
+        config,
+        price_info,
+        debt_info,
+        max_repayment_amt_x,
+        shape,
+    )
 }
