@@ -51,7 +51,7 @@ public struct Key has copy, drop, store {
 public fun empty(ctx: &mut TxContext): DebtBag {
     DebtBag {
         id: object::new(ctx),
-        infos: vector::empty(),
+        infos: vector[],
         bag: bag::new(ctx),
     }
 }
