@@ -3,9 +3,9 @@
 # This file SHOULD be committed to source control
 
 [published.mainnet]
-toolchain-version = "1.61.2"
+toolchain-version = "1.77.3"
 chain-id = "35834a8a"
-published-at = "0xf259194ebadf4a68c7dd0103483aa6c6e0e058597c02c390a398092892192f6f"
+published-at = "0x634794be3a538c645f9afbb8f652455a665df57e8ccaca69de879c1feb08d908"
 original-id = "0x51e0ccce48f0763f98f1cb4856847c2e1531adacada99cdd7626ab999db57523"
-version = 18
+version = 19
 upgrade-capability = "0xc5354f7b8f1b0fc11b70114ab470b125cc36485bfd5ab0ac838aece8876a68fa"
