@@ -242,7 +242,7 @@ public(package) fun new<T, YT>(lp_treasury: TreasuryCap<YT>, ctx: &mut TxContext
         lp_treasury,
         strategies: vec_map::empty(),
         performance_fee_balance: balance::zero(),
-        strategy_withdraw_priority_order: vector::empty(),
+        strategy_withdraw_priority_order: vector[],
         withdraw_ticket_issued: false,
         tvl_cap: option::none(),
         profit_unlock_duration_sec: DEFAULT_PROFIT_UNLOCK_DURATION_SEC,
@@ -488,7 +488,7 @@ entry fun set_withdrawals_disabled<T, YT>(
 ) {
     assert_version(vault);
 
-    if (df::exists_(&vault.id, b"withdrawals_disabled")) {
+    if (df::exists(&vault.id, b"withdrawals_disabled")) {
         let val = df::borrow_mut(&mut vault.id, b"withdrawals_disabled");
         *val = withdrawals_disabled;
     } else {
@@ -498,7 +498,7 @@ entry fun set_withdrawals_disabled<T, YT>(
 
 /// Returns true if withdrawals are currently disabled for the vault.
 public fun withdrawals_disabled<T, YT>(vault: &Vault<T, YT>): bool {
-    if (df::exists_(&vault.id, b"withdrawals_disabled")) {
+    if (df::exists(&vault.id, b"withdrawals_disabled")) {
         let val = df::borrow(&vault.id, b"withdrawals_disabled");
         *val
     } else {
@@ -526,7 +526,7 @@ entry fun remove_rate_limiter<T, YT>(
 }
 
 fun has_rate_limiter<T, YT>(vault: &Vault<T, YT>): bool {
-    df::exists_(&vault.id, b"rate_limiter")
+    df::exists(&vault.id, b"rate_limiter")
 }
 
 fun rate_limiter_mut<T, YT>(vault: &mut Vault<T, YT>): &mut NetSlidingSumLimiter {
@@ -905,8 +905,8 @@ public fun calc_rebalance_amounts<T, YT>(vault: &Vault<T, YT>, clock: &Clock): R
     // calculate total available balance and prepare rebalance infos
     let mut rebalance_infos: VecMap<ID, RebalanceInfo> = vec_map::empty();
     let mut total_available_balance = 0;
-    let mut max_borrow_idxs_to_process = vector::empty();
-    let mut no_max_borrow_idxs = vector::empty();
+    let mut max_borrow_idxs_to_process = vector[];
+    let mut no_max_borrow_idxs = vector[];
 
     total_available_balance = total_available_balance + balance::value(&vault.free_balance);
     total_available_balance =
@@ -944,7 +944,7 @@ public fun calc_rebalance_amounts<T, YT>(vault: &Vault<T, YT>, clock: &Clock): R
     while (need_to_reprocess) {
         let mut i = 0;
         let n = vector::length(&max_borrow_idxs_to_process);
-        let mut new_max_borrow_idxs_to_process = vector::empty();
+        let mut new_max_borrow_idxs_to_process = vector[];
         need_to_reprocess = false;
         while (i < n) {
             let idx = *vector::borrow(&max_borrow_idxs_to_process, i);
@@ -1141,7 +1141,7 @@ public(package) fun strategy_hand_over_profit<T, YT>(
         timestamp_sec(clock),
         clock,
     );
-    let unlock_per_second = u64::divide_and_round_up(
+    let unlock_per_second = u64::div_ceil(
         balance::value(&redeposit),
         vault.profit_unlock_duration_sec,
     );

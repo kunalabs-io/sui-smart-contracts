@@ -924,7 +924,7 @@ fun upsert_config_extension<Key: copy + drop + store, Val: store + drop>(
 ): ActionRequest {
     check_config_version(config);
 
-    if (df::exists_(&config.id, key)) {
+    if (df::exists(&config.id, key)) {
         let val = df::borrow_mut<Key, Val>(&mut config.id, key);
         *val = new_value;
     } else {
@@ -948,7 +948,7 @@ fun add_config_extension<Key: copy + drop + store, Val: store>(
 
 fun has_config_extension<Key: copy + drop + store>(config: &PositionConfig, key: Key): bool {
     check_config_version(config);
-    df::exists_(&config.id, key)
+    df::exists(&config.id, key)
 }
 
 fun borrow_config_extension<Key: copy + drop + store, Val: store>(
@@ -966,7 +966,7 @@ fun get_config_extension_or_default<Key: copy + drop + store, Val: copy + drop +
 ): Val {
     check_config_version(config);
 
-    if (df::exists_(&config.id, key)) {
+    if (df::exists(&config.id, key)) {
         *df::borrow<Key, Val>(&config.id, key)
     } else {
         default_value
