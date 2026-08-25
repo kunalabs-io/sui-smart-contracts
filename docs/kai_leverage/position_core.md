@@ -36,6 +36,7 @@ seamless integration with diverse AMM architectures.
 -  [Struct `Position`](#kai_leverage_position_core_clmm_Position)
 -  [Struct `PositionCap`](#kai_leverage_position_core_clmm_PositionCap)
 -  [Struct `PythConfig`](#kai_leverage_position_core_clmm_PythConfig)
+-  [Struct `OraclePriceConfig`](#kai_leverage_position_core_clmm_OraclePriceConfig)
 -  [Struct `PositionConfig`](#kai_leverage_position_core_clmm_PositionConfig)
 -  [Struct `LiquidationDisabledKey`](#kai_leverage_position_core_clmm_LiquidationDisabledKey)
 -  [Struct `ReductionDisabledKey`](#kai_leverage_position_core_clmm_ReductionDisabledKey)
@@ -142,6 +143,10 @@ seamless integration with diverse AMM architectures.
 -  [Function `set_pyth_config_max_age_secs`](#kai_leverage_position_core_clmm_set_pyth_config_max_age_secs)
 -  [Function `pyth_config_allow_pio`](#kai_leverage_position_core_clmm_pyth_config_allow_pio)
 -  [Function `pyth_config_disallow_pio`](#kai_leverage_position_core_clmm_pyth_config_disallow_pio)
+-  [Function `config_add_empty_oracle_price_config`](#kai_leverage_position_core_clmm_config_add_empty_oracle_price_config)
+-  [Function `set_oracle_price_config_max_age_secs`](#kai_leverage_position_core_clmm_set_oracle_price_config_max_age_secs)
+-  [Function `oracle_price_config_allow_price_object`](#kai_leverage_position_core_clmm_oracle_price_config_allow_price_object)
+-  [Function `oracle_price_config_disallow_price_object`](#kai_leverage_position_core_clmm_oracle_price_config_disallow_price_object)
 -  [Function `set_deleverage_margin_bps`](#kai_leverage_position_core_clmm_set_deleverage_margin_bps)
 -  [Function `set_base_deleverage_factor_bps`](#kai_leverage_position_core_clmm_set_base_deleverage_factor_bps)
 -  [Function `set_liq_margin_bps`](#kai_leverage_position_core_clmm_set_liq_margin_bps)
@@ -269,6 +274,8 @@ seamless integration with diverse AMM architectures.
 -  [Function `price_deviation_is_acceptable`](#kai_leverage_position_core_clmm_price_deviation_is_acceptable)
 -  [Function `liq_margin_is_valid`](#kai_leverage_position_core_clmm_liq_margin_is_valid)
 -  [Function `init_margin_is_valid`](#kai_leverage_position_core_clmm_init_margin_is_valid)
+-  [Macro function `lp_shape`](#kai_leverage_position_core_clmm_lp_shape)
+-  [Function `position_model_from_lp_shape`](#kai_leverage_position_core_clmm_position_model_from_lp_shape)
 -  [Macro function `model_from_position`](#kai_leverage_position_core_clmm_model_from_position)
 -  [Macro function `slippage_tolerance_assertion`](#kai_leverage_position_core_clmm_slippage_tolerance_assertion)
 -  [Function `get_amount_ema_usd_value_6_decimals`](#kai_leverage_position_core_clmm_get_amount_ema_usd_value_6_decimals)
@@ -284,9 +291,9 @@ seamless integration with diverse AMM architectures.
 -  [Function `deleverage_ticket_repay_y`](#kai_leverage_position_core_clmm_deleverage_ticket_repay_y)
 -  [Function `destroy_deleverage_ticket`](#kai_leverage_position_core_clmm_destroy_deleverage_ticket)
 -  [Function `calc_liq_fee_from_reward`](#kai_leverage_position_core_clmm_calc_liq_fee_from_reward)
--  [Macro function `liquidate_col_x`](#kai_leverage_position_core_clmm_liquidate_col_x)
--  [Macro function `liquidate_col_y`](#kai_leverage_position_core_clmm_liquidate_col_y)
--  [Macro function `repay_bad_debt`](#kai_leverage_position_core_clmm_repay_bad_debt)
+-  [Function `liquidate_col_x`](#kai_leverage_position_core_clmm_liquidate_col_x)
+-  [Function `liquidate_col_y`](#kai_leverage_position_core_clmm_liquidate_col_y)
+-  [Function `repay_bad_debt`](#kai_leverage_position_core_clmm_repay_bad_debt)
 -  [Macro function `reduce`](#kai_leverage_position_core_clmm_reduce)
 -  [Function `reduction_ticket_calc_repay_amt_x`](#kai_leverage_position_core_clmm_reduction_ticket_calc_repay_amt_x)
 -  [Function `reduction_ticket_calc_repay_amt_y`](#kai_leverage_position_core_clmm_reduction_ticket_calc_repay_amt_y)
@@ -319,27 +326,28 @@ seamless integration with diverse AMM architectures.
 -  [Function `collect_protocol_fees`](#kai_leverage_position_core_clmm_collect_protocol_fees)
 -  [Function `collect_deleted_position_fees`](#kai_leverage_position_core_clmm_collect_deleted_position_fees)
 -  [Macro function `validated_model_for_position`](#kai_leverage_position_core_clmm_validated_model_for_position)
--  [Macro function `calc_liquidate_col_x`](#kai_leverage_position_core_clmm_calc_liquidate_col_x)
--  [Macro function `calc_liquidate_col_y`](#kai_leverage_position_core_clmm_calc_liquidate_col_y)
+-  [Function `calc_liquidate_col_x`](#kai_leverage_position_core_clmm_calc_liquidate_col_x)
+-  [Function `calc_liquidate_col_y`](#kai_leverage_position_core_clmm_calc_liquidate_col_y)
 
 
-<pre><code><b>use</b> <a href="../../dependencies/access_management/access.md#access_management_access">access_management::access</a>;
+<pre><code><b>use</b> (pyth=0x55300367A2D40813727CCAC4ECEE977A39FB9CDB46F2E6B2C354B9798F5DE2C0)::i64;
+<b>use</b> (pyth=0x55300367A2D40813727CCAC4ECEE977A39FB9CDB46F2E6B2C354B9798F5DE2C0)::price;
+<b>use</b> (pyth=0x55300367A2D40813727CCAC4ECEE977A39FB9CDB46F2E6B2C354B9798F5DE2C0)::price_feed;
+<b>use</b> (pyth=0x55300367A2D40813727CCAC4ECEE977A39FB9CDB46F2E6B2C354B9798F5DE2C0)::price_identifier;
+<b>use</b> (pyth=0x55300367A2D40813727CCAC4ECEE977A39FB9CDB46F2E6B2C354B9798F5DE2C0)::price_info;
+<b>use</b> <a href="../../dependencies/access_management/access.md#access_management_access">access_management::access</a>;
 <b>use</b> <a href="../../dependencies/access_management/dynamic_map.md#access_management_dynamic_map">access_management::dynamic_map</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/balance_bag.md#kai_leverage_balance_bag">kai_leverage::balance_bag</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt">kai_leverage::debt</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/debt_bag.md#kai_leverage_debt_bag">kai_leverage::debt_bag</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info">kai_leverage::debt_info</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/equity.md#kai_leverage_equity">kai_leverage::equity</a>;
+<b>use</b> <a href="../../dependencies/kai_leverage/lp_shape.md#kai_leverage_lp_shape_clmm">kai_leverage::lp_shape_clmm</a>;
+<b>use</b> <a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price">kai_leverage::oracle_price</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/piecewise.md#kai_leverage_piecewise">kai_leverage::piecewise</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm">kai_leverage::position_model_clmm</a>;
-<b>use</b> <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth">kai_leverage::pyth</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool">kai_leverage::supply_pool</a>;
 <b>use</b> <a href="../../dependencies/kai_leverage/util.md#kai_leverage_util">kai_leverage::util</a>;
-<b>use</b> pyth::i64;
-<b>use</b> pyth::price;
-<b>use</b> pyth::price_feed;
-<b>use</b> pyth::price_identifier;
-<b>use</b> pyth::price_info;
 <b>use</b> <a href="../../dependencies/rate_limiter/net_sliding_sum_limiter.md#rate_limiter_net_sliding_sum_limiter">rate_limiter::net_sliding_sum_limiter</a>;
 <b>use</b> <a href="../../dependencies/rate_limiter/ring_aggregator.md#rate_limiter_ring_aggregator">rate_limiter::ring_aggregator</a>;
 <b>use</b> <a href="../../dependencies/rate_limiter/sliding_sum_limiter.md#rate_limiter_sliding_sum_limiter">rate_limiter::sliding_sum_limiter</a>;
@@ -361,8 +369,10 @@ seamless integration with diverse AMM architectures.
 <b>use</b> <a href="../../dependencies/sui/bcs.md#sui_bcs">sui::bcs</a>;
 <b>use</b> <a href="../../dependencies/sui/clock.md#sui_clock">sui::clock</a>;
 <b>use</b> <a href="../../dependencies/sui/coin.md#sui_coin">sui::coin</a>;
+<b>use</b> <a href="../../dependencies/sui/coin_registry.md#sui_coin_registry">sui::coin_registry</a>;
 <b>use</b> <a href="../../dependencies/sui/config.md#sui_config">sui::config</a>;
 <b>use</b> <a href="../../dependencies/sui/deny_list.md#sui_deny_list">sui::deny_list</a>;
+<b>use</b> <a href="../../dependencies/sui/derived_object.md#sui_derived_object">sui::derived_object</a>;
 <b>use</b> <a href="../../dependencies/sui/dynamic_field.md#sui_dynamic_field">sui::dynamic_field</a>;
 <b>use</b> <a href="../../dependencies/sui/dynamic_object_field.md#sui_dynamic_object_field">sui::dynamic_object_field</a>;
 <b>use</b> <a href="../../dependencies/sui/event.md#sui_event">sui::event</a>;
@@ -743,6 +753,39 @@ Configuration for Pyth oracle integration.
 </dd>
 <dt>
 <code>pio_allowlist: <a href="../../dependencies/sui/vec_map.md#sui_vec_map_VecMap">sui::vec_map::VecMap</a>&lt;<a href="../../dependencies/std/type_name.md#std_type_name_TypeName">std::type_name::TypeName</a>, <a href="../../dependencies/sui/object.md#sui_object_ID">sui::object::ID</a>&gt;</code>
+</dt>
+<dd>
+</dd>
+</dl>
+
+
+</details>
+
+<a name="kai_leverage_position_core_clmm_OraclePriceConfig"></a>
+
+## Struct `OraclePriceConfig`
+
+Configuration for the rail-agnostic oracle price collection
+(<code><a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price">kai_leverage::oracle_price</a></code>).
+
+
+<pre><code><b>public</b> <b>struct</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_OraclePriceConfig">OraclePriceConfig</a> <b>has</b> <b>copy</b>, drop, store
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>max_age_secs: u64</code>
+</dt>
+<dd>
+</dd>
+<dt>
+<code>price_object_allowlist: <a href="../../dependencies/sui/vec_map.md#sui_vec_map_VecMap">sui::vec_map::VecMap</a>&lt;<a href="../../dependencies/std/type_name.md#std_type_name_TypeName">std::type_name::TypeName</a>, <a href="../../dependencies/sui/object.md#sui_object_ID">sui::object::ID</a>&gt;</code>
 </dt>
 <dd>
 </dd>
@@ -4248,6 +4291,138 @@ Remove allowlist for a specific Pyth price info object.
 
 </details>
 
+<a name="kai_leverage_position_core_clmm_config_add_empty_oracle_price_config"></a>
+
+## Function `config_add_empty_oracle_price_config`
+
+Add empty oracle price configuration to position config.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_config_add_empty_oracle_price_config">config_add_empty_oracle_price_config</a>(config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_config_add_empty_oracle_price_config">config_add_empty_oracle_price_config</a>(
+    config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
+    ctx: &<b>mut</b> TxContext,
+): ActionRequest {
+    <b>let</b> oracle_price_config = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_OraclePriceConfig">OraclePriceConfig</a> {
+        max_age_secs: 0,
+        price_object_allowlist: vec_map::empty(),
+    };
+    config
+        .<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_allowed_oracles">allowed_oracles</a>
+        .add(type_name::with_defining_ids&lt;<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_OraclePriceConfig">OraclePriceConfig</a>&gt;(), oracle_price_config);
+    access::new_request(<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_AModifyConfig">AModifyConfig</a> {}, ctx)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_position_core_clmm_set_oracle_price_config_max_age_secs"></a>
+
+## Function `set_oracle_price_config_max_age_secs`
+
+Set maximum age for oracle price feeds in seconds.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_set_oracle_price_config_max_age_secs">set_oracle_price_config_max_age_secs</a>(config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, max_age_secs: u64, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_set_oracle_price_config_max_age_secs">set_oracle_price_config_max_age_secs</a>(
+    config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
+    max_age_secs: u64,
+    ctx: &<b>mut</b> TxContext,
+): ActionRequest {
+    <b>let</b> oracle_price_config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_OraclePriceConfig">OraclePriceConfig</a> =
+        &<b>mut</b> config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_allowed_oracles">allowed_oracles</a>[type_name::with_defining_ids&lt;<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_OraclePriceConfig">OraclePriceConfig</a>&gt;()];
+    oracle_price_config.max_age_secs = max_age_secs;
+    access::new_request(<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_AModifyConfig">AModifyConfig</a> {}, ctx)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_position_core_clmm_oracle_price_config_allow_price_object"></a>
+
+## Function `oracle_price_config_allow_price_object`
+
+Allow a specific oracle price info object for a coin type.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_oracle_price_config_allow_price_object">oracle_price_config_allow_price_object</a>(config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, coin_type: <a href="../../dependencies/std/type_name.md#std_type_name_TypeName">std::type_name::TypeName</a>, price_object_id: <a href="../../dependencies/sui/object.md#sui_object_ID">sui::object::ID</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_oracle_price_config_allow_price_object">oracle_price_config_allow_price_object</a>(
+    config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
+    coin_type: TypeName,
+    price_object_id: ID,
+    ctx: &<b>mut</b> TxContext,
+): ActionRequest {
+    <b>let</b> oracle_price_config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_OraclePriceConfig">OraclePriceConfig</a> =
+        &<b>mut</b> config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_allowed_oracles">allowed_oracles</a>[type_name::with_defining_ids&lt;<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_OraclePriceConfig">OraclePriceConfig</a>&gt;()];
+    oracle_price_config.price_object_allowlist.insert(coin_type, price_object_id);
+    access::new_request(<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_AModifyConfig">AModifyConfig</a> {}, ctx)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_position_core_clmm_oracle_price_config_disallow_price_object"></a>
+
+## Function `oracle_price_config_disallow_price_object`
+
+Remove allowlist for a specific oracle price info object.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_oracle_price_config_disallow_price_object">oracle_price_config_disallow_price_object</a>(config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, coin_type: <a href="../../dependencies/std/type_name.md#std_type_name_TypeName">std::type_name::TypeName</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_oracle_price_config_disallow_price_object">oracle_price_config_disallow_price_object</a>(
+    config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
+    coin_type: TypeName,
+    ctx: &<b>mut</b> TxContext,
+): ActionRequest {
+    <b>let</b> oracle_price_config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_OraclePriceConfig">OraclePriceConfig</a> =
+        &<b>mut</b> config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_allowed_oracles">allowed_oracles</a>[type_name::with_defining_ids&lt;<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_OraclePriceConfig">OraclePriceConfig</a>&gt;()];
+    oracle_price_config.price_object_allowlist.remove(&coin_type);
+    access::new_request(<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_AModifyConfig">AModifyConfig</a> {}, ctx)
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="kai_leverage_position_core_clmm_set_deleverage_margin_bps"></a>
 
 ## Function `set_deleverage_margin_bps`
@@ -7525,7 +7700,7 @@ Migrate position to current module version.
 
 
 
-<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_price_info">validate_price_info</a>(config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>): <a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_ValidatedPythPriceInfo">kai_leverage::pyth::ValidatedPythPriceInfo</a>
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_price_info">validate_price_info</a>(config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>): <a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_ValidatedPrices">kai_leverage::oracle_price::ValidatedPrices</a>
 </code></pre>
 
 
@@ -7536,11 +7711,14 @@ Migrate position to current module version.
 
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_price_info">validate_price_info</a>(
     config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    price_info: &PythPriceInfo,
-): ValidatedPythPriceInfo {
-    <b>let</b> pyth_config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PythConfig">PythConfig</a> =
-        &config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_allowed_oracles">allowed_oracles</a>[type_name::with_defining_ids&lt;<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PythConfig">PythConfig</a>&gt;()];
-    price_info.validate(pyth_config.max_age_secs, &pyth_config.pio_allowlist)
+    price_info: &PriceCollection,
+): ValidatedPrices {
+    <b>let</b> oracle_price_config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_OraclePriceConfig">OraclePriceConfig</a> =
+        &config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_allowed_oracles">allowed_oracles</a>[type_name::with_defining_ids&lt;<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_OraclePriceConfig">OraclePriceConfig</a>&gt;()];
+    price_info.validate(
+        oracle_price_config.max_age_secs,
+        &oracle_price_config.price_object_allowlist,
+    )
 }
 </code></pre>
 
@@ -7717,6 +7895,96 @@ Migrate position to current module version.
 
 </details>
 
+<a name="kai_leverage_position_core_clmm_lp_shape"></a>
+
+## Macro function `lp_shape`
+
+Extract the LP position's shape as an [LpShape].
+
+This is the only piece of position state whose extraction needs to know
+the concrete LP type (tick range and liquidity are structural method
+calls), so it stays a macro while the rest of the model build lives in
+[position_model_from_lp_shape].
+
+
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_lp_shape">lp_shape</a>&lt;$X, $Y, $LP&gt;($position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;): <a href="../../dependencies/kai_leverage/lp_shape.md#kai_leverage_lp_shape_clmm_LpShape">kai_leverage::lp_shape_clmm::LpShape</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_lp_shape">lp_shape</a>&lt;$X, $Y, $LP&gt;($position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;): LpShape {
+    <b>let</b> position = $position;
+    <b>let</b> (tick_a, tick_b) = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_lp_position">lp_position</a>().tick_range();
+    lp_shape_clmm::new(
+        tick_a.as_sqrt_price_x64(),
+        tick_b.as_sqrt_price_x64(),
+        position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_lp_position">lp_position</a>().liquidity(),
+    )
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="kai_leverage_position_core_clmm_position_model_from_lp_shape"></a>
+
+## Function `position_model_from_lp_shape`
+
+Build a <code>PositionModel</code> snapshot from position state given the LP
+position's shape (see [lp_shape]).
+
+
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_position_model_from_lp_shape">position_model_from_lp_shape</a>&lt;X, Y, LP&gt;(position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, LP&gt;, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_ValidatedDebtInfo">kai_leverage::debt_info::ValidatedDebtInfo</a>, shape: <a href="../../dependencies/kai_leverage/lp_shape.md#kai_leverage_lp_shape_clmm_LpShape">kai_leverage::lp_shape_clmm::LpShape</a>): <a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_PositionModel">kai_leverage::position_model_clmm::PositionModel</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_position_model_from_lp_shape">position_model_from_lp_shape</a>&lt;X, Y, LP&gt;(
+    position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;X, Y, LP&gt;,
+    debt_info: &ValidatedDebtInfo,
+    shape: LpShape,
+): PositionModel {
+    <b>let</b> cx = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_col_x">col_x</a>().value();
+    <b>let</b> cy = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_col_y">col_y</a>().value();
+    <b>let</b> sx = position.debt_bag().get_share_amount_by_asset_type&lt;X&gt;();
+    <b>let</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_dx">dx</a> = <b>if</b> (sx &gt; 0) {
+        <b>let</b> share_type = position.debt_bag().get_share_type_for_asset&lt;X&gt;();
+        debt_info.calc_repay_by_shares(share_type, sx)
+    } <b>else</b> {
+        0
+    };
+    <b>let</b> sy = position.debt_bag().get_share_amount_by_asset_type&lt;Y&gt;();
+    <b>let</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_dy">dy</a> = <b>if</b> (sy &gt; 0) {
+        <b>let</b> share_type = position.debt_bag().get_share_type_for_asset&lt;Y&gt;();
+        debt_info.calc_repay_by_shares(share_type, sy)
+    } <b>else</b> {
+        0
+    };
+    position_model_clmm::create(
+        shape.sqrt_pa_x64(),
+        shape.sqrt_pb_x64(),
+        shape.l(),
+        cx,
+        cy,
+        <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_dx">dx</a>,
+        <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_dy">dy</a>,
+    )
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="kai_leverage_position_core_clmm_model_from_position"></a>
 
 ## Macro function `model_from_position`
@@ -7742,36 +8010,8 @@ and calculated debt amounts from the debt bag.
     $debt_info: &ValidatedDebtInfo,
 ): PositionModel {
     <b>let</b> position = $position;
-    <b>let</b> debt_info = $debt_info;
-    <b>let</b> (tick_a, tick_b) = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_lp_position">lp_position</a>().tick_range();
-    <b>let</b> l = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_lp_position">lp_position</a>().liquidity();
-    <b>let</b> sqrt_pa_x64 = tick_a.as_sqrt_price_x64();
-    <b>let</b> sqrt_pb_x64 = tick_b.as_sqrt_price_x64();
-    <b>let</b> cx = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_col_x">col_x</a>().value();
-    <b>let</b> cy = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_col_y">col_y</a>().value();
-    <b>let</b> sx = position.debt_bag().get_share_amount_by_asset_type&lt;$X&gt;();
-    <b>let</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_dx">dx</a> = <b>if</b> (sx &gt; 0) {
-        <b>let</b> share_type = position.debt_bag().get_share_type_for_asset&lt;$X&gt;();
-        debt_info.calc_repay_by_shares(share_type, sx)
-    } <b>else</b> {
-        0
-    };
-    <b>let</b> sy = position.debt_bag().get_share_amount_by_asset_type&lt;$Y&gt;();
-    <b>let</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_dy">dy</a> = <b>if</b> (sy &gt; 0) {
-        <b>let</b> share_type = position.debt_bag().get_share_type_for_asset&lt;$Y&gt;();
-        debt_info.calc_repay_by_shares(share_type, sy)
-    } <b>else</b> {
-        0
-    };
-    position_model_clmm::create(
-        sqrt_pa_x64,
-        sqrt_pb_x64,
-        l,
-        cx,
-        cy,
-        <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_dx">dx</a>,
-        <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_dy">dy</a>,
-    )
+    <b>let</b> shape = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_lp_shape">lp_shape</a>!(position);
+    <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_position_model_from_lp_shape">position_model_from_lp_shape</a>(position, $debt_info, shape)
 }
 </code></pre>
 
@@ -7825,7 +8065,7 @@ Validate pool price is within acceptable slippage tolerance.
 
 
 
-<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_get_amount_ema_usd_value_6_decimals">get_amount_ema_usd_value_6_decimals</a>&lt;T&gt;(amount: u64, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_ValidatedPythPriceInfo">kai_leverage::pyth::ValidatedPythPriceInfo</a>, round_up: bool): u64
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_get_amount_ema_usd_value_6_decimals">get_amount_ema_usd_value_6_decimals</a>&lt;T&gt;(amount: u64, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_ValidatedPrices">kai_leverage::oracle_price::ValidatedPrices</a>, round_up: bool): u64
 </code></pre>
 
 
@@ -7836,14 +8076,14 @@ Validate pool price is within acceptable slippage tolerance.
 
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_get_amount_ema_usd_value_6_decimals">get_amount_ema_usd_value_6_decimals</a>&lt;T&gt;(
     amount: u64,
-    price_info: &ValidatedPythPriceInfo,
+    price_info: &ValidatedPrices,
     round_up: bool,
 ): u64 {
     <b>let</b> t = type_name::with_defining_ids&lt;T&gt;();
-    <b>let</b> price = price_info.get_ema_price(t);
-    <b>let</b> p = pyth_i64::get_magnitude_if_positive(&price.get_price()) <b>as</b> u128;
-    <b>let</b> expo = pyth_i64::get_magnitude_if_negative(&price.get_expo()) <b>as</b> u8;
-    <b>let</b> dec = pyth::decimals(t);
+    <b>let</b> quote = price_info.get_smoothed_price(t);
+    <b>let</b> p = quote.quote_price() <b>as</b> u128;
+    <b>let</b> expo = quote.quote_expo_neg() <b>as</b> u8;
+    <b>let</b> dec = price_info.decimals(t);
     <b>let</b> num = p * (amount <b>as</b> u128);
     (<b>if</b> (expo + dec &gt; 6) {
             <b>if</b> (round_up) {
@@ -7867,7 +8107,7 @@ Validate pool price is within acceptable slippage tolerance.
 
 
 
-<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_get_balance_ema_usd_value_6_decimals">get_balance_ema_usd_value_6_decimals</a>&lt;T&gt;(balance: &<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;T&gt;, price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_ValidatedPythPriceInfo">kai_leverage::pyth::ValidatedPythPriceInfo</a>, round_up: bool): u64
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_get_balance_ema_usd_value_6_decimals">get_balance_ema_usd_value_6_decimals</a>&lt;T&gt;(balance: &<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;T&gt;, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_ValidatedPrices">kai_leverage::oracle_price::ValidatedPrices</a>, round_up: bool): u64
 </code></pre>
 
 
@@ -7878,7 +8118,7 @@ Validate pool price is within acceptable slippage tolerance.
 
 <pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_get_balance_ema_usd_value_6_decimals">get_balance_ema_usd_value_6_decimals</a>&lt;T&gt;(
     balance: &Balance&lt;T&gt;,
-    price_info: &ValidatedPythPriceInfo,
+    price_info: &ValidatedPrices,
     round_up: bool,
 ): u64 {
     <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_get_amount_ema_usd_value_6_decimals">get_amount_ema_usd_value_6_decimals</a>&lt;T&gt;(balance.value(), price_info, round_up)
@@ -7900,7 +8140,7 @@ margin requirements, and position size limits before creating a ticket that
 can be used to open a leveraged position.
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_create_position_ticket">create_position_ticket</a>&lt;$X, $Y, $I32&gt;($pool_object: _, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $tick_a: $I32, $tick_b: $I32, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_principal_x">principal_x</a>: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_principal_y">principal_y</a>: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_delta_l">delta_l</a>: u128, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, $ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_CreatePositionTicket">kai_leverage::position_core_clmm::CreatePositionTicket</a>&lt;$X, $Y, $I32&gt;
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_create_position_ticket">create_position_ticket</a>&lt;$X, $Y, $I32&gt;($pool_object: _, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $tick_a: $I32, $tick_b: $I32, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_principal_x">principal_x</a>: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_principal_y">principal_y</a>: <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_delta_l">delta_l</a>: u128, $price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, $clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, $ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_CreatePositionTicket">kai_leverage::position_core_clmm::CreatePositionTicket</a>&lt;$X, $Y, $I32&gt;
 </code></pre>
 
 
@@ -7919,7 +8159,7 @@ can be used to open a leveraged position.
     $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_principal_x">principal_x</a>: Balance&lt;$X&gt;,
     $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_principal_y">principal_y</a>: Balance&lt;$Y&gt;,
     $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_delta_l">delta_l</a>: u128,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $clock: &Clock,
     $ctx: &<b>mut</b> TxContext,
 ): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_CreatePositionTicket">CreatePositionTicket</a>&lt;$X, $Y, $I32&gt; {
@@ -7957,7 +8197,7 @@ can be used to open a leveraged position.
     <b>let</b> p0_x128 = (sqrt_p0_x64 <b>as</b> u256) * (sqrt_p0_x64 <b>as</b> u256);
     // validate price deviation
     {
-        <b>let</b> p0_oracle_ema_x128 = price_info.div_ema_price_numeric_x128(
+        <b>let</b> p0_oracle_ema_x128 = price_info.div_smoothed_price_numeric_x128(
             type_name::with_defining_ids&lt;$X&gt;(),
             type_name::with_defining_ids&lt;$Y&gt;(),
         );
@@ -8217,7 +8457,7 @@ and returning a PositionCap for ownership control.
 
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_create_deleverage_ticket_inner">create_deleverage_ticket_inner</a>&lt;$X, $Y, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $max_delta_l: u128, $is_for_liquidation: bool, $remove_liquidity: |&<b>mut</b> $Pool, &<b>mut</b> $LP, u128| -&gt; (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;)): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_DeleverageTicket">kai_leverage::position_core_clmm::DeleverageTicket</a>
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_create_deleverage_ticket_inner">create_deleverage_ticket_inner</a>&lt;$X, $Y, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $max_delta_l: u128, $is_for_liquidation: bool, $remove_liquidity: |&<b>mut</b> $Pool, &<b>mut</b> $LP, u128| -&gt; (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;)): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_DeleverageTicket">kai_leverage::position_core_clmm::DeleverageTicket</a>
 </code></pre>
 
 
@@ -8229,7 +8469,7 @@ and returning a PositionCap for ownership control.
 <pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_create_deleverage_ticket_inner">create_deleverage_ticket_inner</a>&lt;$X, $Y, $Pool, $LP&gt;(
     $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
     $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &<b>mut</b> $Pool,
     $max_delta_l: u128,
@@ -8332,7 +8572,7 @@ to restore healthy margin levels.
 This operation is permissioned.
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_create_deleverage_ticket">create_deleverage_ticket</a>&lt;$X, $Y, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $max_delta_l: u128, $ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>, $remove_liquidity: |&<b>mut</b> $Pool, &<b>mut</b> $LP, u128| -&gt; (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;)): (<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_DeleverageTicket">kai_leverage::position_core_clmm::DeleverageTicket</a>, <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>)
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_create_deleverage_ticket">create_deleverage_ticket</a>&lt;$X, $Y, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $max_delta_l: u128, $ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>, $remove_liquidity: |&<b>mut</b> $Pool, &<b>mut</b> $LP, u128| -&gt; (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;)): (<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_DeleverageTicket">kai_leverage::position_core_clmm::DeleverageTicket</a>, <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>)
 </code></pre>
 
 
@@ -8344,7 +8584,7 @@ This operation is permissioned.
 <pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_create_deleverage_ticket">create_deleverage_ticket</a>&lt;$X, $Y, $Pool, $LP&gt;(
     $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
     $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &<b>mut</b> $Pool,
     $max_delta_l: u128,
@@ -8379,7 +8619,7 @@ Create deleveraging ticket specifically for liquidation scenarios.
 Unlike the regular deleveraging, this operation is permissionless.
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_create_deleverage_ticket_for_liquidation">create_deleverage_ticket_for_liquidation</a>&lt;$X, $Y, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $remove_liquidity: |&<b>mut</b> $Pool, &<b>mut</b> $LP, u128| -&gt; (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;)): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_DeleverageTicket">kai_leverage::position_core_clmm::DeleverageTicket</a>
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_create_deleverage_ticket_for_liquidation">create_deleverage_ticket_for_liquidation</a>&lt;$X, $Y, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $remove_liquidity: |&<b>mut</b> $Pool, &<b>mut</b> $LP, u128| -&gt; (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;)): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_DeleverageTicket">kai_leverage::position_core_clmm::DeleverageTicket</a>
 </code></pre>
 
 
@@ -8391,7 +8631,7 @@ Unlike the regular deleveraging, this operation is permissionless.
 <pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_create_deleverage_ticket_for_liquidation">create_deleverage_ticket_for_liquidation</a>&lt;$X, $Y, $Pool, $LP&gt;(
     $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
     $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &<b>mut</b> $Pool,
     $remove_liquidity: |&<b>mut</b> $Pool, &<b>mut</b> $LP, u128| -&gt; (Balance&lt;$X&gt;, Balance&lt;$Y&gt;),
@@ -8578,16 +8818,18 @@ no event is emitted.
 
 <a name="kai_leverage_position_core_clmm_liquidate_col_x"></a>
 
-## Macro function `liquidate_col_x`
+## Function `liquidate_col_x`
 
 Liquidate X collateral by repaying Y debt.
 
-This macro performs partial liquidation of a position's X collateral
+This function performs partial liquidation of a position's X collateral
 in exchange for repaying Y debt. Liquidators receive X tokens as reward
 for helping restore position health by reducing debt obligations.
 
+The LP position's shape is passed in by the wrapper via [lp_shape].
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liquidate_col_x">liquidate_col_x</a>&lt;$X, $Y, $SY, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;, $supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;$Y, $SY&gt;, $clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;
+
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liquidate_col_x">liquidate_col_x</a>&lt;X, Y, SY, LP: store&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, LP&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;, supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;Y, SY&gt;, shape: <a href="../../dependencies/kai_leverage/lp_shape.md#kai_leverage_lp_shape_clmm_LpShape">kai_leverage::lp_shape_clmm::LpShape</a>, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;
 </code></pre>
 
 
@@ -8596,29 +8838,26 @@ for helping restore position health by reducing debt obligations.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liquidate_col_x">liquidate_col_x</a>&lt;$X, $Y, $SY, $LP&gt;(
-    $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
-    $config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    $price_info: &PythPriceInfo,
-    $debt_info: &DebtInfo,
-    $repayment: &<b>mut</b> Balance&lt;$Y&gt;,
-    $supply_pool: &<b>mut</b> SupplyPool&lt;$Y, $SY&gt;,
-    $clock: &Clock,
-): Balance&lt;$X&gt; {
-    <b>let</b> position = $position;
-    <b>let</b> config = $config;
-    <b>let</b> repayment = $repayment;
-    <b>let</b> supply_pool = $supply_pool;
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liquidate_col_x">liquidate_col_x</a>&lt;X, Y, SY, LP: store&gt;(
+    position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;X, Y, LP&gt;,
+    config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
+    price_info: &PriceCollection,
+    debt_info: &DebtInfo,
+    repayment: &<b>mut</b> Balance&lt;Y&gt;,
+    supply_pool: &<b>mut</b> SupplyPool&lt;Y, SY&gt;,
+    shape: LpShape,
+    clock: &Clock,
+): Balance&lt;X&gt; {
     <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_check_versions">check_versions</a>(position, config);
     <b>assert</b>!(position.config_id() == object::id(config), <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_invalid_config">e_invalid_config</a>!());
     <b>assert</b>!(position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ticket_active">ticket_active</a>() == <b>false</b>, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_ticket_active">e_ticket_active</a>!());
     <b>assert</b>!(!config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liquidation_disabled">liquidation_disabled</a>(), <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_liquidation_disabled">e_liquidation_disabled</a>!());
-    <b>let</b> price_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_price_info">validate_price_info</a>(config, $price_info);
-    <b>let</b> debt_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_debt_info">validate_debt_info</a>(config, $debt_info);
-    <b>let</b> model = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_model_from_position">model_from_position</a>!(position, &debt_info);
+    <b>let</b> price_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_price_info">validate_price_info</a>(config, price_info);
+    <b>let</b> debt_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_debt_info">validate_debt_info</a>(config, debt_info);
+    <b>let</b> model = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_position_model_from_lp_shape">position_model_from_lp_shape</a>(position, &debt_info, shape);
     <b>let</b> p_x128 = price_info.div_price_numeric_x128(
-        type_name::with_defining_ids&lt;$X&gt;(),
-        type_name::with_defining_ids&lt;$Y&gt;(),
+        type_name::with_defining_ids&lt;X&gt;(),
+        type_name::with_defining_ids&lt;Y&gt;(),
     );
     <b>let</b> (repayment_amt_y, reward_amt_x) = model.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liquidate_col_x">calc_liquidate_col_x</a>(
         p_x128,
@@ -8632,12 +8871,12 @@ for helping restore position health by reducing debt obligations.
     };
     <b>let</b> <b>mut</b> r = repayment.split(repayment_amt_y);
     <b>assert</b>!(
-        type_name::with_defining_ids&lt;$SY&gt;() == position.debt_bag().get_share_type_for_asset&lt;$Y&gt;(),
+        type_name::with_defining_ids&lt;SY&gt;() == position.debt_bag().get_share_type_for_asset&lt;Y&gt;(),
         <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_supply_pool_mismatch">e_supply_pool_mismatch</a>!(),
     );
     <b>let</b> <b>mut</b> debt_shares = position.debt_bag_mut().take_all();
-    <b>let</b> (_, y_repaid) = supply_pool.repay_max_possible(&<b>mut</b> debt_shares, &<b>mut</b> r, $clock);
-    position.debt_bag_mut().add&lt;$Y, $SY&gt;(debt_shares);
+    <b>let</b> (_, y_repaid) = supply_pool.repay_max_possible(&<b>mut</b> debt_shares, &<b>mut</b> r, clock);
+    position.debt_bag_mut().add&lt;Y, SY&gt;(debt_shares);
     repayment.join(r);
     <b>let</b> <b>mut</b> reward = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_col_x_mut">col_x_mut</a>().split(reward_amt_x);
     <b>let</b> fee_amt = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liq_fee_from_reward">calc_liq_fee_from_reward</a>(config, reward_amt_x);
@@ -8672,16 +8911,18 @@ for helping restore position health by reducing debt obligations.
 
 <a name="kai_leverage_position_core_clmm_liquidate_col_y"></a>
 
-## Macro function `liquidate_col_y`
+## Function `liquidate_col_y`
 
 Liquidate Y collateral by repaying X debt.
 
-This macro performs partial liquidation of a position's Y collateral
+This function performs partial liquidation of a position's Y collateral
 in exchange for repaying X debt. Liquidators receive Y tokens as reward
 for helping restore position health by reducing debt obligations.
 
+The LP position's shape is passed in by the wrapper via [lp_shape].
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liquidate_col_y">liquidate_col_y</a>&lt;$X, $Y, $SX, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, $supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;$X, $SX&gt;, $clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;
+
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liquidate_col_y">liquidate_col_y</a>&lt;X, Y, SX, LP: store&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, LP&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;X&gt;, supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;X, SX&gt;, shape: <a href="../../dependencies/kai_leverage/lp_shape.md#kai_leverage_lp_shape_clmm_LpShape">kai_leverage::lp_shape_clmm::LpShape</a>, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>): <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;Y&gt;
 </code></pre>
 
 
@@ -8690,29 +8931,26 @@ for helping restore position health by reducing debt obligations.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liquidate_col_y">liquidate_col_y</a>&lt;$X, $Y, $SX, $LP&gt;(
-    $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
-    $config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    $price_info: &PythPriceInfo,
-    $debt_info: &DebtInfo,
-    $repayment: &<b>mut</b> Balance&lt;$X&gt;,
-    $supply_pool: &<b>mut</b> SupplyPool&lt;$X, $SX&gt;,
-    $clock: &Clock,
-): Balance&lt;$Y&gt; {
-    <b>let</b> position = $position;
-    <b>let</b> config = $config;
-    <b>let</b> repayment = $repayment;
-    <b>let</b> supply_pool = $supply_pool;
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liquidate_col_y">liquidate_col_y</a>&lt;X, Y, SX, LP: store&gt;(
+    position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;X, Y, LP&gt;,
+    config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
+    price_info: &PriceCollection,
+    debt_info: &DebtInfo,
+    repayment: &<b>mut</b> Balance&lt;X&gt;,
+    supply_pool: &<b>mut</b> SupplyPool&lt;X, SX&gt;,
+    shape: LpShape,
+    clock: &Clock,
+): Balance&lt;Y&gt; {
     <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_check_versions">check_versions</a>(position, config);
     <b>assert</b>!(position.config_id() == object::id(config), <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_invalid_config">e_invalid_config</a>!());
     <b>assert</b>!(position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ticket_active">ticket_active</a>() == <b>false</b>, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_ticket_active">e_ticket_active</a>!());
     <b>assert</b>!(!config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liquidation_disabled">liquidation_disabled</a>(), <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_liquidation_disabled">e_liquidation_disabled</a>!());
-    <b>let</b> price_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_price_info">validate_price_info</a>(config, $price_info);
-    <b>let</b> debt_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_debt_info">validate_debt_info</a>(config, $debt_info);
-    <b>let</b> model = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_model_from_position">model_from_position</a>!(position, &debt_info);
+    <b>let</b> price_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_price_info">validate_price_info</a>(config, price_info);
+    <b>let</b> debt_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_debt_info">validate_debt_info</a>(config, debt_info);
+    <b>let</b> model = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_position_model_from_lp_shape">position_model_from_lp_shape</a>(position, &debt_info, shape);
     <b>let</b> p_x128 = price_info.div_price_numeric_x128(
-        type_name::with_defining_ids&lt;$X&gt;(),
-        type_name::with_defining_ids&lt;$Y&gt;(),
+        type_name::with_defining_ids&lt;X&gt;(),
+        type_name::with_defining_ids&lt;Y&gt;(),
     );
     <b>let</b> (repayment_amt_x, reward_amt_y) = model.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liquidate_col_y">calc_liquidate_col_y</a>(
         p_x128,
@@ -8726,12 +8964,12 @@ for helping restore position health by reducing debt obligations.
     };
     <b>let</b> <b>mut</b> r = repayment.split(repayment_amt_x);
     <b>assert</b>!(
-        type_name::with_defining_ids&lt;$SX&gt;() == position.debt_bag().get_share_type_for_asset&lt;$X&gt;(),
+        type_name::with_defining_ids&lt;SX&gt;() == position.debt_bag().get_share_type_for_asset&lt;X&gt;(),
         <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_supply_pool_mismatch">e_supply_pool_mismatch</a>!(),
     );
     <b>let</b> <b>mut</b> debt_shares = position.debt_bag_mut().take_all();
-    <b>let</b> (_, x_repaid) = supply_pool.repay_max_possible(&<b>mut</b> debt_shares, &<b>mut</b> r, $clock);
-    position.debt_bag_mut().add&lt;$X, $SX&gt;(debt_shares);
+    <b>let</b> (_, x_repaid) = supply_pool.repay_max_possible(&<b>mut</b> debt_shares, &<b>mut</b> r, clock);
+    position.debt_bag_mut().add&lt;X, SX&gt;(debt_shares);
     repayment.join(r);
     <b>let</b> <b>mut</b> reward = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_col_y_mut">col_y_mut</a>().split(reward_amt_y);
     <b>let</b> fee_amt = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liq_fee_from_reward">calc_liq_fee_from_reward</a>(config, reward_amt_y);
@@ -8766,7 +9004,7 @@ for helping restore position health by reducing debt obligations.
 
 <a name="kai_leverage_position_core_clmm_repay_bad_debt"></a>
 
-## Macro function `repay_bad_debt`
+## Function `repay_bad_debt`
 
 Handles the repayment of "bad debt" for a position that has no assets but retains outstanding debt.
 
@@ -8774,11 +9012,15 @@ This scenario can occur if a position's assets are fully liquidated but the debt
 Standard liquidation is not possible here, typically due to the minimum liquidation bonus requirement,
 making the position under-collateralized and unable to be restored via normal means.
 
-This macro enables an entity with the <code><a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ARepayBadDebt">ARepayBadDebt</a></code> permission to repay the residual debt,
+This function enables an entity with the <code><a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ARepayBadDebt">ARepayBadDebt</a></code> permission to repay the residual debt,
 aiding in restoring the solvency of the position and allowing the protocol to manage or close it gracefully.
 
+The LP position's shape is passed in by the wrapper via [lp_shape]
+(structural method calls on the LP type can't be made on an unbound
+generic).
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_repay_bad_debt">repay_bad_debt</a>&lt;$X, $Y, $T, $ST, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;$T, $ST&gt;, $repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$T&gt;, $clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, $ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
+
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_repay_bad_debt">repay_bad_debt</a>&lt;X, Y, T, ST, LP: store&gt;(position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, LP&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, supply_pool: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;T, ST&gt;, repayment: &<b>mut</b> <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;T&gt;, shape: <a href="../../dependencies/kai_leverage/lp_shape.md#kai_leverage_lp_shape_clmm_LpShape">kai_leverage::lp_shape_clmm::LpShape</a>, clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, ctx: &<b>mut</b> <a href="../../dependencies/sui/tx_context.md#sui_tx_context_TxContext">sui::tx_context::TxContext</a>): <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>
 </code></pre>
 
 
@@ -8787,47 +9029,44 @@ aiding in restoring the solvency of the position and allowing the protocol to ma
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_repay_bad_debt">repay_bad_debt</a>&lt;$X, $Y, $T, $ST, $LP&gt;(
-    $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
-    $config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    $supply_pool: &<b>mut</b> SupplyPool&lt;$T, $ST&gt;,
-    $repayment: &<b>mut</b> Balance&lt;$T&gt;,
-    $clock: &Clock,
-    $ctx: &<b>mut</b> TxContext,
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_repay_bad_debt">repay_bad_debt</a>&lt;X, Y, T, ST, LP: store&gt;(
+    position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;X, Y, LP&gt;,
+    config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
+    supply_pool: &<b>mut</b> SupplyPool&lt;T, ST&gt;,
+    repayment: &<b>mut</b> Balance&lt;T&gt;,
+    shape: LpShape,
+    clock: &Clock,
+    ctx: &<b>mut</b> TxContext,
 ): ActionRequest {
-    <b>let</b> position = $position;
-    <b>let</b> config = $config;
-    <b>let</b> supply_pool = $supply_pool;
     <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_check_versions">check_versions</a>(position, config);
     <b>assert</b>!(position.config_id() == object::id(config), <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_invalid_config">e_invalid_config</a>!());
     <b>assert</b>!(position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ticket_active">ticket_active</a>() == <b>false</b>, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_ticket_active">e_ticket_active</a>!());
     <b>assert</b>!(
-        position.debt_bag().share_type_matches_asset_if_any_exists&lt;$T, $ST&gt;(),
+        position.debt_bag().share_type_matches_asset_if_any_exists&lt;T, ST&gt;(),
         <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_supply_pool_mismatch">e_supply_pool_mismatch</a>!(),
     );
-    <b>let</b> l = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_lp_position">lp_position</a>().liquidity();
     <b>let</b> cx = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_col_x">col_x</a>().value();
     <b>let</b> cy = position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_col_y">col_y</a>().value();
-    <b>let</b> sx = position.debt_bag().get_share_amount_by_asset_type&lt;$X&gt;();
-    <b>let</b> sy = position.debt_bag().get_share_amount_by_asset_type&lt;$Y&gt;();
-    <b>let</b> has_assets = l &gt; 0 || cx &gt; 0 || cy &gt; 0;
+    <b>let</b> sx = position.debt_bag().get_share_amount_by_asset_type&lt;X&gt;();
+    <b>let</b> sy = position.debt_bag().get_share_amount_by_asset_type&lt;Y&gt;();
+    <b>let</b> has_assets = shape.l() &gt; 0 || cx &gt; 0 || cy &gt; 0;
     <b>let</b> has_debt = sx &gt; 0 || sy &gt; 0;
     <b>assert</b>!(has_assets == <b>false</b> && has_debt == <b>true</b>, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_no_bad_debt_or_not_fully_liquidated">e_no_bad_debt_or_not_fully_liquidated</a>!());
     <b>let</b> <b>mut</b> debt_shares = position.debt_bag_mut().take_all();
     <b>if</b> (debt_shares.value_x64() == 0) {
         debt_shares.destroy_zero();
-        <b>return</b> access::new_request(<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_a_repay_bad_debt">a_repay_bad_debt</a>(), $ctx)
+        <b>return</b> access::new_request(<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_a_repay_bad_debt">a_repay_bad_debt</a>(), ctx)
     };
     <b>let</b> (shares_repaid, balance_repaid) = supply_pool.repay_max_possible(
         &<b>mut</b> debt_shares,
-        $repayment,
-        $clock,
+        repayment,
+        clock,
     );
-    position.debt_bag_mut().add&lt;$T, $ST&gt;(debt_shares);
+    position.debt_bag_mut().add&lt;T, ST&gt;(debt_shares);
     <b>if</b> (shares_repaid &gt; 0 || balance_repaid &gt; 0) {
-        <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_emit_bad_debt_repaid">emit_bad_debt_repaid</a>&lt;$ST&gt;(object::id(position), shares_repaid, balance_repaid);
+        <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_emit_bad_debt_repaid">emit_bad_debt_repaid</a>&lt;ST&gt;(object::id(position), shares_repaid, balance_repaid);
     };
-    access::new_request(<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_a_repay_bad_debt">a_repay_bad_debt</a>(), $ctx)
+    access::new_request(<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_a_repay_bad_debt">a_repay_bad_debt</a>(), ctx)
 }
 </code></pre>
 
@@ -8845,7 +9084,7 @@ This macro implements position reduction based on the theoretical framework wher
 safe operations maintain or improve the margin function M(P) = A(P)/D(P).
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_reduce">reduce</a>&lt;$X, $Y, $SX, $SY, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">kai_leverage::position_core_clmm::PositionCap</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $supply_pool_x: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;$X, $SX&gt;, $supply_pool_y: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;$Y, $SY&gt;, $pool_object: &<b>mut</b> $Pool, $factor_x64: u128, $clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, $remove_liquidity: |&<b>mut</b> $Pool, &<b>mut</b> $LP, u128| -&gt; (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;)): (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ReductionRepaymentTicket">kai_leverage::position_core_clmm::ReductionRepaymentTicket</a>&lt;$SX, $SY&gt;)
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_reduce">reduce</a>&lt;$X, $Y, $SX, $SY, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">kai_leverage::position_core_clmm::PositionCap</a>, $price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, $supply_pool_x: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;$X, $SX&gt;, $supply_pool_y: &<b>mut</b> <a href="../../dependencies/kai_leverage/supply_pool.md#kai_leverage_supply_pool_SupplyPool">kai_leverage::supply_pool::SupplyPool</a>&lt;$Y, $SY&gt;, $pool_object: &<b>mut</b> $Pool, $factor_x64: u128, $clock: &<a href="../../dependencies/sui/clock.md#sui_clock_Clock">sui::clock::Clock</a>, $remove_liquidity: |&<b>mut</b> $Pool, &<b>mut</b> $LP, u128| -&gt; (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;)): (<a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$X&gt;, <a href="../../dependencies/sui/balance.md#sui_balance_Balance">sui::balance::Balance</a>&lt;$Y&gt;, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ReductionRepaymentTicket">kai_leverage::position_core_clmm::ReductionRepaymentTicket</a>&lt;$SX, $SY&gt;)
 </code></pre>
 
 
@@ -8858,7 +9097,7 @@ safe operations maintain or improve the margin function M(P) = A(P)/D(P).
     $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
     $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
     $cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">PositionCap</a>,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $supply_pool_x: &<b>mut</b> SupplyPool&lt;$X, $SX&gt;,
     $supply_pool_y: &<b>mut</b> SupplyPool&lt;$Y, $SY&gt;,
     $pool_object: &<b>mut</b> $Pool,
@@ -9235,7 +9474,7 @@ Used by wrapper modules to add liquidity to existing positions while
 maintaining risk limits and collecting protocol-specific receipts.
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_with_receipt_inner">add_liquidity_with_receipt_inner</a>&lt;$X, $Y, $Pool, $LP, $Receipt&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64, $Receipt)): ($Receipt, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_AddLiquidityInfo">kai_leverage::position_core_clmm::AddLiquidityInfo</a>)
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_with_receipt_inner">add_liquidity_with_receipt_inner</a>&lt;$X, $Y, $Pool, $LP, $Receipt&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64, $Receipt)): ($Receipt, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_AddLiquidityInfo">kai_leverage::position_core_clmm::AddLiquidityInfo</a>)
 </code></pre>
 
 
@@ -9247,7 +9486,7 @@ maintaining risk limits and collecting protocol-specific receipts.
 <pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_with_receipt_inner">add_liquidity_with_receipt_inner</a>&lt;$X, $Y, $Pool, $LP, $Receipt&gt;(
     $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
     $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &<b>mut</b> $Pool,
     $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64, $Receipt),
@@ -9309,7 +9548,7 @@ This macro is used by wrapper modules to add liquidity to existing positions,
 ensuring all risk and protocol constraints are maintained.
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>&lt;$X, $Y, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64)): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_AddLiquidityInfo">kai_leverage::position_core_clmm::AddLiquidityInfo</a>
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>&lt;$X, $Y, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64)): <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_AddLiquidityInfo">kai_leverage::position_core_clmm::AddLiquidityInfo</a>
 </code></pre>
 
 
@@ -9321,7 +9560,7 @@ ensuring all risk and protocol constraints are maintained.
 <pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>&lt;$X, $Y, $Pool, $LP&gt;(
     $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
     $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &<b>mut</b> $Pool,
     $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64),
@@ -9356,7 +9595,7 @@ enforcing all protocol and risk constraints, and returns a custom receipt
 type provided by the caller.
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_with_receipt">add_liquidity_with_receipt</a>&lt;$X, $Y, $Pool, $LP, $Receipt&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">kai_leverage::position_core_clmm::PositionCap</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64, $Receipt)): $Receipt
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_with_receipt">add_liquidity_with_receipt</a>&lt;$X, $Y, $Pool, $LP, $Receipt&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">kai_leverage::position_core_clmm::PositionCap</a>, $price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64, $Receipt)): $Receipt
 </code></pre>
 
 
@@ -9369,7 +9608,7 @@ type provided by the caller.
     $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
     $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
     $cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">PositionCap</a>,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &<b>mut</b> $Pool,
     $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64, $Receipt),
@@ -9405,7 +9644,7 @@ Add liquidity to a position, enforcing all protocol and risk constraints.
 This macro allows wrapper modules to add liquidity to an existing position.
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity">add_liquidity</a>&lt;$X, $Y, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">kai_leverage::position_core_clmm::PositionCap</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64))
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity">add_liquidity</a>&lt;$X, $Y, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">kai_leverage::position_core_clmm::PositionCap</a>, $price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64))
 </code></pre>
 
 
@@ -9418,7 +9657,7 @@ This macro allows wrapper modules to add liquidity to an existing position.
     $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
     $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
     $cap: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionCap">PositionCap</a>,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &<b>mut</b> $Pool,
     $<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_add_liquidity_inner">add_liquidity_inner</a>: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64),
@@ -9975,7 +10214,7 @@ Updates the <code><a href="../../dependencies/kai_leverage/position_core.md#kai_
 Returns the custom receipt produced by the lambda.
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_rebalance_add_liquidity_with_receipt">rebalance_add_liquidity_with_receipt</a>&lt;$X, $Y, $Pool, $LP, $Receipt&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $receipt: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_RebalanceReceipt">kai_leverage::position_core_clmm::RebalanceReceipt</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $add_liquidity_lambda: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64, $Receipt)): $Receipt
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_rebalance_add_liquidity_with_receipt">rebalance_add_liquidity_with_receipt</a>&lt;$X, $Y, $Pool, $LP, $Receipt&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $receipt: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_RebalanceReceipt">kai_leverage::position_core_clmm::RebalanceReceipt</a>, $price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $add_liquidity_lambda: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64, $Receipt)): $Receipt
 </code></pre>
 
 
@@ -9988,7 +10227,7 @@ Returns the custom receipt produced by the lambda.
     $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
     $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
     $receipt: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_RebalanceReceipt">RebalanceReceipt</a>,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &<b>mut</b> $Pool,
     $add_liquidity_lambda: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64, $Receipt),
@@ -10024,7 +10263,7 @@ This macro uses a custom lambda to perform the liquidity addition and updates th
 <code><a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_RebalanceReceipt">RebalanceReceipt</a></code> with the amounts of liquidity and tokens added.
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_rebalance_add_liquidity">rebalance_add_liquidity</a>&lt;$X, $Y, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $receipt: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_RebalanceReceipt">kai_leverage::position_core_clmm::RebalanceReceipt</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $add_liquidity_lambda: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64))
+<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_rebalance_add_liquidity">rebalance_add_liquidity</a>&lt;$X, $Y, $Pool, $LP&gt;($position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $receipt: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_RebalanceReceipt">kai_leverage::position_core_clmm::RebalanceReceipt</a>, $price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $pool_object: &<b>mut</b> $Pool, $add_liquidity_lambda: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64))
 </code></pre>
 
 
@@ -10037,7 +10276,7 @@ This macro uses a custom lambda to perform the liquidity addition and updates th
     $position: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
     $config: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
     $receipt: &<b>mut</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_RebalanceReceipt">RebalanceReceipt</a>,
-    $price_info: &PythPriceInfo,
+    $price_info: &PriceCollection,
     $debt_info: &DebtInfo,
     $pool_object: &<b>mut</b> $Pool,
     $add_liquidity_lambda: |&<b>mut</b> $Pool, &<b>mut</b> $LP| -&gt; (u128, u64, u64),
@@ -10362,12 +10601,14 @@ liquidation calculations, and other analytical operations.
 
 <a name="kai_leverage_position_core_clmm_calc_liquidate_col_x"></a>
 
-## Macro function `calc_liquidate_col_x`
+## Function `calc_liquidate_col_x`
 
 Calculate the required amounts to liquidate X collateral by repaying Y debt.
 
+The LP position's shape is passed in by the wrapper via [lp_shape].
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liquidate_col_x">calc_liquidate_col_x</a>&lt;$X, $Y, $LP&gt;($position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $max_repayment_amt_y: u64): (u64, u64)
+
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liquidate_col_x">calc_liquidate_col_x</a>&lt;X, Y, LP: store&gt;(position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, LP&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, max_repayment_amt_y: u64, shape: <a href="../../dependencies/kai_leverage/lp_shape.md#kai_leverage_lp_shape_clmm_LpShape">kai_leverage::lp_shape_clmm::LpShape</a>): (u64, u64)
 </code></pre>
 
 
@@ -10376,27 +10617,26 @@ Calculate the required amounts to liquidate X collateral by repaying Y debt.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liquidate_col_x">calc_liquidate_col_x</a>&lt;$X, $Y, $LP&gt;(
-    $position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
-    $config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    $price_info: &PythPriceInfo,
-    $debt_info: &DebtInfo,
-    $max_repayment_amt_y: u64,
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liquidate_col_x">calc_liquidate_col_x</a>&lt;X, Y, LP: store&gt;(
+    position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;X, Y, LP&gt;,
+    config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
+    price_info: &PriceCollection,
+    debt_info: &DebtInfo,
+    max_repayment_amt_y: u64,
+    shape: LpShape,
 ): (u64, u64) {
-    <b>let</b> position = $position;
-    <b>let</b> config = $config;
     <b>assert</b>!(position.config_id() == object::id(config), <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_invalid_config">e_invalid_config</a>!());
     <b>assert</b>!(position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ticket_active">ticket_active</a>() == <b>false</b>, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_ticket_active">e_ticket_active</a>!());
-    <b>let</b> price_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_price_info">validate_price_info</a>(config, $price_info);
-    <b>let</b> debt_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_debt_info">validate_debt_info</a>(config, $debt_info);
-    <b>let</b> model = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_model_from_position">model_from_position</a>!(position, &debt_info);
+    <b>let</b> price_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_price_info">validate_price_info</a>(config, price_info);
+    <b>let</b> debt_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_debt_info">validate_debt_info</a>(config, debt_info);
+    <b>let</b> model = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_position_model_from_lp_shape">position_model_from_lp_shape</a>(position, &debt_info, shape);
     <b>let</b> p_x128 = price_info.div_price_numeric_x128(
-        type_name::with_defining_ids&lt;$X&gt;(),
-        type_name::with_defining_ids&lt;$Y&gt;(),
+        type_name::with_defining_ids&lt;X&gt;(),
+        type_name::with_defining_ids&lt;Y&gt;(),
     );
     model.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liquidate_col_x">calc_liquidate_col_x</a>(
         p_x128,
-        $max_repayment_amt_y,
+        max_repayment_amt_y,
         config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liq_margin_bps">liq_margin_bps</a>(),
         config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liq_bonus_bps">liq_bonus_bps</a>(),
         config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_base_liq_factor_bps">base_liq_factor_bps</a>(),
@@ -10410,12 +10650,14 @@ Calculate the required amounts to liquidate X collateral by repaying Y debt.
 
 <a name="kai_leverage_position_core_clmm_calc_liquidate_col_y"></a>
 
-## Macro function `calc_liquidate_col_y`
+## Function `calc_liquidate_col_y`
 
 Calculate the required amounts to liquidate Y collateral by repaying X debt.
 
+The LP position's shape is passed in by the wrapper via [lp_shape].
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liquidate_col_y">calc_liquidate_col_y</a>&lt;$X, $Y, $LP&gt;($position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;$X, $Y, $LP&gt;, $config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, $price_info: &<a href="../../dependencies/kai_leverage/pyth.md#kai_leverage_pyth_PythPriceInfo">kai_leverage::pyth::PythPriceInfo</a>, $debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, $max_repayment_amt_x: u64): (u64, u64)
+
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liquidate_col_y">calc_liquidate_col_y</a>&lt;X, Y, LP: store&gt;(position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">kai_leverage::position_core_clmm::Position</a>&lt;X, Y, LP&gt;, config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">kai_leverage::position_core_clmm::PositionConfig</a>, price_info: &<a href="../../dependencies/kai_leverage/oracle_price.md#kai_leverage_oracle_price_PriceCollection">kai_leverage::oracle_price::PriceCollection</a>, debt_info: &<a href="../../dependencies/kai_leverage/debt_info.md#kai_leverage_debt_info_DebtInfo">kai_leverage::debt_info::DebtInfo</a>, max_repayment_amt_x: u64, shape: <a href="../../dependencies/kai_leverage/lp_shape.md#kai_leverage_lp_shape_clmm_LpShape">kai_leverage::lp_shape_clmm::LpShape</a>): (u64, u64)
 </code></pre>
 
 
@@ -10424,27 +10666,26 @@ Calculate the required amounts to liquidate Y collateral by repaying X debt.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(package) <b>macro</b> <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liquidate_col_y">calc_liquidate_col_y</a>&lt;$X, $Y, $LP&gt;(
-    $position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;$X, $Y, $LP&gt;,
-    $config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
-    $price_info: &PythPriceInfo,
-    $debt_info: &DebtInfo,
-    $max_repayment_amt_x: u64,
+<pre><code><b>public</b>(package) <b>fun</b> <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liquidate_col_y">calc_liquidate_col_y</a>&lt;X, Y, LP: store&gt;(
+    position: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_Position">Position</a>&lt;X, Y, LP&gt;,
+    config: &<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_PositionConfig">PositionConfig</a>,
+    price_info: &PriceCollection,
+    debt_info: &DebtInfo,
+    max_repayment_amt_x: u64,
+    shape: LpShape,
 ): (u64, u64) {
-    <b>let</b> position = $position;
-    <b>let</b> config = $config;
     <b>assert</b>!(position.config_id() == object::id(config), <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_invalid_config">e_invalid_config</a>!());
     <b>assert</b>!(position.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_ticket_active">ticket_active</a>() == <b>false</b>, <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_e_ticket_active">e_ticket_active</a>!());
-    <b>let</b> price_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_price_info">validate_price_info</a>(config, $price_info);
-    <b>let</b> debt_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_debt_info">validate_debt_info</a>(config, $debt_info);
-    <b>let</b> model = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_model_from_position">model_from_position</a>!(position, &debt_info);
+    <b>let</b> price_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_price_info">validate_price_info</a>(config, price_info);
+    <b>let</b> debt_info = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_validate_debt_info">validate_debt_info</a>(config, debt_info);
+    <b>let</b> model = <a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_position_model_from_lp_shape">position_model_from_lp_shape</a>(position, &debt_info, shape);
     <b>let</b> p_x128 = price_info.div_price_numeric_x128(
-        type_name::with_defining_ids&lt;$X&gt;(),
-        type_name::with_defining_ids&lt;$Y&gt;(),
+        type_name::with_defining_ids&lt;X&gt;(),
+        type_name::with_defining_ids&lt;Y&gt;(),
     );
     model.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_calc_liquidate_col_y">calc_liquidate_col_y</a>(
         p_x128,
-        $max_repayment_amt_x,
+        max_repayment_amt_x,
         config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liq_margin_bps">liq_margin_bps</a>(),
         config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_liq_bonus_bps">liq_bonus_bps</a>(),
         config.<a href="../../dependencies/kai_leverage/position_core.md#kai_leverage_position_core_clmm_base_liq_factor_bps">base_liq_factor_bps</a>(),

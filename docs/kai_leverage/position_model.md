@@ -1000,8 +1000,10 @@ Notes:
     - <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cx">cx</a> == 0</code>
 - The position is liquidated so that the margin level is above the liquidation threshold after
   the liquidation, if possible for the given <code>max_repayment_amt_y</code> and available collateral.
-- Always respects the liquidation bonus, even if there's not enough collateral to cover a full
-  liquidation.
+- The reward never exceeds the bonus-adjusted value of the repayment actually charged. It is
+  rounded down, so it can be up to 1 wei less than the exact amount (in the protocol's favor).
+- When there's not enough collateral to cover a full liquidation, the entire collateral amount
+  is paid out.
 - Never aborts.
 
 See documentation for <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_calc_max_liq_factor_x64">calc_max_liq_factor_x64</a></code> for more details on how the liquidation factor
@@ -1055,19 +1057,21 @@ is calculated.
         ) <b>as</b> u256; // 64.64
     <b>let</b> liq_factor_x64 = util::min_u256(possible_repayment_factor_x64, max_liq_factor_x64); // 64.64
     <b>let</b> repayment_value_x64 = (liq_factor_x64 * debt_value_x64) &gt;&gt; 64; // 64.64
-    <b>let</b> repayment_value_with_bonus_x64 = (repayment_value_x64 * ((1 &lt;&lt; 64) + liq_bonus_x64)) &gt;&gt; 64; // 81.64
     // calc repayment and reward amt
     <b>let</b> repayment_amt_y =
         util::min_u256(
             util::divide_and_round_up_u256(repayment_value_x64, 1 &lt;&lt; 64),
             max_repayment_amt_y <b>as</b> u256,
         ) <b>as</b> u64;
+    // The reward is derived from the repayment amount actually charged (rounded up) and is rounded
+    // down. This bounds it by the bonus-adjusted value of what the liquidator actually paid, <b>while</b>
+    // the rounding-up slack on the repayment is what lets the maximum liquidation case
+    // (`M &lt; Mc`, see `<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_calc_max_liq_factor_x64">calc_max_liq_factor_x64</a>`) still pay out the full collateral amount.
+    <b>let</b> charged_value_with_bonus_x64 =
+        (((repayment_amt_y <b>as</b> u256) &lt;&lt; 64) * ((1 &lt;&lt; 64) + liq_bonus_x64)) &gt;&gt; 64; // 81.64
     <b>let</b> reward_amt_x =
         util::min_u256(
-            util::divide_and_round_up_u256(
-                repayment_value_with_bonus_x64 * (position.<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cx">cx</a> <b>as</b> u256),
-                asset_value_x64,
-            ),
+            (charged_value_with_bonus_x64 * (position.<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cx">cx</a> <b>as</b> u256)) / asset_value_x64,
             position.<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cx">cx</a> <b>as</b> u256,
         ) <b>as</b> u64;
     (repayment_amt_y, reward_amt_x)
@@ -1094,8 +1098,10 @@ Note:
   - <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cy">cy</a> == 0</code>
 - The position is liquidated so that the margin level is above the liquidation threshold after
   the liquidation, if possible for the given <code>max_repayment_amt_x</code> and available collateral.
-- Always respects the liquidation bonus, even if there's not enough collateral to cover a full
-  liquidation.
+- The reward never exceeds the bonus-adjusted value of the repayment actually charged. It is
+  rounded down, so it can be up to 1 wei less than the exact amount (in the protocol's favor).
+- When there's not enough collateral to cover a full liquidation, the entire collateral amount
+  is paid out.
 - Never aborts.
 
 See documentation for <code><a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_calc_max_liq_factor_x64">calc_max_liq_factor_x64</a></code> for more details on how the liquidation factor
@@ -1149,17 +1155,21 @@ is calculated.
         ) <b>as</b> u256,
     ); // 64.64
     <b>let</b> liq_factor_x64 = util::min_u256(possible_repayment_factor_x64, max_liq_factor_x64); // 64.64
-    <b>let</b> repayment_value_x64 = (liq_factor_x64 * debt_value_x64) &gt;&gt; 64; // 64.64
-    <b>let</b> repayment_value_with_bonus_x64 = (repayment_value_x64 * ((1 &lt;&lt; 64) + liq_bonus_x64)) &gt;&gt; 64; // 81.64
     // calc repayment and reward amt
     <b>let</b> repayment_amt_x =
         util::min_u256(
             util::divide_and_round_up_u256(liq_factor_x64 * (position.<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_dx">dx</a> <b>as</b> u256), 1 &lt;&lt; 64),
             max_repayment_amt_x <b>as</b> u256,
         ) <b>as</b> u64;
+    // The reward is derived from the repayment amount actually charged (rounded up) and is rounded
+    // down. This bounds it by the bonus-adjusted value of what the liquidator actually paid, <b>while</b>
+    // the rounding-up slack on the repayment is what lets the maximum liquidation case
+    // (`M &lt; Mc`, see `<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_calc_max_liq_factor_x64">calc_max_liq_factor_x64</a>`) still pay out the full collateral amount.
+    <b>let</b> charged_value_with_bonus_x64 =
+        (((repayment_amt_x <b>as</b> u256) * p_x64) * ((1 &lt;&lt; 64) + liq_bonus_x64)) &gt;&gt; 64; // 81.64
     <b>let</b> reward_amt_y =
         util::min_u256(
-            util::divide_and_round_up_u256(repayment_value_with_bonus_x64, 1 &lt;&lt; 64),
+            charged_value_with_bonus_x64 &gt;&gt; 64,
             position.<a href="../../dependencies/kai_leverage/position_model.md#kai_leverage_position_model_clmm_cy">cy</a> <b>as</b> u256,
         ) <b>as</b> u64;
     (repayment_amt_x, reward_amt_y)

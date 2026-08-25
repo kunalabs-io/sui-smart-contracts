@@ -130,6 +130,12 @@ Represents a balance of debt shares in Q64.64 format.
 
 Registry tracking total debt shares and liability value.
 
+Note that <code><a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_liability_value_x64">liability_value_x64</a></code> can be zero while <code><a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_supply_x64">supply_x64</a></code> is not. <code><a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_repay_lossy">repay_lossy</a></code> rounds
+the repaid amount up and credits the overpayment to the remaining borrowers by reducing the
+total liability; when that overpayment exceeds what is left, the liability is pinned at zero
+while sub-unit shares are still outstanding. Code must not treat a zero liability as proof
+that the registry is empty -- <code><a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_supply_x64">supply_x64</a></code> is the authoritative signal for that.
+
 
 <pre><code><b>public</b> <b>struct</b> <a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_DebtRegistry">DebtRegistry</a>&lt;<b>phantom</b> T&gt; <b>has</b> store
 </code></pre>
@@ -515,7 +521,11 @@ format.
 ): <a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_DebtShareBalance">DebtShareBalance</a>&lt;T&gt; {
     <b>if</b> (registry.<a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_liability_value_x64">liability_value_x64</a> == 0) {
         registry.<a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_liability_value_x64">liability_value_x64</a> = <a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_value_x64">value_x64</a>;
-        registry.<a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_supply_x64">supply_x64</a> = <a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_value_x64">value_x64</a>;
+        // accumulate rather than assign: `<a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_supply_x64">supply_x64</a>` can be non-<a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_zero">zero</a> here, holding sub-unit
+        // shares left outstanding by `<a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_repay_lossy">repay_lossy</a>` (see the note on `<a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_DebtRegistry">DebtRegistry</a>`). Overwriting
+        // would drop them from the registry <b>while</b> they still exist in their holder's balance,
+        // leaving outstanding shares in excess of the supply and underflowing a later repayment.
+        registry.<a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_supply_x64">supply_x64</a> = registry.<a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_supply_x64">supply_x64</a> + <a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_value_x64">value_x64</a>;
         <b>return</b> <a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_DebtShareBalance">DebtShareBalance</a> { <a href="../../dependencies/kai_leverage/debt.md#kai_leverage_debt_value_x64">value_x64</a> }
     };
     <b>let</b> amt_shares_x64 = util::muldiv_round_up_u128(
