@@ -24,6 +24,12 @@ const EPriceUndefined: u64 = 2;
 const EPriceObjectMissing: u64 = 3;
 const ESmoothedPriceUnavailable: u64 = 4;
 const EDecimalsMissing: u64 = 5;
+const EPriceTimestampInFuture: u64 = 6;
+
+/// Upper bound on how far a price timestamp may lead the collection's clock
+/// snapshot before the timestamp is treated as nonsense rather than as skew.
+/// See `kai_leverage::pyth::MAX_FUTURE_SKEW_SECS` for the full rationale.
+const MAX_FUTURE_SKEW_SECS: u64 = 60;
 
 /// A single oracle price point. `price` is always positive and `expo_neg`
 /// is the magnitude of the (always negative) decimal exponent — both
@@ -136,7 +142,11 @@ public(package) fun validate(
         assert!(data_opt.is_some(), EPriceObjectMissing);
         let data = data_opt.destroy_some();
 
-        let age = self.created_at_sec - data.timestamp_sec;
+        assert!(
+            data.timestamp_sec <= self.created_at_sec + MAX_FUTURE_SKEW_SECS,
+            EPriceTimestampInFuture,
+        );
+        let age = u64::saturating_sub(self.created_at_sec, data.timestamp_sec);
         assert!(age <= max_age_secs, EStalePrice);
         max_age_seen = u64::max(max_age_seen, age);
 

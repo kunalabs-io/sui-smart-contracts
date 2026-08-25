@@ -94,6 +94,98 @@ fun validate_aborts_when_price_stale() {
     abort 0
 }
 
+#[test]
+fun validate_accepts_price_slightly_ahead_of_clock() {
+    let mut ctx = tx_context::dummy();
+    let mut clock = clock::create_for_testing(&mut ctx);
+    clock.set_for_testing(1755000000000);
+
+    let mut registry = coin_registry_test_util::create_registry_for_testing(&mut ctx);
+    let sui_currency = coin_registry_test_util::create_currency_for_testing<SUI>(
+        &mut registry,
+        9,
+        &mut ctx,
+    );
+
+    // the collection snapshots the clock first, then a price published one
+    // second later joins the same transaction -- what happens when a freshly
+    // pushed price is read during simulation, where `Clock` trails wall time
+    // by the node's execution lag
+    let mut price_info = oracle_price::create(&clock);
+    clock.set_for_testing(1755000001000);
+    let sui_pio = pyth_test_util::create_pyth_pio_with_price_human_mul_100(3_50, &clock, &mut ctx);
+
+    price_info.add_pyth_pro(&sui_pio);
+    price_info.add_currency(&sui_currency);
+
+    let mut allowlist = vec_map::empty<TypeName, ID>();
+    allowlist.insert(type_name::with_defining_ids<SUI>(), object::id(&sui_pio));
+
+    let validated = price_info.validate(60, &allowlist);
+
+    // a price ahead of the snapshot is not stale -- age clamps to zero
+    assert!(validated.max_age_secs() == 0);
+
+    destroy(clock);
+    destroy(sui_pio);
+    destroy(registry);
+    destroy(sui_currency);
+}
+
+#[test]
+fun validate_accepts_price_at_max_future_skew() {
+    let mut ctx = tx_context::dummy();
+    let mut clock = clock::create_for_testing(&mut ctx);
+    clock.set_for_testing(1755000000000);
+
+    let mut registry = coin_registry_test_util::create_registry_for_testing(&mut ctx);
+    let sui_currency = coin_registry_test_util::create_currency_for_testing<SUI>(
+        &mut registry,
+        9,
+        &mut ctx,
+    );
+
+    // exactly MAX_FUTURE_SKEW_SECS ahead of the snapshot -- the bound is inclusive
+    let mut price_info = oracle_price::create(&clock);
+    clock.set_for_testing(1755000060000);
+    let sui_pio = pyth_test_util::create_pyth_pio_with_price_human_mul_100(3_50, &clock, &mut ctx);
+
+    price_info.add_pyth_pro(&sui_pio);
+    price_info.add_currency(&sui_currency);
+
+    let mut allowlist = vec_map::empty<TypeName, ID>();
+    allowlist.insert(type_name::with_defining_ids<SUI>(), object::id(&sui_pio));
+
+    let validated = price_info.validate(60, &allowlist);
+    assert!(validated.max_age_secs() == 0);
+
+    destroy(clock);
+    destroy(sui_pio);
+    destroy(registry);
+    destroy(sui_currency);
+}
+
+#[test, expected_failure(abort_code = oracle_price::EPriceTimestampInFuture)]
+fun validate_aborts_when_price_too_far_in_future() {
+    let mut ctx = tx_context::dummy();
+    let mut clock = clock::create_for_testing(&mut ctx);
+    clock.set_for_testing(1755000000000);
+
+    // one second past MAX_FUTURE_SKEW_SECS -- no longer plausible skew
+    let mut price_info = oracle_price::create(&clock);
+    clock.set_for_testing(1755000061000);
+    let sui_pio = pyth_test_util::create_pyth_pio_with_price_human_mul_100(3_50, &clock, &mut ctx);
+
+    price_info.add_pyth_pro(&sui_pio);
+
+    let mut allowlist = vec_map::empty<TypeName, ID>();
+    allowlist.insert(type_name::with_defining_ids<SUI>(), object::id(&sui_pio));
+
+    price_info.validate(60, &allowlist);
+
+    abort 0
+}
+
 #[test, expected_failure(abort_code = oracle_price::EPriceObjectMissing)]
 fun validate_aborts_when_allowlisted_price_object_absent() {
     let mut ctx = tx_context::dummy();
