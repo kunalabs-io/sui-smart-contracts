@@ -3,6 +3,7 @@
 # This file SHOULD be committed to source control
 
 [published.mainnet]
+toolchain-version = "1.61.2"
 chain-id = "35834a8a"
 published-at = "0xf259194ebadf4a68c7dd0103483aa6c6e0e058597c02c390a398092892192f6f"
 original-id = "0x51e0ccce48f0763f98f1cb4856847c2e1531adacada99cdd7626ab999db57523"
