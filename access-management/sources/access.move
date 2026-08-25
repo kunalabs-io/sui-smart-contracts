@@ -3,6 +3,12 @@
 
 /// Access Management module for Sui packages.
 /// Provides fine-grained, configurable permissions using PackageAdmin, Policy, Rule, and ActionRequest.
+///
+/// Authorization model: the rule is the unit of authorization. A `Rule` permits any of its actions
+/// provided all of its conditions are approved; the caller selects which rule a request is judged
+/// under; and a policy's permissions are therefore the union over its rules. There are no deny
+/// rules, so adding a rule can only widen access. Entities are allowlisted per policy rather than
+/// per rule, so every allowlisted entity may be judged under every rule in that policy.
 module access_management::access;
 
 use access_management::dynamic_map::{Self, DynamicMap};
@@ -59,10 +65,15 @@ public struct Entity has key, store {
 }
 
 /// Represents a rule within a policy, specifying allowed actions and required conditions.
+///
+/// The condition set applies uniformly to every action in the rule. Conditions are not paired with
+/// individual actions, and `condition_configs` is keyed by condition alone, so the configuration
+/// cannot vary per action either. Express per-action conditions by splitting the actions across
+/// separate rules.
 public struct Rule has store {
     /// The set of action type names that are allowed by this rule.
     actions: VecSet<TypeName>,
-    /// Conditions that must be met for the actions to be allowed.
+    /// Conditions that must all be met for any of the actions to be allowed.
     conditions: VecSet<TypeName>,
     /// A dynamic map from condition type name to its configuration for this rule.
     condition_configs: DynamicMap<TypeName>,
@@ -70,11 +81,17 @@ public struct Rule has store {
 
 /// Represents an access control policy for a package, specifying which entities are allowed,
 /// the rules governing actions, and the policy's status and version.
+///
+/// A policy's permissions are the union over its rules: an action allowed by any rule is allowed,
+/// under that rule's conditions. Placing the same action in two rules therefore gives the caller
+/// the choice of the weaker one.
 public struct Policy has key {
     id: UID,
     /// The address string of the package this policy applies to.
     package: String,
-    /// The set of entity IDs that are allowed by this policy.
+    /// The set of entity IDs that are allowed by this policy. Allowlisting is policy-wide: every
+    /// entity listed here may be judged under every rule in the policy. To scope access by holder,
+    /// use separate policies rather than separate rules.
     allowed_entities: VecSet<ID>,
     /// A mapping from rule ID (address) to the corresponding rule definition.
     rules: VecMap<address, Rule>,
@@ -97,6 +114,13 @@ public struct ActionRequest {
 
 /// Carries condition configuration and context for condition approval functions.
 ///
+/// The witness is bound to the rule, not to an action. The `Action` type argument of
+/// `get_condition_witness` is validated against the rule's action set at creation and then
+/// discarded, so a witness obtained for one action can be applied to a request carrying any other
+/// action of the same rule. That is sound under the rule-wide condition model, because every
+/// action of a rule requires the same conditions, but a condition implementation must not treat a
+/// witness as evidence of which action is being approved.
+///
 /// Type Parameters:
 /// - `Condition`: The condition type being witnessed
 /// - `Config`: Configuration data for the condition
@@ -105,9 +129,9 @@ public struct ConditionWitness<phantom Condition, Config: store + copy + drop> h
     rule_id: address,
     /// Configuration data for the condition
     config: Config,
-    /// Policy ID for additional context
+    /// Policy ID, informational for the condition implementation; not re-checked at approval
     policy: ID,
-    /// Entity ID for additional context
+    /// Entity ID, informational for the condition implementation; not re-checked at approval
     entity: ID,
 }
 
@@ -270,6 +294,10 @@ public fun drop_rule(policy: &mut Policy, admin: &PackageAdmin, rule_id: address
 /* ================= action ================= */
 
 /// Adds an action to a rule.
+///
+/// Actions are not exclusive to one rule. Adding an action that another rule of the same policy
+/// already allows creates an alternative path to it under that other rule's conditions, and the
+/// caller picks which rule to be judged under.
 public fun add_action_to_rule<Action: drop>(
     policy: &mut Policy,
     admin: &PackageAdmin,
@@ -303,6 +331,7 @@ public fun remove_action_from_rule<Action: drop>(
 /* ================= condition ================= */
 
 /// Adds a condition with configuration to a rule.
+/// The condition applies to every action in the rule.
 public fun add_condition_to_rule_with_config<Condition: drop, Config: store + copy + drop>(
     policy: &mut Policy,
     admin: &PackageAdmin,
@@ -320,6 +349,7 @@ public fun add_condition_to_rule_with_config<Condition: drop, Config: store + co
 }
 
 /// Adds a condition without configuration to a rule.
+/// The condition applies to every action in the rule.
 public fun add_condition_to_rule<Condition: drop>(
     policy: &mut Policy,
     admin: &PackageAdmin,
@@ -457,6 +487,17 @@ public fun context_value<Value: store + copy + drop>(request: &ActionRequest, ke
 /* ================= approval ================= */
 
 /// Gets a condition witness for approval.
+///
+/// `Action` is checked against the rule's action set and is not retained in the returned witness;
+/// see `ConditionWitness`.
+///
+/// Aborts with:
+/// - `EInvalidPolicyVersion` if the policy has not been migrated to the current module version.
+/// - `EPolicyDisabled` if the policy is disabled.
+/// - `EEntityNotAllowed` if the entity is not allowlisted in the policy.
+/// - `EActionNotInRule` if `Action` is not allowed by the selected rule.
+/// - `sui::vec_map::EKeyDoesNotExist` if `rule_id` is not a rule of this policy, or the rule has
+///   no configuration stored for `Condition`.
 public fun get_condition_witness<Condition, Action: drop, Config: store + copy + drop>(
     policy: &Policy,
     entity: &Entity,
@@ -517,8 +558,12 @@ public fun cw_entity_id<Condition, Config: store + copy + drop>(
     witness.entity
 }
 
-/// Approves a condition for an action request.
-/// Aborts if the condition is not needed for the action request.
+/// Records an approved condition on an action request.
+///
+/// This only records the approval. Whether the condition is actually required is checked when the
+/// request is consumed: `approve_and_return_context` aborts there if an approved condition is not
+/// required by the selected rule, or if its rule id does not match. Aborts here only if the same
+/// condition has already been approved on this request.
 public fun approve_condition<Condition: drop, Config: store + copy + drop>(
     request: &mut ActionRequest,
     witness: &ConditionWitness<Condition, Config>,
@@ -530,7 +575,15 @@ public fun approve_condition<Condition: drop, Config: store + copy + drop>(
 
 /// Approves an action request and returns the context.
 ///
+/// The rule is selected by the caller: the request is judged only under `rule_id`, and no other
+/// rule of the policy is consulted even if one allows the same action under stricter conditions.
+///
 /// Aborts with:
+/// - `EInvalidPolicyVersion` if the policy has not been migrated to the current module version.
+/// - `EPolicyDisabled` if the policy is disabled.
+/// - `EEntityNotAllowed` if the entity is not allowlisted in the policy.
+/// - `sui::vec_map::EKeyDoesNotExist` if `rule_id` is not a rule of this policy.
+/// - `EActionNotInRule` if the request's action is not allowed by the selected rule.
 /// - `EInvalidConditionApproval` if an approved condition's rule id does not
 ///   match the requested rule id.
 /// - `std::vector::EKeyDoesNotExist` if a required condition is not present

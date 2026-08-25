@@ -6,6 +6,12 @@
 Access Management module for Sui packages.
 Provides fine-grained, configurable permissions using PackageAdmin, Policy, Rule, and ActionRequest.
 
+Authorization model: the rule is the unit of authorization. A <code><a href="../../dependencies/access_management/access.md#access_management_access_Rule">Rule</a></code> permits any of its actions
+provided all of its conditions are approved; the caller selects which rule a request is judged
+under; and a policy's permissions are therefore the union over its rules. There are no deny
+rules, so adding a rule can only widen access. Entities are allowlisted per policy rather than
+per rule, so every allowlisted entity may be judged under every rule in that policy.
+
 
 -  [Struct `PackageAdmin`](#access_management_access_PackageAdmin)
 -  [Struct `Entity`](#access_management_access_Entity)
@@ -146,6 +152,11 @@ Represents an entity that can be granted permissions in a policy.
 
 Represents a rule within a policy, specifying allowed actions and required conditions.
 
+The condition set applies uniformly to every action in the rule. Conditions are not paired with
+individual actions, and <code>condition_configs</code> is keyed by condition alone, so the configuration
+cannot vary per action either. Express per-action conditions by splitting the actions across
+separate rules.
+
 
 <pre><code><b>public</b> <b>struct</b> <a href="../../dependencies/access_management/access.md#access_management_access_Rule">Rule</a> <b>has</b> store
 </code></pre>
@@ -167,7 +178,7 @@ Represents a rule within a policy, specifying allowed actions and required condi
 <code>conditions: <a href="../../dependencies/sui/vec_set.md#sui_vec_set_VecSet">sui::vec_set::VecSet</a>&lt;<a href="../../dependencies/std/type_name.md#std_type_name_TypeName">std::type_name::TypeName</a>&gt;</code>
 </dt>
 <dd>
- Conditions that must be met for the actions to be allowed.
+ Conditions that must all be met for any of the actions to be allowed.
 </dd>
 <dt>
 <code>condition_configs: <a href="../../dependencies/access_management/dynamic_map.md#access_management_dynamic_map_DynamicMap">access_management::dynamic_map::DynamicMap</a>&lt;<a href="../../dependencies/std/type_name.md#std_type_name_TypeName">std::type_name::TypeName</a>&gt;</code>
@@ -186,6 +197,10 @@ Represents a rule within a policy, specifying allowed actions and required condi
 
 Represents an access control policy for a package, specifying which entities are allowed,
 the rules governing actions, and the policy's status and version.
+
+A policy's permissions are the union over its rules: an action allowed by any rule is allowed,
+under that rule's conditions. Placing the same action in two rules therefore gives the caller
+the choice of the weaker one.
 
 
 <pre><code><b>public</b> <b>struct</b> <a href="../../dependencies/access_management/access.md#access_management_access_Policy">Policy</a> <b>has</b> key
@@ -213,7 +228,9 @@ the rules governing actions, and the policy's status and version.
 <code>allowed_entities: <a href="../../dependencies/sui/vec_set.md#sui_vec_set_VecSet">sui::vec_set::VecSet</a>&lt;<a href="../../dependencies/sui/object.md#sui_object_ID">sui::object::ID</a>&gt;</code>
 </dt>
 <dd>
- The set of entity IDs that are allowed by this policy.
+ The set of entity IDs that are allowed by this policy. Allowlisting is policy-wide: every
+ entity listed here may be judged under every rule in the policy. To scope access by holder,
+ use separate policies rather than separate rules.
 </dd>
 <dt>
 <code>rules: <a href="../../dependencies/sui/vec_map.md#sui_vec_map_VecMap">sui::vec_map::VecMap</a>&lt;<b>address</b>, <a href="../../dependencies/access_management/access.md#access_management_access_Rule">access_management::access::Rule</a>&gt;</code>
@@ -285,6 +302,13 @@ Represents a request to perform a specific action.
 
 Carries condition configuration and context for condition approval functions.
 
+The witness is bound to the rule, not to an action. The <code>Action</code> type argument of
+<code><a href="../../dependencies/access_management/access.md#access_management_access_get_condition_witness">get_condition_witness</a></code> is validated against the rule's action set at creation and then
+discarded, so a witness obtained for one action can be applied to a request carrying any other
+action of the same rule. That is sound under the rule-wide condition model, because every
+action of a rule requires the same conditions, but a condition implementation must not treat a
+witness as evidence of which action is being approved.
+
 Type Parameters:
 - <code>Condition</code>: The condition type being witnessed
 - <code>Config</code>: Configuration data for the condition
@@ -316,13 +340,13 @@ Type Parameters:
 <code>policy: <a href="../../dependencies/sui/object.md#sui_object_ID">sui::object::ID</a></code>
 </dt>
 <dd>
- Policy ID for additional context
+ Policy ID, informational for the condition implementation; not re-checked at approval
 </dd>
 <dt>
 <code>entity: <a href="../../dependencies/sui/object.md#sui_object_ID">sui::object::ID</a></code>
 </dt>
 <dd>
- Entity ID for additional context
+ Entity ID, informational for the condition implementation; not re-checked at approval
 </dd>
 </dl>
 
@@ -918,6 +942,10 @@ the caller should manually remove the rule configs before calling this function.
 
 Adds an action to a rule.
 
+Actions are not exclusive to one rule. Adding an action that another rule of the same policy
+already allows creates an alternative path to it under that other rule's conditions, and the
+caller picks which rule to be judged under.
+
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/access_management/access.md#access_management_access_add_action_to_rule">add_action_to_rule</a>&lt;Action: drop&gt;(policy: &<b>mut</b> <a href="../../dependencies/access_management/access.md#access_management_access_Policy">access_management::access::Policy</a>, admin: &<a href="../../dependencies/access_management/access.md#access_management_access_PackageAdmin">access_management::access::PackageAdmin</a>, rule_id: <b>address</b>)
 </code></pre>
@@ -985,6 +1013,7 @@ Removes an action from a rule.
 ## Function `add_condition_to_rule_with_config`
 
 Adds a condition with configuration to a rule.
+The condition applies to every action in the rule.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/access_management/access.md#access_management_access_add_condition_to_rule_with_config">add_condition_to_rule_with_config</a>&lt;Condition: drop, Config: <b>copy</b>, drop, store&gt;(policy: &<b>mut</b> <a href="../../dependencies/access_management/access.md#access_management_access_Policy">access_management::access::Policy</a>, admin: &<a href="../../dependencies/access_management/access.md#access_management_access_PackageAdmin">access_management::access::PackageAdmin</a>, rule_id: <b>address</b>, config: Config)
@@ -1020,6 +1049,7 @@ Adds a condition with configuration to a rule.
 ## Function `add_condition_to_rule`
 
 Adds a condition without configuration to a rule.
+The condition applies to every action in the rule.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/access_management/access.md#access_management_access_add_condition_to_rule">add_condition_to_rule</a>&lt;Condition: drop&gt;(policy: &<b>mut</b> <a href="../../dependencies/access_management/access.md#access_management_access_Policy">access_management::access::Policy</a>, admin: &<a href="../../dependencies/access_management/access.md#access_management_access_PackageAdmin">access_management::access::PackageAdmin</a>, rule_id: <b>address</b>)
@@ -1363,6 +1393,17 @@ Gets a value from the action request context.
 
 Gets a condition witness for approval.
 
+<code>Action</code> is checked against the rule's action set and is not retained in the returned witness;
+see <code><a href="../../dependencies/access_management/access.md#access_management_access_ConditionWitness">ConditionWitness</a></code>.
+
+Aborts with:
+- <code><a href="../../dependencies/access_management/access.md#access_management_access_EInvalidPolicyVersion">EInvalidPolicyVersion</a></code> if the policy has not been migrated to the current module version.
+- <code><a href="../../dependencies/access_management/access.md#access_management_access_EPolicyDisabled">EPolicyDisabled</a></code> if the policy is disabled.
+- <code><a href="../../dependencies/access_management/access.md#access_management_access_EEntityNotAllowed">EEntityNotAllowed</a></code> if the entity is not allowlisted in the policy.
+- <code><a href="../../dependencies/access_management/access.md#access_management_access_EActionNotInRule">EActionNotInRule</a></code> if <code>Action</code> is not allowed by the selected rule.
+- <code><a href="../../dependencies/sui/vec_map.md#sui_vec_map_EKeyDoesNotExist">sui::vec_map::EKeyDoesNotExist</a></code> if <code>rule_id</code> is not a rule of this policy, or the rule has
+  no configuration stored for <code>Condition</code>.
+
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/access_management/access.md#access_management_access_get_condition_witness">get_condition_witness</a>&lt;Condition, Action: drop, Config: <b>copy</b>, drop, store&gt;(policy: &<a href="../../dependencies/access_management/access.md#access_management_access_Policy">access_management::access::Policy</a>, entity: &<a href="../../dependencies/access_management/access.md#access_management_access_Entity">access_management::access::Entity</a>, rule_id: <b>address</b>): <a href="../../dependencies/access_management/access.md#access_management_access_ConditionWitness">access_management::access::ConditionWitness</a>&lt;Condition, Config&gt;
 </code></pre>
@@ -1511,8 +1552,12 @@ Gets the entity ID from a condition witness.
 
 ## Function `approve_condition`
 
-Approves a condition for an action request.
-Aborts if the condition is not needed for the action request.
+Records an approved condition on an action request.
+
+This only records the approval. Whether the condition is actually required is checked when the
+request is consumed: <code><a href="../../dependencies/access_management/access.md#access_management_access_approve_and_return_context">approve_and_return_context</a></code> aborts there if an approved condition is not
+required by the selected rule, or if its rule id does not match. Aborts here only if the same
+condition has already been approved on this request.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="../../dependencies/access_management/access.md#access_management_access_approve_condition">approve_condition</a>&lt;Condition: drop, Config: <b>copy</b>, drop, store&gt;(request: &<b>mut</b> <a href="../../dependencies/access_management/access.md#access_management_access_ActionRequest">access_management::access::ActionRequest</a>, witness: &<a href="../../dependencies/access_management/access.md#access_management_access_ConditionWitness">access_management::access::ConditionWitness</a>&lt;Condition, Config&gt;, _: Condition)
@@ -1544,7 +1589,15 @@ Aborts if the condition is not needed for the action request.
 
 Approves an action request and returns the context.
 
+The rule is selected by the caller: the request is judged only under <code>rule_id</code>, and no other
+rule of the policy is consulted even if one allows the same action under stricter conditions.
+
 Aborts with:
+- <code><a href="../../dependencies/access_management/access.md#access_management_access_EInvalidPolicyVersion">EInvalidPolicyVersion</a></code> if the policy has not been migrated to the current module version.
+- <code><a href="../../dependencies/access_management/access.md#access_management_access_EPolicyDisabled">EPolicyDisabled</a></code> if the policy is disabled.
+- <code><a href="../../dependencies/access_management/access.md#access_management_access_EEntityNotAllowed">EEntityNotAllowed</a></code> if the entity is not allowlisted in the policy.
+- <code><a href="../../dependencies/sui/vec_map.md#sui_vec_map_EKeyDoesNotExist">sui::vec_map::EKeyDoesNotExist</a></code> if <code>rule_id</code> is not a rule of this policy.
+- <code><a href="../../dependencies/access_management/access.md#access_management_access_EActionNotInRule">EActionNotInRule</a></code> if the request's action is not allowed by the selected rule.
 - <code><a href="../../dependencies/access_management/access.md#access_management_access_EInvalidConditionApproval">EInvalidConditionApproval</a></code> if an approved condition's rule id does not
   match the requested rule id.
 - <code>std::vector::EKeyDoesNotExist</code> if a required condition is not present
