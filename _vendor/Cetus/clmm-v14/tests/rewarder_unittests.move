@@ -49,7 +49,7 @@ fun test_add_rewarder() {
     let rewarder = borrow_rewarder<RewarderCoin>(&manager);
     assert!(rewarder.emissions_per_second() == 0, 1);
     assert!(rewarder.growth_global() == 0, 2);
-    assert!(rewarder.reward_coin() == type_name::get<RewarderCoin>(), 3);
+    assert!(rewarder.reward_coin() == type_name::with_defining_ids<RewarderCoin>(), 3);
 
     add_rewarder<RewarderCoin2>(&mut manager);
     assert!(vector::length(&rewarder::rewarders(&manager)) == 2, 4);
@@ -57,7 +57,7 @@ fun test_add_rewarder() {
     let rewarder = borrow_rewarder<RewarderCoin2>(&manager);
     assert!(rewarder.emissions_per_second() == 0, 6);
     assert!(rewarder.growth_global() == 0, 7);
-    assert!(rewarder.reward_coin() == type_name::get<RewarderCoin2>(), 8);
+    assert!(rewarder.reward_coin() == type_name::with_defining_ids<RewarderCoin2>(), 8);
     return_manager(manager, &mut ctx);
 }
 

@@ -17,7 +17,7 @@ manifest_digest = "CD547CB1ACCE0880C835DAED2D8FFCB91D56C833AE5240D3AA5B918398263
 deps = { MoveStdlib = "MoveStdlib" }
 
 [pinned.mainnet.cetus_clmm]
-source = { local = "../clmm-v13" }
+source = { local = "../clmm-v14" }
 use_environment = "mainnet"
 manifest_digest = "F7C63F1ECF575145EBED2E2DBEEDFDFA65654D819BFD3482A0E92BF63E87668A"
 deps = { integer_mate = "integer_mate", move_stl = "move_stl", std = "MoveStdlib", sui = "Sui" }
@@ -25,7 +25,7 @@ deps = { integer_mate = "integer_mate", move_stl = "move_stl", std = "MoveStdlib
 [pinned.mainnet.cetus_farming]
 source = { root = true }
 use_environment = "mainnet"
-manifest_digest = "3225B989FC764799DE3CD274E672A6A2CFE5CA95BEAF4902ADCDEDA663C500B4"
+manifest_digest = "4FE58A3F9C1606824A2A872618780BE1AB4481C2784E215A668B6301D1324CBA"
 deps = { cetus_clmm = "cetus_clmm", integer_mate = "integer_mate", move_stl = "move_stl", std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.integer_mate]
@@ -53,7 +53,7 @@ manifest_digest = "7AFB66695545775FBFBB2D3078ADFD084244D5002392E837FDE21D9EA1C6D
 deps = { MoveStdlib = "MoveStdlib" }
 
 [pinned.testnet.cetus_clmm]
-source = { local = "../clmm-v13" }
+source = { local = "../clmm-v14" }
 use_environment = "testnet"
 manifest_digest = "AA1E11CF782D4544DCB978407AF89B5DF9851B2ECF80E93B2D30FBA628682A8C"
 deps = { integer_mate = "integer_mate", move_stl = "move_stl", std = "MoveStdlib", sui = "Sui" }
@@ -61,7 +61,7 @@ deps = { integer_mate = "integer_mate", move_stl = "move_stl", std = "MoveStdlib
 [pinned.testnet.cetus_farming]
 source = { root = true }
 use_environment = "testnet"
-manifest_digest = "8DB158090AFF5CFE23E583AEC9A22C651155612065FEC356DA74C639F67B5231"
+manifest_digest = "96F53A2CCF011614325D9C9AEF436A87A5852F81611C7464AFD6D0015FF7DAE4"
 deps = { cetus_clmm = "cetus_clmm", integer_mate = "integer_mate", move_stl = "move_stl", std = "MoveStdlib", sui = "Sui" }
 
 [pinned.testnet.integer_mate]

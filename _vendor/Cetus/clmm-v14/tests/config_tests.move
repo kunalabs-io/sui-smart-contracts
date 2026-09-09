@@ -180,7 +180,7 @@ fun test_update_fee_tier_fee_rate_max_exceed() {
 fun test_package_version() {
     let mut ctx = tx_context::dummy();
     let (admin_cap, mut config) = config::new_global_config_for_test(&mut ctx, 1000);
-    config::update_package_version(&admin_cap, &mut config, 14);
+    config::update_package_version(&admin_cap, &mut config, 15);
     config::add_fee_tier(&mut config, 2, 2000, &ctx);
     public_share_object(config);
     public_transfer(admin_cap, tx_context::sender(&ctx));

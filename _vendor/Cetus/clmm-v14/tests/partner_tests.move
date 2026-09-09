@@ -337,7 +337,7 @@ fun test_receiver_and_claim_ref_fee() {
     // receive second time
     let coin_a = coin::mint_for_testing<CoinA>(1000000000, &mut ctx);
     partner::receive_ref_fee_internal(&mut partner, coin::into_balance(coin_a));
-    let type_name = type_name::get<CoinA>();
+    let type_name = type_name::with_defining_ids<CoinA>();
     let key = string::from_ascii(type_name::into_string(type_name));
     let balance_a = bag::borrow<String, Balance<CoinA>>(partner::balances(&partner), key);
     assert!(balance::value(balance_a) == 2000000000, 0);
@@ -369,7 +369,7 @@ fun test_receiver_and_claim_ref_fee_invalid_coin_type() {
     // receive second time
     let coin_a = coin::mint_for_testing<CoinA>(1000000000, &mut ctx);
     partner::receive_ref_fee_internal(&mut partner, coin::into_balance(coin_a));
-    let type_name = type_name::get<CoinA>();
+    let type_name = type_name::with_defining_ids<CoinA>();
     let key = string::from_ascii(type_name::into_string(type_name));
     let balance_a = bag::borrow<String, Balance<CoinA>>(partner::balances(&partner), key);
     assert!(balance::value(balance_a) == 2000000000, 0);
@@ -412,7 +412,7 @@ fun test_claim_ref_fee_wrong_partner_cap() {
     // receive second time
     let coin_a = coin::mint_for_testing<CoinA>(1000000000, &mut ctx);
     partner::receive_ref_fee_internal(&mut partner, coin::into_balance(coin_a));
-    let type_name = type_name::get<CoinA>();
+    let type_name = type_name::with_defining_ids<CoinA>();
     let key = string::from_ascii(type_name::into_string(type_name));
     let balance_a = bag::borrow<String, Balance<CoinA>>(partner::balances(&partner), key);
     assert!(balance::value(balance_a) == 2000000000, 0);
