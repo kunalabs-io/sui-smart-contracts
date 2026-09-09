@@ -76,7 +76,7 @@ module cetus_clmm::factory_tests {
         assert!(10 == factory::tick_spacing(info), 0);
         assert!(1 == factory::index(&pools), 0);
         let (ca, cb) = factory::coin_types(info);
-        assert!(ca == type_name::get<CoinB>() && cb == type_name::get<CoinA>(), 0);
+        assert!(ca == type_name::with_defining_ids<CoinB>() && cb == type_name::with_defining_ids<CoinA>(), 0);
 
         clock::destroy_for_testing(clock);
         close_test(admin_cap, config, pools);
@@ -229,8 +229,8 @@ module cetus_clmm::factory_tests {
         assert_eq!(pool_info.pool_id(), pool_id);
         assert_eq!(pool_info.tick_spacing(), 10);
         let (ca, cb) = factory::coin_types(&pool_info);
-        assert_eq!(ca, type_name::get<CoinA>());
-        assert_eq!(cb, type_name::get<SUI>());
+        assert_eq!(ca, type_name::with_defining_ids<CoinA>());
+        assert_eq!(cb, type_name::with_defining_ids<SUI>());
         assert_eq!(pool_key, pool_info.pool_key());
 
         let pool_infos = factory::fetch_pools(&pools, vector::singleton(pool_key), 10);
@@ -239,8 +239,8 @@ module cetus_clmm::factory_tests {
         assert_eq!(pool_info.pool_id(), pool_id);
         assert_eq!(pool_info.tick_spacing(), 10);
         let (ca, cb) = factory::coin_types(&pool_info);
-        assert_eq!(ca, type_name::get<CoinA>());
-        assert_eq!(cb, type_name::get<SUI>());
+        assert_eq!(ca, type_name::with_defining_ids<CoinA>());
+        assert_eq!(cb, type_name::with_defining_ids<SUI>());
         assert_eq!(pool_key, pool_info.pool_key());
         clock::destroy_for_testing(clock);
         test_scenario::return_shared(pool);
@@ -319,7 +319,7 @@ module cetus_clmm::factory_tests {
 
     #[test]
     #[expected_failure(abort_code = cetus_clmm::factory::ECoinTypeNotAllowed)]
-    fun test_create_pool_v2_not_allowed_coin() {
+    fun test_create_pool_v3_not_allowed_coin() {
         let ctx = &mut tx_context::dummy();
         let (clock, admin_cap, mut config, mut pools) = init_test(ctx);
         config::add_fee_tier(
@@ -334,9 +334,7 @@ module cetus_clmm::factory_tests {
         factory::add_denied_list<usdc::USDC>(&config, &mut pools, ctx);
         let coin_a = coin::mint_for_testing<cetus::CETUS>(1000000000, ctx);
         let coin_b = coin::mint_for_testing<usdc::USDC>(1200000000, ctx);
-        let metadata_a = cetus::init_coin(ctx);
-        let metadata_b = usdc::init_coin(ctx);
-        let (position, coin_a, coin_b) = factory::create_pool_v2_(
+        let (position, coin_a, coin_b) = factory::create_pool_v3_(
             &config,
             &mut pools,
             10,
@@ -346,8 +344,6 @@ module cetus_clmm::factory_tests {
             200,
             coin_a,
             coin_b,
-            &metadata_a,
-            &metadata_b,
             1000000000,
             1200000000,
             true,
@@ -359,13 +355,11 @@ module cetus_clmm::factory_tests {
         transfer::public_transfer(position, ctx.sender());
         clock::destroy_for_testing(clock);
         close_test(admin_cap, config, pools);
-        transfer::public_freeze_object(metadata_a);
-        transfer::public_freeze_object(metadata_b);
     }
 
     #[test]
     #[expected_failure(abort_code = cetus_clmm::factory::ECoinTypeNotAllowed)]
-    fun test_create_pool_v2_not_allowed_coin_2() {
+    fun test_create_pool_v3_not_allowed_coin_2() {
         let ctx = &mut tx_context::dummy();
         let (clock, admin_cap, mut config, mut pools) = init_test(ctx);
         config::add_fee_tier(
@@ -379,9 +373,7 @@ module cetus_clmm::factory_tests {
         factory::add_denied_list<usdc::USDC>(&config, &mut pools, ctx);
         let coin_a = coin::mint_for_testing<cetus::CETUS>(1000000000, ctx);
         let coin_b = coin::mint_for_testing<usdc::USDC>(1200000000, ctx);
-        let metadata_a = cetus::init_coin(ctx);
-        let metadata_b = usdc::init_coin(ctx);
-        let (position, coin_a, coin_b) = factory::create_pool_v2_(
+        let (position, coin_a, coin_b) = factory::create_pool_v3_(
             &config,
             &mut pools,
             10,
@@ -391,8 +383,6 @@ module cetus_clmm::factory_tests {
             200,
             coin_a,
             coin_b,
-            &metadata_a,
-            &metadata_b,
             1000000000,
             1200000000,
             true,
@@ -404,12 +394,10 @@ module cetus_clmm::factory_tests {
         transfer::public_transfer(position, ctx.sender());
         clock::destroy_for_testing(clock);
         close_test(admin_cap, config, pools);
-        transfer::public_freeze_object(metadata_a);
-        transfer::public_freeze_object(metadata_b);
     }
 
     #[test]
-    fun test_create_pool_v2_fix_amount_b() {
+    fun test_create_pool_v3_fix_amount_b() {
         let ctx = &mut tx_context::dummy();
         let (clock, admin_cap, mut config, mut pools) = init_test(ctx);
         config::add_fee_tier(&mut config, 10, 2000, ctx);
@@ -417,9 +405,7 @@ module cetus_clmm::factory_tests {
         factory::init_manager_and_whitelist(&config, &mut pools, ctx);
         let coin_a = coin::mint_for_testing<cetus::CETUS>(1000000000, ctx);
         let coin_b = coin::mint_for_testing<usdc::USDC>(3000000000, ctx);
-        let metadata_a = cetus::init_coin(ctx);
-        let metadata_b = usdc::init_coin(ctx);
-        let (position, coin_a, coin_b) = factory::create_pool_v2_(
+        let (position, coin_a, coin_b) = factory::create_pool_v3_(
             &config,
             &mut pools,
             10,
@@ -429,8 +415,6 @@ module cetus_clmm::factory_tests {
             200,
             coin_b,
             coin_a,
-            &metadata_b,
-            &metadata_a,
             3000000000,
             1000000000,
             false,
@@ -442,22 +426,18 @@ module cetus_clmm::factory_tests {
         transfer::public_transfer(position, ctx.sender());
         clock::destroy_for_testing(clock);
         close_test(admin_cap, config, pools);
-        transfer::public_freeze_object(metadata_a);
-        transfer::public_freeze_object(metadata_b);
     }
 
     #[test]
     #[expected_failure(abort_code = cetus_clmm::factory::ELiquidityCheckFailed)]
-    fun test_create_pool_v2_liquidity_check_failed() {
+    fun test_create_pool_v3_liquidity_check_failed() {
         let ctx = &mut tx_context::dummy();
         let (clock, admin_cap, mut config, mut pools) = init_test(ctx);
         config::add_fee_tier(&mut config, 200, 2000, ctx);
         factory::init_manager_and_whitelist(&config, &mut pools, ctx);
         let coin_a = coin::mint_for_testing<cetus::CETUS>(1000000000, ctx);
         let coin_b = coin::mint_for_testing<usdc::USDC>(3000000000, ctx);
-        let metadata_a = cetus::init_coin(ctx);
-        let metadata_b = usdc::init_coin(ctx);
-        let (position, coin_a, coin_b) = factory::create_pool_v2_(
+        let (position, coin_a, coin_b) = factory::create_pool_v3_(
             &config,
             &mut pools,
             200,
@@ -467,8 +447,6 @@ module cetus_clmm::factory_tests {
             0,
             coin_b,
             coin_a,
-            &metadata_b,
-            &metadata_a,
             3000000000,
             1000000000,
             false,
@@ -480,22 +458,18 @@ module cetus_clmm::factory_tests {
         transfer::public_transfer(position, ctx.sender());
         clock::destroy_for_testing(clock);
         close_test(admin_cap, config, pools);
-        transfer::public_freeze_object(metadata_a);
-        transfer::public_freeze_object(metadata_b);
     }
 
     #[test]
     #[expected_failure(abort_code = cetus_clmm::factory::ELiquidityCheckFailed)]
-    fun test_create_pool_v2_liquidity_check_failed_coin_a() {
+    fun test_create_pool_v3_liquidity_check_failed_coin_a() {
         let ctx = &mut tx_context::dummy();
         let (clock, admin_cap, mut config, mut pools) = init_test(ctx);
         config::add_fee_tier(&mut config, 200, 2000, ctx);
         factory::init_manager_and_whitelist(&config, &mut pools, ctx);
         let coin_a = coin::mint_for_testing<cetus::CETUS>(1000000000, ctx);
         let coin_b = coin::mint_for_testing<usdc::USDC>(3000000000, ctx);
-        let metadata_a = cetus::init_coin(ctx);
-        let metadata_b = usdc::init_coin(ctx);
-        let (position, coin_a, coin_b) = factory::create_pool_v2_(
+        let (position, coin_a, coin_b) = factory::create_pool_v3_(
             &config,
             &mut pools,
             200,
@@ -505,8 +479,6 @@ module cetus_clmm::factory_tests {
             i32::from(200).as_u32(),
             coin_b,
             coin_a,
-            &metadata_b,
-            &metadata_a,
             3000000000,
             1000000000,
             true,
@@ -518,22 +490,18 @@ module cetus_clmm::factory_tests {
         transfer::public_transfer(position, ctx.sender());
         clock::destroy_for_testing(clock);
         close_test(admin_cap, config, pools);
-        transfer::public_freeze_object(metadata_a);
-        transfer::public_freeze_object(metadata_b);
     }
 
     #[test]
     #[expected_failure(abort_code = cetus_clmm::factory::EAmountInAboveMaxLimit)]
-    fun test_create_pool_v2_amount_in_above_max_limit() {
+    fun test_create_pool_v3_amount_in_above_max_limit() {
         let ctx = &mut tx_context::dummy();
         let (clock, admin_cap, mut config, mut pools) = init_test(ctx);
         config::add_fee_tier(&mut config, 200, 2000, ctx);
         factory::init_manager_and_whitelist(&config, &mut pools, ctx);
         let coin_a = coin::mint_for_testing<cetus::CETUS>(1000000000, ctx);
         let coin_b = coin::mint_for_testing<usdc::USDC>(3000000000, ctx);
-        let metadata_a = cetus::init_coin(ctx);
-        let metadata_b = usdc::init_coin(ctx);
-        let (position, coin_a, coin_b) = factory::create_pool_v2_(
+        let (position, coin_a, coin_b) = factory::create_pool_v3_(
             &config,
             &mut pools,
             200,
@@ -543,8 +511,6 @@ module cetus_clmm::factory_tests {
             i32::from(200).as_u32(),
             coin_b,
             coin_a,
-            &metadata_b,
-            &metadata_a,
             3000000000,
             1000000000,
             true,
@@ -556,22 +522,18 @@ module cetus_clmm::factory_tests {
         transfer::public_transfer(position, ctx.sender());
         clock::destroy_for_testing(clock);
         close_test(admin_cap, config, pools);
-        transfer::public_freeze_object(metadata_a);
-        transfer::public_freeze_object(metadata_b);
     }
 
     #[test]
     #[expected_failure(abort_code = cetus_clmm::factory::EAmountOutBelowMinLimit)]
-    fun test_create_pool_v2_amount_out_below_min_limit() {
+    fun test_create_pool_v3_amount_out_below_min_limit() {
         let ctx = &mut tx_context::dummy();
         let (clock, admin_cap, mut config, mut pools) = init_test(ctx);
         config::add_fee_tier(&mut config, 200, 2000, ctx);
         factory::init_manager_and_whitelist(&config, &mut pools, ctx);
         let coin_a = coin::mint_for_testing<cetus::CETUS>(2000000000, ctx);
         let coin_b = coin::mint_for_testing<usdc::USDC>(1000000000, ctx);
-        let metadata_a = cetus::init_coin(ctx);
-        let metadata_b = usdc::init_coin(ctx);
-        let (position, coin_a, coin_b) = factory::create_pool_v2_(
+        let (position, coin_a, coin_b) = factory::create_pool_v3_(
             &config,
             &mut pools,
             200,
@@ -581,8 +543,6 @@ module cetus_clmm::factory_tests {
             i32::from(200).as_u32(),
             coin_b,
             coin_a,
-            &metadata_b,
-            &metadata_a,
             1000000000,
             2000000000,
             false,
@@ -594,22 +554,18 @@ module cetus_clmm::factory_tests {
         transfer::public_transfer(position, ctx.sender());
         clock::destroy_for_testing(clock);
         close_test(admin_cap, config, pools);
-        transfer::public_freeze_object(metadata_a);
-        transfer::public_freeze_object(metadata_b);
     }
 
     #[test]
     #[expected_failure(abort_code = cetus_clmm::factory::EInvalidSqrtPrice)]
-    fun test_create_pool_v2_init_sqrt_price_invalid() {
+    fun test_create_pool_v3_init_sqrt_price_invalid() {
         let ctx = &mut tx_context::dummy();
         let (clock, admin_cap, mut config, mut pools) = init_test(ctx);
         config::add_fee_tier(&mut config, 200, 2000, ctx);
         factory::init_manager_and_whitelist(&config, &mut pools, ctx);
         let coin_a = coin::mint_for_testing<cetus::CETUS>(2000000000, ctx);
         let coin_b = coin::mint_for_testing<usdc::USDC>(1000000000, ctx);
-        let metadata_a = cetus::init_coin(ctx);
-        let metadata_b = usdc::init_coin(ctx);
-        let (position, coin_a, coin_b) = factory::create_pool_v2_(
+        let (position, coin_a, coin_b) = factory::create_pool_v3_(
             &config,
             &mut pools,
             200,
@@ -619,8 +575,6 @@ module cetus_clmm::factory_tests {
             i32::from(200).as_u32(),
             coin_b,
             coin_a,
-            &metadata_b,
-            &metadata_a,
             1000000000,
             2000000000,
             false,
@@ -632,22 +586,18 @@ module cetus_clmm::factory_tests {
         transfer::public_transfer(position, ctx.sender());
         clock::destroy_for_testing(clock);
         close_test(admin_cap, config, pools);
-        transfer::public_freeze_object(metadata_a);
-        transfer::public_freeze_object(metadata_b);
     }
 
     #[test]
     #[expected_failure(abort_code = cetus_clmm::factory::EInvalidSqrtPrice)]
-    fun test_create_pool_v2_init_sqrt_price_invalid_2() {
+    fun test_create_pool_v3_init_sqrt_price_invalid_2() {
         let ctx = &mut tx_context::dummy();
         let (clock, admin_cap, mut config, mut pools) = init_test(ctx);
         config::add_fee_tier(&mut config, 200, 2000, ctx);
         factory::init_manager_and_whitelist(&config, &mut pools, ctx);
         let coin_a = coin::mint_for_testing<cetus::CETUS>(2000000000, ctx);
         let coin_b = coin::mint_for_testing<usdc::USDC>(1000000000, ctx);
-        let metadata_a = cetus::init_coin(ctx);
-        let metadata_b = usdc::init_coin(ctx);
-        let (position, coin_a, coin_b) = factory::create_pool_v2_(
+        let (position, coin_a, coin_b) = factory::create_pool_v3_(
             &config,
             &mut pools,
             200,
@@ -657,8 +607,6 @@ module cetus_clmm::factory_tests {
             i32::from(200).as_u32(),
             coin_b,
             coin_a,
-            &metadata_b,
-            &metadata_a,
             1000000000,
             2000000000,
             false,
@@ -670,22 +618,18 @@ module cetus_clmm::factory_tests {
         transfer::public_transfer(position, ctx.sender());
         clock::destroy_for_testing(clock);
         close_test(admin_cap, config, pools);
-        transfer::public_freeze_object(metadata_a);
-        transfer::public_freeze_object(metadata_b);
     }
 
     #[test]
     #[expected_failure(abort_code = cetus_clmm::factory::EPoolAlreadyExist)]
-    fun test_create_pool_v2_pool_already_exists() {
+    fun test_create_pool_v3_pool_already_exists() {
         let ctx = &mut tx_context::dummy();
         let (clock, admin_cap, mut config, mut pools) = init_test(ctx);
         config::add_fee_tier(&mut config, 200, 2000, ctx);
         factory::init_manager_and_whitelist(&config, &mut pools, ctx);
         let coin_a = coin::mint_for_testing<cetus::CETUS>(1000000000, ctx);
         let coin_b = coin::mint_for_testing<usdc::USDC>(1000000000, ctx);
-        let metadata_a = cetus::init_coin(ctx);
-        let metadata_b = usdc::init_coin(ctx);
-        let (position, coin_a, coin_b) = factory::create_pool_v2_(
+        let (position, coin_a, coin_b) = factory::create_pool_v3_(
             &config,
             &mut pools,
             200,
@@ -695,8 +639,6 @@ module cetus_clmm::factory_tests {
             i32::from(200).as_u32(),
             coin_b,
             coin_a,
-            &metadata_b,
-            &metadata_a,
             1000000000,
             1000000000,
             false,
@@ -707,7 +649,7 @@ module cetus_clmm::factory_tests {
         coin_b.burn_for_testing();
         let coin_a = coin::mint_for_testing<cetus::CETUS>(1000000000, ctx);
         let coin_b = coin::mint_for_testing<usdc::USDC>(1000000000, ctx);
-        let (position2, coin_a, coin_b) = factory::create_pool_v2_(
+        let (position2, coin_a, coin_b) = factory::create_pool_v3_(
             &config,
             &mut pools,
             200,
@@ -717,8 +659,6 @@ module cetus_clmm::factory_tests {
             i32::from(200).as_u32(),
             coin_b,
             coin_a,
-            &metadata_b,
-            &metadata_a,
             1000000000,
             1000000000,
             false,
@@ -731,8 +671,6 @@ module cetus_clmm::factory_tests {
         transfer::public_transfer(position2, ctx.sender());
         clock::destroy_for_testing(clock);
         close_test(admin_cap, config, pools);
-        transfer::public_freeze_object(metadata_a);
-        transfer::public_freeze_object(metadata_b);
     }
 
     #[test]

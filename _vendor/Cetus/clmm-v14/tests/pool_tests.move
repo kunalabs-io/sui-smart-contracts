@@ -1597,8 +1597,8 @@ public fun swap_with_partner<CoinTypeA, CoinTypeB>(
     let (before_protocol_fee_a, before_protocol_fee_b) = pool::protocol_fee(pool);
     let (before_ref_balance_a, before_ref_balance_b) = {
         let ref_balances = partner::balances(partner);
-        let key_a = string::from_ascii(type_name::into_string(type_name::get<CoinTypeA>()));
-        let key_b = string::from_ascii(type_name::into_string(type_name::get<CoinTypeB>()));
+        let key_a = string::from_ascii(type_name::into_string(type_name::with_defining_ids<CoinTypeA>()));
+        let key_b = string::from_ascii(type_name::into_string(type_name::with_defining_ids<CoinTypeB>()));
         let balance_a = if (bag::contains(ref_balances, key_a)) {
             balance::value(bag::borrow<String, Balance<CoinTypeA>>(ref_balances, key_a))
         } else {
@@ -1691,8 +1691,8 @@ public fun swap_with_partner<CoinTypeA, CoinTypeB>(
     // Check ref fee
     let (after_ref_balance_a, after_ref_balance_b) = {
         let ref_balances = partner::balances(partner);
-        let key_a = string::from_ascii(type_name::into_string(type_name::get<CoinTypeA>()));
-        let key_b = string::from_ascii(type_name::into_string(type_name::get<CoinTypeB>()));
+        let key_a = string::from_ascii(type_name::into_string(type_name::with_defining_ids<CoinTypeA>()));
+        let key_b = string::from_ascii(type_name::into_string(type_name::with_defining_ids<CoinTypeB>()));
         let balance_a = if (bag::contains(ref_balances, key_a)) {
             balance::value(bag::borrow<String, Balance<CoinTypeA>>(ref_balances, key_a))
         } else {
@@ -1906,8 +1906,8 @@ fun test_flash_loan_with_partner() {
     assert!(fee_growth_global_b == fee_growth_global_b_expect, 0);
 
     let ref_fee = cetus_clmm::partner::balances(&partner);
-    let key_a = string::from_ascii(type_name::into_string(type_name::get<CoinA>()));
-    let key_b = string::from_ascii(type_name::into_string(type_name::get<CoinB>()));
+    let key_a = string::from_ascii(type_name::into_string(type_name::with_defining_ids<CoinA>()));
+    let key_b = string::from_ascii(type_name::into_string(type_name::with_defining_ids<CoinB>()));
     let balance_a = bag::borrow<String, Balance<CoinA>>(ref_fee, key_a);
     let balance_b = bag::borrow<String, Balance<CoinB>>(ref_fee, key_b);
     assert!(balance::value(balance_a) == 4, 0);

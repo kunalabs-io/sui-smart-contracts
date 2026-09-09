@@ -306,7 +306,7 @@ public fun in_allowed_list<Coin>(pools: &Pools): bool {
         &pools.id,
         string::utf8(DENY_COIN_LIST_KEY),
     );
-    table::contains<TypeName, bool>(&coin_list.allowed_list, type_name::get<Coin>())
+    table::contains<TypeName, bool>(&coin_list.allowed_list, type_name::with_defining_ids<Coin>())
 }
 
 /// Check if a coin is in the denied list
@@ -321,7 +321,7 @@ public fun in_denied_list<Coin>(pools: &Pools): bool {
         &pools.id,
         string::utf8(DENY_COIN_LIST_KEY),
     );
-    table::contains<TypeName, bool>(&coin_list.denied_list, type_name::get<Coin>())
+    table::contains<TypeName, bool>(&coin_list.denied_list, type_name::with_defining_ids<Coin>())
 }
 
 /// Check if a coin is allowed
@@ -329,6 +329,13 @@ public fun in_denied_list<Coin>(pools: &Pools): bool {
 /// * `Coin` - The coin type
 /// * `_metadata` - The coin metadata
 public fun is_allowed_coin<Coin>(pools: &mut Pools, _metadata: &CoinMetadata<Coin>): bool {
+    let mut is_allowed = in_allowed_list<Coin>(pools);
+    is_allowed = is_allowed || !in_denied_list<Coin>(pools);
+    is_allowed
+    // TODO: add_denied_coin
+}
+
+public fun is_allowed_coin_v2<Coin>(pools: &mut Pools): bool {
     let mut is_allowed = in_allowed_list<Coin>(pools);
     is_allowed = is_allowed || !in_denied_list<Coin>(pools);
     is_allowed
@@ -395,12 +402,12 @@ public entry fun init_manager_and_whitelist(
     let tick_spacing_200 = TICK_SPACING_200;
     assert!(vec_map::contains(fee_tiers_, &tick_spacing_200), ETickSpacingNotExistsInFeeTier);
     assert!(
-        !table::contains(&manager.allowed_pair_config, type_name::get<SUI>()),
+        !table::contains(&manager.allowed_pair_config, type_name::with_defining_ids<SUI>()),
         ECoinAlreadyExistsInAllowedPairConfig,
     );
     table::add(
         &mut manager.allowed_pair_config,
-        type_name::get<SUI>(),
+        type_name::with_defining_ids<SUI>(),
         vec_set::singleton(tick_spacing_200),
     );
     let manager_id = object::id(&manager);
@@ -433,7 +440,7 @@ public entry fun init_manager_and_whitelist(
 public fun add_allowed_list<Coin>(config: &GlobalConfig, pools: &mut Pools, ctx: &TxContext) {
     checked_package_version(config);
     check_pool_manager_role(config, tx_context::sender(ctx));
-    let c_type = type_name::get<Coin>();
+    let c_type = type_name::with_defining_ids<Coin>();
     assert!(
         dynamic_object_field::exists_(&pools.id, string::utf8(DENY_COIN_LIST_KEY)),
         EDenyCoinListNotExists,
@@ -456,7 +463,7 @@ public fun add_allowed_list<Coin>(config: &GlobalConfig, pools: &mut Pools, ctx:
 public fun remove_allowed_list<Coin>(config: &GlobalConfig, pools: &mut Pools, ctx: &TxContext) {
     checked_package_version(config);
     check_pool_manager_role(config, tx_context::sender(ctx));
-    let c_type = type_name::get<Coin>();
+    let c_type = type_name::with_defining_ids<Coin>();
     assert!(
         dynamic_object_field::exists_(&pools.id, string::utf8(DENY_COIN_LIST_KEY)),
         EDenyCoinListNotExists,
@@ -489,7 +496,7 @@ public fun add_denied_list<Coin>(config: &GlobalConfig, pools: &mut Pools, ctx: 
 public fun remove_denied_list<Coin>(config: &GlobalConfig, pools: &mut Pools, ctx: &TxContext) {
     checked_package_version(config);
     check_pool_manager_role(config, tx_context::sender(ctx));
-    let c_type = type_name::get<Coin>();
+    let c_type = type_name::with_defining_ids<Coin>();
     assert!(
         dynamic_object_field::exists_(&pools.id, string::utf8(DENY_COIN_LIST_KEY)),
         EDenyCoinListNotExists,
@@ -521,7 +528,7 @@ public fun add_allowed_pair_config<Coin>(
     let fee_tiers_ = fee_tiers(config);
     assert!(vec_map::contains(fee_tiers_, &tick_spacing), ETickSpacingNotExistsInFeeTier);
 
-    let name = type_name::get<Coin>();
+    let name = type_name::with_defining_ids<Coin>();
     assert!(
         dynamic_object_field::exists_(&pools.id, string::utf8(PERMISSION_PAIR_MANAGER_KEY)),
         EPermissionPairManagerNotExists,
@@ -561,7 +568,7 @@ public fun remove_allowed_pair_config<Coin>(
 ) {
     checked_package_version(config);
     check_pool_manager_role(config, tx_context::sender(ctx));
-    let coin_type = type_name::get<Coin>();
+    let coin_type = type_name::with_defining_ids<Coin>();
     assert!(
         dynamic_object_field::exists_(&pools.id, string::utf8(PERMISSION_PAIR_MANAGER_KEY)),
         EPermissionPairManagerNotExists,
@@ -604,7 +611,7 @@ public fun mint_pool_creation_cap<Coin>(
     ctx: &mut TxContext,
 ): PoolCreationCap {
     checked_package_version(config);
-    let c_type = type_name::get<Coin>();
+    let c_type = type_name::with_defining_ids<Coin>();
     let cap = mint_pool_creation_cap_internal(pools, c_type, ctx);
 
     event::emit(MintPoolCreationCap {
@@ -625,7 +632,7 @@ public fun mint_pool_creation_cap_by_admin<Coin>(
 ): PoolCreationCap {
     checked_package_version(config);
     check_pool_manager_role(config, tx_context::sender(ctx));
-    let c_type = type_name::get<Coin>();
+    let c_type = type_name::with_defining_ids<Coin>();
     let cap = mint_pool_creation_cap_internal(pools, c_type, ctx);
 
     event::emit(MintPoolCreationCapByAdmin {
@@ -687,7 +694,7 @@ fun register_permission_pair_internal<CoinTypeA, CoinTypeB>(
         &mut pools.id,
         string::utf8(PERMISSION_PAIR_MANAGER_KEY),
     );
-    let quote_coin = type_name::get<CoinTypeB>();
+    let quote_coin = type_name::with_defining_ids<CoinTypeB>();
     assert!(
         table::contains<TypeName, VecSet<u32>>(&manager.allowed_pair_config, quote_coin),
         EQuoteCoinTypeNotInAllowedPairConfig,
@@ -695,7 +702,7 @@ fun register_permission_pair_internal<CoinTypeA, CoinTypeB>(
     let vec_set = table::borrow<TypeName, VecSet<u32>>(&manager.allowed_pair_config, quote_coin);
     assert!(vec_set::contains(vec_set, &tick_spacing), ETickSpacingNotInAllowedPairConfig);
 
-    assert!(type_name::get<CoinTypeA>() == cap.coin_type, ECapNotMatchWithCoinType);
+    assert!(type_name::with_defining_ids<CoinTypeA>() == cap.coin_type, ECapNotMatchWithCoinType);
     let is_right = is_right_order<CoinTypeA, CoinTypeB>();
 
     let (pool_key, coin_a, coin_b) = if (is_right) {
@@ -741,7 +748,7 @@ fun unregister_permission_pair_internal<CoinTypeA, CoinTypeB>(
         &mut pools.id,
         string::utf8(PERMISSION_PAIR_MANAGER_KEY),
     );
-    let quote_coin = type_name::get<CoinTypeB>();
+    let quote_coin = type_name::with_defining_ids<CoinTypeB>();
 
     let is_right = is_right_order<CoinTypeA, CoinTypeB>();
     let pool_key = if (is_right) {
@@ -769,7 +776,7 @@ fun unregister_permission_pair_internal<CoinTypeA, CoinTypeB>(
 }
 
 fun add_denied_coin<Coin>(pools: &mut Pools) {
-    let c_type = type_name::get<Coin>();
+    let c_type = type_name::with_defining_ids<Coin>();
     assert!(
         dynamic_object_field::exists_(&pools.id, string::utf8(DENY_COIN_LIST_KEY)),
         EDenyCoinListNotExists,
@@ -862,24 +869,7 @@ public fun create_pool_with_liquidity<CoinTypeA, CoinTypeB>(
     abort EMethodDeprecated
 }
 
-#[allow(lint(share_owned))]
-/// Create pool and add liquidity.
-/// * `config` - The global config
-/// * `pools` - The global pools
-/// * `tick_spacing` - The tick spacing of the pool
-/// * `initialize_price` - The initial price of the pool
-/// * `url` - The url of the pool which is used in position nft
-/// * `tick_lower_idx` - The lower tick index of the pool
-/// * `tick_upper_idx` - The upper tick index of the pool
-/// * `coin_a` - The coin a
-/// * `coin_b` - The coin b
-/// * `metadata_a` - The metadata of the coin a
-/// * `metadata_b` - The metadata of the coin b
-/// * `amount_a` - The amount of coin a
-/// * `amount_b` - The amount of coin b
-/// * `fix_amount_a` - Fix the amount of coin a or b
-/// * `clock` - The clock
-/// * `ctx` - Transaction context used to create the pool and add liquidity
+#[allow(unused_variable, unused_mut_parameter, unused_let_mut)]
 public(package) fun create_pool_v2_<CoinTypeA, CoinTypeB>(
     config: &GlobalConfig,
     pools: &mut Pools,
@@ -898,9 +888,44 @@ public(package) fun create_pool_v2_<CoinTypeA, CoinTypeB>(
     clock: &Clock,
     ctx: &mut TxContext,
 ): (Position, Coin<CoinTypeA>, Coin<CoinTypeB>) {
+    abort EMethodDeprecated
+}
+
+#[allow(lint(share_owned))]
+/// Create pool and add liquidity.
+/// * `config` - The global config
+/// * `pools` - The global pools
+/// * `tick_spacing` - The tick spacing of the pool
+/// * `initialize_price` - The initial price of the pool
+/// * `url` - The url of the pool which is used in position nft
+/// * `tick_lower_idx` - The lower tick index of the pool
+/// * `tick_upper_idx` - The upper tick index of the pool
+/// * `coin_a` - The coin a
+/// * `coin_b` - The coin b
+/// * `amount_a` - The amount of coin a
+/// * `amount_b` - The amount of coin b
+/// * `fix_amount_a` - Fix the amount of coin a or b
+/// * `clock` - The clock
+/// * `ctx` - Transaction context used to create the pool and add liquidity
+public(package) fun create_pool_v3_<CoinTypeA, CoinTypeB>(
+    config: &GlobalConfig,
+    pools: &mut Pools,
+    tick_spacing: u32,
+    initialize_price: u128,
+    url: String,
+    tick_lower_idx: u32,
+    tick_upper_idx: u32,
+    mut coin_a: Coin<CoinTypeA>,
+    mut coin_b: Coin<CoinTypeB>,
+    amount_a: u64,
+    amount_b: u64,
+    fix_amount_a: bool,
+    clock: &Clock,
+    ctx: &mut TxContext,
+): (Position, Coin<CoinTypeA>, Coin<CoinTypeB>) {
     checked_package_version(config);
-    assert!(is_allowed_coin<CoinTypeA>(pools, metadata_a), ECoinTypeNotAllowed);
-    assert!(is_allowed_coin<CoinTypeB>(pools, metadata_b), ECoinTypeNotAllowed);
+    assert!(is_allowed_coin_v2<CoinTypeA>(pools), ECoinTypeNotAllowed);
+    assert!(is_allowed_coin_v2<CoinTypeB>(pools), ECoinTypeNotAllowed);
     let mut pool = create_pool_internal<CoinTypeA, CoinTypeB>(
         pools,
         config,
@@ -961,7 +986,7 @@ fun create_pool_internal<CoinTypeA, CoinTypeB>(
         EInvalidSqrtPrice,
     );
 
-    let (coin_type_a, coin_type_b) = (type_name::get<CoinTypeA>(), type_name::get<CoinTypeB>());
+    let (coin_type_a, coin_type_b) = (type_name::with_defining_ids<CoinTypeA>(), type_name::with_defining_ids<CoinTypeB>());
     assert!(coin_type_a != coin_type_b, ESameCoinType);
     let pool_key = new_pool_key<CoinTypeA, CoinTypeB>(tick_spacing);
     // Check pool if exist
@@ -1047,8 +1072,8 @@ public fun fetch_pools(pools: &Pools, start: vector<ID>, limit: u64): vector<Poo
 /// * `CoinTypeB` - The type name of the second coin
 /// * `tick_spacing` - The tick spacing
 public fun new_pool_key<CoinTypeA, CoinTypeB>(tick_spacing: u32): ID {
-    let mut coin_type_a = *ascii::as_bytes(&type_name::into_string(type_name::get<CoinTypeA>()));
-    let coin_type_b = *ascii::as_bytes(&type_name::into_string(type_name::get<CoinTypeB>()));
+    let mut coin_type_a = *ascii::as_bytes(&type_name::into_string(type_name::with_defining_ids<CoinTypeA>()));
+    let coin_type_b = *ascii::as_bytes(&type_name::into_string(type_name::with_defining_ids<CoinTypeB>()));
     let (len_a, len_b) = (vector::length(&coin_type_a), vector::length((&coin_type_b)));
     let mut i = 0;
     let mut check_pass = false;
@@ -1084,8 +1109,8 @@ public fun new_pool_key<CoinTypeA, CoinTypeB>(tick_spacing: u32): ID {
 /// * `CoinTypeA` - The type name of the first coin
 /// * `CoinTypeB` - The type name of the second coin
 public fun is_right_order<CoinTypeA, CoinTypeB>(): bool {
-    let coin_type_a = *ascii::as_bytes(&type_name::into_string(type_name::get<CoinTypeA>()));
-    let coin_type_b = *ascii::as_bytes(&type_name::into_string(type_name::get<CoinTypeB>()));
+    let coin_type_a = *ascii::as_bytes(&type_name::into_string(type_name::with_defining_ids<CoinTypeA>()));
+    let coin_type_b = *ascii::as_bytes(&type_name::into_string(type_name::with_defining_ids<CoinTypeB>()));
     let (len_a, len_b) = (vector::length(&coin_type_a), vector::length((&coin_type_b)));
     let mut i = 0;
     let mut check_pass = false;

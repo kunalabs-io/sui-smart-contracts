@@ -597,8 +597,8 @@ public fun set_display<CoinTypeA, CoinTypeB>(
         utf8(b"project_url"),
         utf8(b"creator"),
     ];
-    let coin_type_a = string::from_ascii(type_name::into_string(type_name::get<CoinTypeA>()));
-    let coin_type_b = string::from_ascii(type_name::into_string(type_name::get<CoinTypeB>()));
+    let coin_type_a = string::from_ascii(type_name::into_string(type_name::with_defining_ids<CoinTypeA>()));
+    let coin_type_b = string::from_ascii(type_name::into_string(type_name::with_defining_ids<CoinTypeB>()));
     let values = vector[name, coin_type_a, coin_type_b, link, url, description, website, creator];
     let mut display = display::new_with_fields<Pool<CoinTypeA, CoinTypeB>>(
         publisher,
@@ -1002,7 +1002,7 @@ public fun collect_reward<CoinTypeA, CoinTypeB, CoinTypeC>(
     event::emit(CollectRewardV2Event {
         pool: object::id(pool),
         position: position_id,
-        rewarder_type: type_name::get<CoinTypeC>(),
+        rewarder_type: type_name::with_defining_ids<CoinTypeC>(),
         amount: reward_amount,
     });
 
@@ -1380,7 +1380,7 @@ public fun initialize_rewarder<CoinTypeA, CoinTypeB, CoinTypeC>(
     rewarder::add_rewarder<CoinTypeC>(&mut pool.rewarder_manager);
     event::emit(AddRewarderEvent {
         pool: object::id(pool),
-        rewarder_type: type_name::get<CoinTypeC>(),
+        rewarder_type: type_name::with_defining_ids<CoinTypeC>(),
     })
 }
 
@@ -1417,7 +1417,7 @@ public fun update_emission<CoinTypeA, CoinTypeB, CoinTypeC>(
 
     event::emit(UpdateEmissionEvent {
         pool: object::id(pool),
-        rewarder_type: type_name::get<CoinTypeC>(),
+        rewarder_type: type_name::with_defining_ids<CoinTypeC>(),
         emissions_per_second,
     })
 }
@@ -2658,7 +2658,7 @@ fun add_liquidity_internal<CoinTypeA, CoinTypeB>(
         position: position_id,
         tick_lower,
         tick_upper,
-        liquidity,
+        liquidity: delta_liquidity,
         after_liquidity,
         current_sqrt_price: pool.current_sqrt_price,
         amount_a,

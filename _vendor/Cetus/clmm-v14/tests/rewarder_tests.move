@@ -74,7 +74,7 @@ fun test_initialize_rewarder() {
 
     deposit_reward<CoinC>(&config, &mut vault, 100000000);
     let balances = vault.balances();
-    let a = balances.borrow<TypeName, Balance<CoinC>>(type_name::get<CoinC>());
+    let a = balances.borrow<TypeName, Balance<CoinC>>(type_name::with_defining_ids<CoinC>());
     assert!(balance::value(a) == 100000000, 0);
     pool::update_emission<CoinA, CoinB, CoinC>(&config, &mut pool, &vault, 1 << 64, &clock, &ctx);
     let rewarder_manager = pool::rewarder_manager(&pool);

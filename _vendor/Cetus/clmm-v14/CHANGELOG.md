@@ -174,3 +174,13 @@ Update `inter-mate` library version
 - Add `AddLiquidityV2Event`, `RemoveLiquidityV2Event`
 - Fix asymptotic audit
 - Add `remove_liquidity_with_slippage`
+
+## 2025-10-14
+- Online Version: 14
+# Added
+- Add partner.`claim_ref_fee_coin`
+- Add pool_creator.`create_pool_v2_with_creation_cap`
+- Add pool_creator.`create_pool_v3`
+- Add factory.`create_pool_v3_`
+### Changed
+- Fix `AddLiquidityV2Event`

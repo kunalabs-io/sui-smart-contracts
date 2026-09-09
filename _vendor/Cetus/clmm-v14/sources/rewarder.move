@@ -92,7 +92,7 @@ public struct EmergentWithdrawEvent has copy, drop, store {
     after_amount: u64,
 }
 
-/// init the `RewarderGlobalVault`
+/// init the `RewarderGlobalVault
 /// * `ctx` - The transaction context
 fun init(ctx: &mut TxContext) {
     let vault = RewarderGlobalVault {
@@ -185,7 +185,7 @@ public fun growth_global(rewarder: &Rewarder): u128 {
 public fun rewarder_index<CoinType>(manager: &RewarderManager): Option<u64> {
     let mut idx = 0;
     while (idx < vector::length(&manager.rewarders)) {
-        if (vector::borrow(&manager.rewarders, idx).reward_coin == type_name::get<CoinType>()) {
+        if (vector::borrow(&manager.rewarders, idx).reward_coin == type_name::with_defining_ids<CoinType>()) {
             return option::some(idx)
         };
         idx = idx + 1;
@@ -199,7 +199,7 @@ public fun rewarder_index<CoinType>(manager: &RewarderManager): Option<u64> {
 public fun borrow_rewarder<CoinType>(manager: &RewarderManager): &Rewarder {
     let mut idx = 0;
     while (idx < vector::length(&manager.rewarders)) {
-        if (vector::borrow(&manager.rewarders, idx).reward_coin == type_name::get<CoinType>()) {
+        if (vector::borrow(&manager.rewarders, idx).reward_coin == type_name::with_defining_ids<CoinType>()) {
             return vector::borrow(&manager.rewarders, idx)
         };
         idx = idx + 1;
@@ -207,13 +207,13 @@ public fun borrow_rewarder<CoinType>(manager: &RewarderManager): &Rewarder {
     abort ERewardNotExist
 }
 
-/// Borrow mutable `Rewarder` from `RewarderManager`
+/// Borrow mutable `Rewarder` from `RewarderManager
 /// * `manager` - The `RewarderManager`
 /// * Returns the mutable rewarder
 public(package) fun borrow_mut_rewarder<CoinType>(manager: &mut RewarderManager): &mut Rewarder {
     let mut idx = 0;
     while (idx < vector::length(&manager.rewarders)) {
-        if (vector::borrow(&manager.rewarders, idx).reward_coin == type_name::get<CoinType>()) {
+        if (vector::borrow(&manager.rewarders, idx).reward_coin == type_name::with_defining_ids<CoinType>()) {
             return vector::borrow_mut(&mut manager.rewarders, idx)
         };
         idx = idx + 1;
@@ -228,7 +228,7 @@ public(package) fun add_rewarder<CoinType>(manager: &mut RewarderManager) {
     assert!(option::is_none(&rewarder_index<CoinType>(manager)), ERewardAlreadyExist);
     let rewarder_infos = &mut manager.rewarders;
     assert!(vector::length(rewarder_infos) <= REWARDER_NUM - 1, ERewardSoltIsFull);
-    let rewarder_type = type_name::get<CoinType>();
+    let rewarder_type = type_name::with_defining_ids<CoinType>();
     let rewarder = Rewarder {
         reward_coin: rewarder_type,
         emissions_per_second: 0,
@@ -303,7 +303,7 @@ public(package) fun update_emission<CoinType>(
     let old_emission = rewarder.emissions_per_second;
     if (emissions_per_second > 0 && emissions_per_second > old_emission) {
         let emission_per_day = DAYS_IN_SECONDS * emissions_per_second;
-        let reward_type = type_name::get<CoinType>();
+        let reward_type = type_name::with_defining_ids<CoinType>();
         assert!(bag::contains(&vault.balances, reward_type), ERewardAmountInsufficient);
         let rewarder_balance = bag::borrow<TypeName, Balance<CoinType>>(
             &vault.balances,
@@ -327,10 +327,10 @@ public(package) fun withdraw_reward<CoinType>(
     vault: &mut RewarderGlobalVault,
     amount: u64,
 ): Balance<CoinType> {
-    assert!(bag::contains(&vault.balances, type_name::get<CoinType>()), ERewardCoinNotEnough);
+    assert!(bag::contains(&vault.balances, type_name::with_defining_ids<CoinType>()), ERewardCoinNotEnough);
     let reward_balance = bag::borrow_mut<TypeName, Balance<CoinType>>(
         &mut vault.balances,
-        type_name::get<CoinType>(),
+        type_name::with_defining_ids<CoinType>(),
     );
     assert!(balance::value(reward_balance) >= amount, ERewardCoinNotEnough);
     balance::split(reward_balance, amount)
@@ -347,18 +347,18 @@ public fun deposit_reward<CoinType>(
     balance: Balance<CoinType>,
 ): u64 {
     checked_package_version(config);
-    let reward_type = type_name::get<CoinType>();
+    let reward_type = type_name::with_defining_ids<CoinType>();
     if (!bag::contains(&vault.balances, reward_type)) {
         bag::add(&mut vault.balances, reward_type, balance::zero<CoinType>());
     };
     let deposit_amount = balance::value(&balance);
     let reward_balance = bag::borrow_mut<TypeName, Balance<CoinType>>(
         &mut vault.balances,
-        type_name::get<CoinType>(),
+        type_name::with_defining_ids<CoinType>(),
     );
     let after_amount = balance::join(reward_balance, balance);
     emit(DepositEvent {
-        reward_type: type_name::get<CoinType>(),
+        reward_type: type_name::with_defining_ids<CoinType>(),
         deposit_amount,
         after_amount,
     });
@@ -381,7 +381,7 @@ public fun emergent_withdraw<CoinType>(
     let withdraw_balance = withdraw_reward<CoinType>(vault, amount);
     let after_amount = balance_of<CoinType>(vault);
     emit(EmergentWithdrawEvent {
-        reward_type: type_name::get<CoinType>(),
+        reward_type: type_name::with_defining_ids<CoinType>(),
         withdraw_amount: amount,
         after_amount,
     });
@@ -399,7 +399,7 @@ public fun balances(vault: &RewarderGlobalVault): &Bag {
 /// * `vault` - The `RewarderGlobalVault`
 /// * Returns the balance value of the reward coin
 public fun balance_of<CoinType>(vault: &RewarderGlobalVault): u64 {
-    let reward_type = type_name::get<CoinType>();
+    let reward_type = type_name::with_defining_ids<CoinType>();
     if (!bag::contains(&vault.balances, reward_type)) {
         return 0
     };
@@ -421,7 +421,7 @@ public fun new_rewarder_for_test<CoinType>(
     growth_global: u128,
 ): Rewarder {
     Rewarder {
-        reward_coin: type_name::get<CoinType>(),
+        reward_coin: type_name::with_defining_ids<CoinType>(),
         emissions_per_second,
         growth_global,
     }

@@ -324,7 +324,7 @@ public fun receive_ref_fee<T>(_partner: &mut Partner, _fee: Balance<T>) {
 /// * `fee` - The balance of the fee
 public(package) fun receive_ref_fee_internal<T>(partner: &mut Partner, fee: Balance<T>) {
     let amount = balance::value<T>(&fee);
-    let type_name = type_name::get<T>();
+    let type_name = type_name::with_defining_ids<T>();
     let key = string::from_ascii(type_name::into_string(type_name));
     if (bag::contains(&partner.balances, key)) {
         let current_balance = bag::borrow_mut<String, Balance<T>>(&mut partner.balances, key);
@@ -352,10 +352,20 @@ public fun claim_ref_fee<T>(
     partner: &mut Partner,
     ctx: &mut TxContext,
 ) {
+    let fee_coin = claim_ref_fee_coin<T>(config, partner_cap, partner, ctx);
+    transfer::public_transfer<Coin<T>>(fee_coin, ctx.sender());
+}
+
+public fun claim_ref_fee_coin<T>(
+    config: &GlobalConfig,
+    partner_cap: &PartnerCap,
+    partner: &mut Partner,
+    ctx: &mut TxContext,
+): Coin<T> {
     checked_package_version(config);
     assert!(partner_cap.partner_id == object::id(partner), EInvalidPartnerCap);
 
-    let type_name = type_name::get<T>();
+    let type_name = type_name::with_defining_ids<T>();
     let key = string::from_ascii(type_name::into_string(type_name));
 
     assert!(bag::contains<String>(&partner.balances, key), EInvalidCoinType);
@@ -366,14 +376,15 @@ public fun claim_ref_fee<T>(
     );
     let amount = balance::value<T>(&current_balance);
     let fee_coin = coin::from_balance<T>(current_balance, ctx);
-    transfer::public_transfer<Coin<T>>(fee_coin, tx_context::sender(ctx));
 
     event::emit(ClaimRefFeeEvent {
         partner_id: object::id(partner),
         amount,
         type_name: key,
     });
+    fee_coin
 }
+
 
 #[test_only]
 public fun create_partner_for_test(
@@ -431,7 +442,7 @@ fun test_init() {
     init(sc.ctx());
     sc.next_tx(@0x24);
     let partners = test_scenario::take_shared<Partners>(&sc);
-    assert_eq!(partners.partners.size(), 0);
+    assert_eq!(partners.partners.length(), 0);
     test_scenario::return_shared(partners);
     test_scenario::end(sc);
 }

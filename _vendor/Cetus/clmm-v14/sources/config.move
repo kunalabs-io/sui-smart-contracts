@@ -52,7 +52,7 @@ const ACL_REWARDER_MANAGER: u8 = 4;
 const ACL_EMERGENCY_PAUSE: u8 = 5;
 
 /// The version of this package, need increase it when upgrade the package.
-const VERSION: u64 = 13;
+const VERSION: u64 = 14;
 /// The version of the package that requires an emergency restore
 const EMERGENCY_RESTORE_NEED_VERSION: u64 = 18446744073709551000;
 /// The version of the package that requires an emergency pause
@@ -536,10 +536,6 @@ public fun emergency_pause(config: &mut GlobalConfig, ctx: &TxContext) {
     dynamic_field::add(&mut config.id, EMERGENCY_PAUSE_BEFORE_VERSION, old_version);
 }
 
-/// Emergency unpause the protocol.
-/// * `config` - The global config
-/// * `version` - The new package version
-/// * `ctx` - The transaction context
 public fun emergency_unpause(config: &mut GlobalConfig, version: u64, ctx: &TxContext) {
     check_emergency_pause_role(config, tx_context::sender(ctx));
     assert!(
@@ -621,7 +617,7 @@ fun test_init() {
     let admin_cap = test_scenario::take_from_address<AdminCap>(&sc, @0x23);
     assert_eq!(config.package_version, 1);
     assert_eq!(config.protocol_fee_rate, DEFAULT_PROTOCOL_FEE_RATE);
-    assert_eq!(config.fee_tiers.size(), 1);
+    assert_eq!(config.fee_tiers.length(), 1);
     check_pool_manager_role(&config, @0x23);
     check_fee_tier_manager_role(&config, @0x23);
     check_rewarder_manager_role(&config, @0x23);
