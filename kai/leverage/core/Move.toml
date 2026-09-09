@@ -6,7 +6,7 @@ edition = "2024"
 
 [dependencies]
 access_management = { local = "../../../access-management" }
-cetus_clmm = { local = "../../../_vendor/Cetus/clmm-v13" }
+cetus_clmm = { local = "../../../_vendor/Cetus/clmm-v14" }
 integer_mate = { local = "../../../_vendor/Cetus/integer-mate-v7", override = true }
 pyth = { local = "../../../_vendor/Pyth/core-v2" }
 pyth_pro = { local = "../../../_vendor/Pyth/pro-compatible-v1", rename-from = "pyth" }

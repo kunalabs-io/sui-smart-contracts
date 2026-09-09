@@ -29,7 +29,7 @@ manifest_digest = "08E79D5F63D1821ACFEA53A572C5EB29D38828B06276E6DBC6EF1C7CFC3C9
 deps = { integer_library = "integer_library", integer_mate = "integer_mate", std = "MoveStdlib", sui = "Sui" }
 
 [pinned.mainnet.cetus_clmm]
-source = { local = "../../../../_vendor/Cetus/clmm-v13" }
+source = { local = "../../../../_vendor/Cetus/clmm-v14" }
 use_environment = "mainnet"
 manifest_digest = "F7C63F1ECF575145EBED2E2DBEEDFDFA65654D819BFD3482A0E92BF63E87668A"
 deps = { integer_mate = "integer_mate_1", move_stl = "move_stl", std = "MoveStdlib", sui = "Sui" }
@@ -61,7 +61,7 @@ deps = { std = "MoveStdlib", sui = "Sui" }
 [pinned.mainnet.kai_leverage]
 source = { local = "../../core" }
 use_environment = "mainnet"
-manifest_digest = "9AB93C6AD3E4A119A20F9755C2972498AE2A09475861DA1D95C30540048D3931"
+manifest_digest = "292B3788A8305B631D9044940340CFB4DA7C422812CDED581798A8C9D40BE8CD"
 deps = { access_management = "access_management", bluefin_spot = "bluefin_spot", cetus_clmm = "cetus_clmm", deep = "deep", integer_mate = "integer_mate_1", lbtc = "lbtc", pyth = "pyth", pyth_pro = "pyth_1", rate_limiter = "rate_limiter", std = "MoveStdlib", sui = "Sui", suiusdt = "suiusdt", usdc = "usdc", usdy = "usdy", wal = "wal", wbtc = "wbtc", whusdce = "whusdce", whusdte = "whusdte", xbtc = "xbtc" }
 
 [pinned.mainnet.klsp_init]
@@ -209,7 +209,7 @@ manifest_digest = "D9F8D7EF4D6A1EFBDE2F84F7F9CE524193D8E2CAB250D0AE01451881FEABD
 deps = { integer_library = "integer_library", integer_mate = "integer_mate", std = "MoveStdlib", sui = "Sui" }
 
 [pinned.testnet.cetus_clmm]
-source = { local = "../../../../_vendor/Cetus/clmm-v13" }
+source = { local = "../../../../_vendor/Cetus/clmm-v14" }
 use_environment = "testnet"
 manifest_digest = "AA1E11CF782D4544DCB978407AF89B5DF9851B2ECF80E93B2D30FBA628682A8C"
 deps = { integer_mate = "integer_mate_1", move_stl = "move_stl", std = "MoveStdlib", sui = "Sui" }
@@ -241,7 +241,7 @@ deps = { std = "MoveStdlib", sui = "Sui" }
 [pinned.testnet.kai_leverage]
 source = { local = "../../core" }
 use_environment = "testnet"
-manifest_digest = "65CCF283F0D558619BECB7C5FD781BA6D1A9140AA9823028562B79AB710C41D0"
+manifest_digest = "1ABFBC5C4586B7C72A5296EAC8CB4475C1B0FAEF2A57C573316087F133A6FD51"
 deps = { access_management = "access_management", bluefin_spot = "bluefin_spot", cetus_clmm = "cetus_clmm", deep = "deep", integer_mate = "integer_mate_1", lbtc = "lbtc", pyth = "pyth", pyth_pro = "pyth_1", rate_limiter = "rate_limiter", std = "MoveStdlib", sui = "Sui", suiusdt = "suiusdt", usdc = "usdc", usdy = "usdy", wal = "wal", wbtc = "wbtc", whusdce = "whusdce", whusdte = "whusdte", xbtc = "xbtc" }
 
 [pinned.testnet.klsp_init]
