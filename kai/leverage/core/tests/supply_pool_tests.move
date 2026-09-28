@@ -106,10 +106,10 @@ fun test_available_balance_value() {
 
     let facil_cap = supply_pool::create_lend_facil_cap(test.ctx());
     let facil_id = object::id(&facil_cap);
-    destroy(
+     destroy(
         pool.add_lend_facil(
             facil_id,
-            piecewise::create(0, 10_00, vector::singleton(piecewise::section(100_00, 10_00))),
+            piecewise::create(0, 10_00, vector[piecewise::section(100_00, 10_00)]),
             test.ctx(),
         ),
     );

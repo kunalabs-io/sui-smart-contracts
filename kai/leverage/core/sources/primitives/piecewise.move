@@ -114,7 +114,7 @@ public fun range(pw: &Piecewise): (u64, u64) {
 
 #[test]
 fun test_piecewise() {
-    let mut sections = vector::empty();
+    let mut sections = vector[];
     vector::push_back(&mut sections, section(50_00, 5_00));
     vector::push_back(&mut sections, section(70_00, 7_00));
     vector::push_back(&mut sections, section(80_00, 4_00));
@@ -138,14 +138,14 @@ fun test_piecewise() {
 #[test]
 #[expected_failure(abort_code = ENoSections)]
 fun test_no_sections() {
-    let sections = vector::empty();
+    let sections = vector[];
     create(0, 2_00, sections);
 }
 
 #[test]
 #[expected_failure(abort_code = EOutOfRange)]
 fun test_out_of_range_start() {
-    let mut sections = vector::empty();
+    let mut sections = vector[];
     vector::push_back(&mut sections, section(50_00, 5_00));
     let pw = create(5_00, 2_00, sections);
 
@@ -155,7 +155,7 @@ fun test_out_of_range_start() {
 #[test]
 #[expected_failure(abort_code = EOutOfRange)]
 fun test_out_of_range_end() {
-    let mut sections = vector::empty();
+    let mut sections = vector[];
     vector::push_back(&mut sections, section(50_00, 5_00));
     let pw = create(5_00, 2, sections);
 
