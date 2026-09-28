@@ -130,7 +130,7 @@ public fun active_liquidity<X, Y>(pool: &MockDexPool<X, Y>): u128 {
 
 public fun get_liquidity_list_downwards<X, Y>(pool: &MockDexPool<X, Y>): vector<LiquidityListItem> {
     if (pool.positions.length() == 0) {
-        return vector::empty()
+        return vector[]
     };
 
     let current_tick_index = pool.current_tick_index();
@@ -158,7 +158,7 @@ public fun get_liquidity_list_downwards<X, Y>(pool: &MockDexPool<X, Y>): vector<
 
 public fun get_liquidity_list_upwards<X, Y>(pool: &MockDexPool<X, Y>): vector<LiquidityListItem> {
     if (pool.positions.length() == 0) {
-        return vector::empty()
+        return vector[]
     };
 
     let current_tick_index = pool.current_tick_index();
@@ -192,7 +192,7 @@ public fun create_mock_dex_pool<X, Y>(
     MockDexPool {
         id: object::new(ctx),
         current_sqrt_price_x64,
-        positions: vector::empty(),
+        positions: vector[],
         balance_x: balance::zero(),
         balance_y: balance::zero(),
         swap_fee_bps,

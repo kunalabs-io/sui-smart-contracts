@@ -105,6 +105,7 @@ fun new_registry(ctx: &mut TxContext): PoolRegistry {
 //    0 if a < b,
 //    1 if a == b,
 //    2 if a > b
+#[allow(lint(unneeded_return))]
 public fun cmp_type_names(a: &TypeName, b: &TypeName): u8 {
     let bytes_a = a.as_string().as_bytes();
     let bytes_b = b.as_string().as_bytes();
