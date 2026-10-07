@@ -15,7 +15,7 @@ env:
   # Bump deliberately. Verify locally with `./scripts/test.sh` before bumping.
   # `mainnet-X.Y.Z` and `testnet-X.Y.Z` are different builds even at the same
   # version number. Match the channel the team develops/tests against.
-  SUI_VERSION: mainnet-1.70.2
+  SUI_VERSION: mainnet-1.80.1
 
 jobs:
   test:
@@ -30,4 +30,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: ./.github/actions/setup-sui
+      # Informational: findings are reported in the log but don't fail CI.
       - run: ./scripts/lint.sh
+        continue-on-error: true

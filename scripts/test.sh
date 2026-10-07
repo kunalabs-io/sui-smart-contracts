@@ -19,7 +19,7 @@ mapfile -t PACKAGES < <(
 FAILED=()
 for pkg in "${PACKAGES[@]}"; do
   echo "::group::$pkg"
-  if ! (cd "$pkg" && sui move test --build-env mainnet); then
+  if ! (cd "$pkg" && sui move test --build-env mainnet --package-size 64); then
     FAILED+=("$pkg")
   fi
   echo "::endgroup::"
