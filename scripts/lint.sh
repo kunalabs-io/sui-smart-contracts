@@ -30,7 +30,7 @@ mapfile -t PACKAGES < <(
 FAILED=()
 for pkg in "${PACKAGES[@]}"; do
   echo "::group::$pkg"
-  if ! (cd "$pkg" && sui move test --build-env mainnet --warnings-are-errors -- __no_match_lint_only__); then
+  if ! (cd "$pkg" && sui move test --build-env mainnet --package-size 64 --warnings-are-errors -- __no_match_lint_only__); then
     FAILED+=("$pkg")
   fi
   echo "::endgroup::"
