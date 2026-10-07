@@ -1,0 +1,3 @@
+[package]
+name = "usdsui"
+edition = "2024"
