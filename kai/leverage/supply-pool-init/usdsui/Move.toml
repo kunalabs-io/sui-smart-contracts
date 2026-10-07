@@ -1,0 +1,10 @@
+[package]
+name = "klsp_usdsui"
+edition = "2024"
+license = "Apache 2.0"
+authors = ["Krešimir Klas (kklas@kunalabs.io)"]
+
+[dependencies]
+kai_leverage = { local = "../../core" }
+klsp_init = { local = "../core" }
+usdsui = { local = "../../../../_vendor/coins/USDSUI" }
