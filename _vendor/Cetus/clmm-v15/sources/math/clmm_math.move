@@ -448,3 +448,19 @@ public fun get_liquidity_by_amount(
     };
     (_liquidity, amount_a, amount_b)
 }
+
+#[test]
+#[expected_failure(abort_code = EAMOUNT_CAST_TO_U128_OVERFLOW)]
+public fun test_overflow_in_get_liquidity_from_a() {
+    // setup with max values to trigger overflow
+    let sqrt_price_0: u128 = tick_math::max_sqrt_price();
+    let sqrt_price_1: u128 = tick_math::max_sqrt_price() - 1;
+    let amount_a: u64 = std::u64::max_value!(); // 2^64 - 1
+
+    get_liquidity_from_a(
+        sqrt_price_0,
+        sqrt_price_1,
+        amount_a,
+        false,
+    );
+}

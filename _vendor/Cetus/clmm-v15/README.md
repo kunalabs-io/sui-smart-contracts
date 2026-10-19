@@ -13,6 +13,18 @@ Cetus CLMM is the core contract implementation of the Cetus protocol, providing 
 - Earn trading fees and rewards
 - Manage liquidity positions
 
+## Current Release
+
+- Source release: **CLMM v15**
+- Mainnet package: `0x260693ec785a6e6c9d81d58c7d2ff72f1288ae0fa6a9725abe05a6478b11f084`
+- Original package ID: `0x1eabed72c53feb3805120a081dc15963c204dc8d091542592abaf7a35689b2fb`
+- Upgrade transaction: `5sSoTfTiti8kXjJhZeYuFWFcxxvjbZpFQ96rZ3dzeQbC`
+
+The v15 package is published on mainnet. At the time this source was synchronized
+(2026-09-18), the on-chain `GlobalConfig.package_version` remained at 14, so v15
+had not yet been activated for protocol operations. The source was verified
+against the published package with Sui CLI 1.74.1.
+
 ## Features
 
 ### Core Modules
@@ -41,7 +53,7 @@ Cetus CLMM is the core contract implementation of the Cetus protocol, providing 
 
 ### Prerequisites
 
-- **Sui CLI**: Latest version
+- **Sui CLI**: 1.74.1 (the version used for source verification and tests)
 
 ### Build and Test
 
@@ -64,6 +76,27 @@ sui move test
 sui client publish --gas-budget 100000000
 
 ```
+
+### Integration
+
+To integrate the **Cetus CLMM** package into your Move project, you can choose one of the following methods:
+
+#### Option 1 — Add via Move Registry (Recommended)
+
+```bash
+mvr add @cetuspackages/clmm --network mainnet
+```
+
+#### Option 2 — Add as Git Dependency
+```
+[dependencies]
+CetusClmm = {
+    git = "https://github.com/CetusProtocol/cetus-contracts.git",
+    subdir = "packages/cetus_clmm",
+    rev = "clmm-v15"
+}
+```
+This method allows you to track a specific version (rev) and inspect or modify the source locally if needed.
 
 ## Project Structure
 

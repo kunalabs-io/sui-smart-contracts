@@ -11,6 +11,7 @@ use cetus_clmm::config::{
     remove_role
 };
 use sui::transfer::{public_share_object, public_transfer};
+use sui::test_scenario;
 use sui::tx_context::sender;
 use sui::vec_map;
 use std::unit_test::assert_eq;
@@ -180,7 +181,7 @@ fun test_update_fee_tier_fee_rate_max_exceed() {
 fun test_package_version() {
     let mut ctx = tx_context::dummy();
     let (admin_cap, mut config) = config::new_global_config_for_test(&mut ctx, 1000);
-    config::update_package_version(&admin_cap, &mut config, 15);
+    config::update_package_version(&admin_cap, &mut config, 16);
     config::add_fee_tier(&mut config, 2, 2000, &ctx);
     public_share_object(config);
     public_transfer(admin_cap, tx_context::sender(&ctx));
@@ -191,6 +192,8 @@ const ACL_FEE_TIER_MANAGER: u8 = 1;
 const ACL_CLAIM_PROTOCOL_FEE: u8 = 2;
 const ACL_PARTNER_MANAGER: u8 = 3;
 const ACL_REWARDER_MANAGER: u8 = 4;
+const ACL_EMERGENCY_UNPAUSE: u8 = 5;
+const ACL_EMERGENCY_PAUSE: u8 = 6;
 
 #[test]
 fun test_acl() {
@@ -280,7 +283,7 @@ fun test_check_role_failure() {
 fun test_emergency_pause() {
     let mut ctx = tx_context::dummy();
     let (admin_cap, mut config) = config::new_global_config_for_test(&mut ctx, 1000);
-    config::add_role(&admin_cap, &mut config, sender(&ctx), 5);
+    config::add_role(&admin_cap, &mut config, sender(&ctx), ACL_EMERGENCY_PAUSE);
     config::emergency_pause(&mut config, &ctx);
     config::checked_package_version(&config);
     public_share_object(config);
@@ -348,6 +351,16 @@ fun test_check_emergency_pause_role() {
 }
 
 #[test]
+#[expected_failure(abort_code = cetus_clmm::config::ENoEmergencyUnpausePermission)]
+fun test_check_emergency_unpause_role() {
+    let mut ctx = tx_context::dummy();
+    let (admin_cap, config) = config::new_global_config_for_test(&mut ctx, 1000);
+    config::check_emergency_unpause_role(&config, sender(&ctx));
+    public_share_object(config);
+    public_transfer(admin_cap, tx_context::sender(&ctx));
+}
+
+#[test]
 fun test_read_config() {
     let mut ctx = tx_context::dummy();
     let (admin_cap, config) = config::new_global_config_for_test(&mut ctx, 1000);
@@ -385,8 +398,69 @@ fun test_check_emergency_restore_version_failure() {
 fun test_emergency_unpause() {
     let mut ctx = tx_context::dummy();
     let (admin_cap, mut config) = config::new_global_config_for_test(&mut ctx, 1000);
-    config::add_role(&admin_cap, &mut config, sender(&ctx), 5);
+    config::add_role(&admin_cap, &mut config, sender(&ctx), ACL_EMERGENCY_UNPAUSE);
     config::emergency_unpause(&mut config, 13, &ctx);
     public_share_object(config);
     public_transfer(admin_cap, tx_context::sender(&ctx));
+}
+
+#[expected_failure(abort_code = cetus_clmm::config::EInvalidPackageVersion)]
+#[test]
+fun test_emergency_unpause_correct_version() {
+    let mut ctx = tx_context::dummy();
+    let (admin_cap, mut config) = config::new_global_config_for_test(&mut ctx, 1000);
+    config::add_role(&admin_cap, &mut config, sender(&ctx), ACL_EMERGENCY_UNPAUSE);
+    config::add_role(&admin_cap, &mut config, sender(&ctx), ACL_EMERGENCY_PAUSE);
+    config::emergency_pause(&mut config, &ctx);
+    config::emergency_unpause(&mut config, 16, &ctx);
+    public_share_object(config);
+    public_transfer(admin_cap, tx_context::sender(&ctx));
+}
+
+#[test]
+#[expected_failure(abort_code = cetus_clmm::config::ENoEmergencyUnpausePermission)]
+fun test_pause_role_cannot_emergency_unpause() {
+    let mut ctx = tx_context::dummy();
+    let (admin_cap, mut config) = config::new_global_config_for_test(&mut ctx, 1000);
+    config::add_role(&admin_cap, &mut config, sender(&ctx), ACL_EMERGENCY_PAUSE);
+    config::emergency_pause(&mut config, &ctx);
+    config::emergency_unpause(&mut config, config::package_version(), &ctx);
+    public_share_object(config);
+    public_transfer(admin_cap, tx_context::sender(&ctx));
+}
+
+#[test]
+#[expected_failure(abort_code = cetus_clmm::config::ENoEmergencyPausePermission)]
+fun test_unpause_role_cannot_emergency_pause() {
+    let mut ctx = tx_context::dummy();
+    let (admin_cap, mut config) = config::new_global_config_for_test(&mut ctx, 1000);
+    config::add_role(&admin_cap, &mut config, sender(&ctx), ACL_EMERGENCY_UNPAUSE);
+    config::emergency_pause(&mut config, &ctx);
+    public_share_object(config);
+    public_transfer(admin_cap, tx_context::sender(&ctx));
+}
+
+#[test]
+fun test_separate_roles_can_pause_then_unpause() {
+    let admin = @0xa11ce;
+    let pauser = @0xb0b;
+    let unpauser = @0xca11;
+    let mut scenario = test_scenario::begin(admin);
+    let (admin_cap, mut config) = config::new_global_config_for_test(scenario.ctx(), 1000);
+    config::add_role(&admin_cap, &mut config, pauser, ACL_EMERGENCY_PAUSE);
+    config::add_role(&admin_cap, &mut config, unpauser, ACL_EMERGENCY_UNPAUSE);
+    public_share_object(config);
+    public_transfer(admin_cap, admin);
+
+    scenario.next_tx(pauser);
+    let mut config = test_scenario::take_shared<config::GlobalConfig>(&scenario);
+    config::emergency_pause(&mut config, scenario.ctx());
+    test_scenario::return_shared(config);
+
+    scenario.next_tx(unpauser);
+    let mut config = test_scenario::take_shared<config::GlobalConfig>(&scenario);
+    config::emergency_unpause(&mut config, config::package_version(), scenario.ctx());
+    config::checked_package_version(&config);
+    test_scenario::return_shared(config);
+    scenario.end();
 }

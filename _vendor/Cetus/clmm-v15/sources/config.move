@@ -12,13 +12,14 @@
 /// lp_fee = total_fee - protocol_fee
 /// Also, the acl roles is managed by this module, the roles is used for control the access of the cetus clmmpool
 /// protocol.
-/// Currently, we have 5 roles:
+/// Currently, we have 7 roles:
 /// 1. PoolManager: The pool manager can update pool fee rate, pause and unpause the pool.
 /// 2. FeeTierManager: The fee tier manager can add/remove fee tier, update fee tier fee rate.
 /// 3. ClaimProtocolFee: The claim protocol fee can claim the protocol fee.
 /// 4. PartnerManager: The partner manager can add/remove partner, update partner fee rate.
 /// 5. RewarderManager: The rewarder manager can add/remove rewarder, update rewarder fee rate.
-/// 6. EmergencyPause: The emergency pause can emergency pause the protocol.
+/// 6. EmergencyUnpause: The emergency unpause role can restore the protocol after an emergency pause.
+/// 7. EmergencyPause: The emergency pause role can pause the protocol without being able to unpause it.
 /// The package version is used for upgrade the package, when upgrade the package, we need increase the package version.
 module cetus_clmm::config;
 
@@ -43,16 +44,19 @@ const TICK_SPACING_200_FEE_RATE: u64 = 10000;
 /// - ACL_CLAIM_PROTOCOL_FEE (2): Can claim protocol fees
 /// - ACL_PARTNER_MANAGER (3): Can add/remove partners and update partner fee rates
 /// - ACL_REWARDER_MANAGER (4): Can add/remove rewarders and update rewarder rates
-/// - ACL_EMERGENCY_PAUSE (5): Can trigger emergency pause functionality
+/// - ACL_EMERGENCY_UNPAUSE (5): Can restore the protocol after an emergency pause
+/// - ACL_EMERGENCY_PAUSE (6): Can trigger emergency pause functionality
 const ACL_POOL_MANAGER: u8 = 0;
 const ACL_FEE_TIER_MANAGER: u8 = 1;
 const ACL_CLAIM_PROTOCOL_FEE: u8 = 2;
 const ACL_PARTNER_MANAGER: u8 = 3;
 const ACL_REWARDER_MANAGER: u8 = 4;
-const ACL_EMERGENCY_PAUSE: u8 = 5;
+// Keep the legacy role at bit 5 so existing multisig unpause permissions remain valid.
+const ACL_EMERGENCY_UNPAUSE: u8 = 5;
+const ACL_EMERGENCY_PAUSE: u8 = 6;
 
 /// The version of this package, need increase it when upgrade the package.
-const VERSION: u64 = 14;
+const VERSION: u64 = 15;
 /// The version of the package that requires an emergency restore
 const EMERGENCY_RESTORE_NEED_VERSION: u64 = 18446744073709551000;
 /// The version of the package that requires an emergency pause
@@ -79,6 +83,7 @@ const ENoEmergencyPausePermission: u64 = 13;
 const EProtocolNotEmergencyPause: u64 = 14;
 const EProtocolAlreadyEmergencyPause: u64 = 15;
 const EInvalidPackageVersion: u64 = 16;
+const ENoEmergencyUnpausePermission: u64 = 17;
 
 /// `AdminCap` is a capability token that grants administrative privileges to its holder.
 public struct AdminCap has key, store {
@@ -469,6 +474,16 @@ public fun check_emergency_pause_role(config: &GlobalConfig, member: address) {
     assert!(acl::has_role(&config.acl, member, ACL_EMERGENCY_PAUSE), ENoEmergencyPausePermission)
 }
 
+/// Check member has emergency unpause role.
+/// * `config` - The global config
+/// * `member` - The member address
+public fun check_emergency_unpause_role(config: &GlobalConfig, member: address) {
+    assert!(
+        acl::has_role(&config.acl, member, ACL_EMERGENCY_UNPAUSE),
+        ENoEmergencyUnpausePermission,
+    )
+}
+
 /// Get tick_spacing of FeeTier.
 /// * `fee_tier` - The fee tier
 /// * Returns the tick spacing
@@ -537,7 +552,7 @@ public fun emergency_pause(config: &mut GlobalConfig, ctx: &TxContext) {
 }
 
 public fun emergency_unpause(config: &mut GlobalConfig, version: u64, ctx: &TxContext) {
-    check_emergency_pause_role(config, tx_context::sender(ctx));
+    check_emergency_unpause_role(config, tx_context::sender(ctx));
     assert!(
         dynamic_field::exists_with_type<vector<u8>, u64>(
             &config.id,
@@ -549,7 +564,7 @@ public fun emergency_unpause(config: &mut GlobalConfig, version: u64, ctx: &TxCo
         &mut config.id,
         EMERGENCY_PAUSE_BEFORE_VERSION,
     );
-    assert!(version >= before_version, EInvalidPackageVersion);
+    assert!(version >= before_version && version <= package_version(), EInvalidPackageVersion);
     config.package_version = version;
 }
 
