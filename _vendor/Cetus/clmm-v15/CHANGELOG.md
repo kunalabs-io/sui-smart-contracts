@@ -175,7 +175,7 @@ Update `inter-mate` library version
 - Fix asymptotic audit
 - Add `remove_liquidity_with_slippage`
 
-## 2025-10-14
+## 2025-10-15
 - Online Version: 14
 # Added
 - Add partner.`claim_ref_fee_coin`
@@ -184,3 +184,10 @@ Update `inter-mate` library version
 - Add factory.`create_pool_v3_`
 ### Changed
 - Fix `AddLiquidityV2Event`
+
+## 2026-09-10
+- Online Version: 15
+
+### Security
+- Split global emergency pause and unpause permissions. Legacy ACL bit 5 is retained for unpause, while the new ACL bit 6 grants pause-only access.
+- Add regression tests proving pause-only accounts cannot unpause and unpause-only accounts cannot pause.
