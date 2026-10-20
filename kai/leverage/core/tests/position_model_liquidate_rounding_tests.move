@@ -121,7 +121,7 @@ fun repeated_dust_liquidation_does_not_drain_collateral() {
     let p_x128 = (104 << 128) / 100; // 1.04
     let mut cx = 10000;
     let mut dy = 9000;
-    let mut calls = 0;
+    let mut calls = 0u64;
     let mut total_repaid = 0;
     let mut total_reward = 0;
     while (calls < 20000) {

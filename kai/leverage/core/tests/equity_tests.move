@@ -102,7 +102,7 @@ fun test_calc_redeem_lossy_matches_redeem_lossy() {
     let (mut registry, mut shares) = registry_with_fractional_price();
 
     // redeem in uneven chunks so each call rounds differently
-    let mut i = 0;
+    let mut i = 0u64;
     while (i < 4) {
         let third = shares.value_x64() / 3;
         let chunk = shares.split_x64(third);

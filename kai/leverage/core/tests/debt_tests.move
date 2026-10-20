@@ -127,7 +127,7 @@ fun test_full_repayment_with_fractional_liability() {
 fun test_calc_repay_lossy_matches_repay_lossy() {
     let (mut registry, mut shares) = registry_with_accrued_interest();
 
-    let mut i = 0;
+    let mut i = 0u64;
     while (i < 4) {
         let third = shares.value_x64() / 3;
         let chunk = shares.split_x64(third);

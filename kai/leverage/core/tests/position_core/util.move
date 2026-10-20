@@ -158,7 +158,7 @@ public fun initialize_config_for_testing(
         let interest_model = piecewise::create(
             0,
             10_00,
-            vector::singleton(piecewise::section(100_00, 10_00)),
+            vector[piecewise::section(100_00, 10_00)],
         );
         let request = supply_pool_x.add_lend_facil(
             object::id(config.lend_facil_cap()),

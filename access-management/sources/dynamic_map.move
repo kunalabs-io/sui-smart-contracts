@@ -72,7 +72,7 @@ public fun remove<K: copy + drop + store, V: copy + drop + store>(
 
 /// Returns true iff there is a value associated with the key `k: K` in map `map: &DynamicMap<K>`
 public fun contains<K: copy + drop + store>(map: &DynamicMap<K>, k: K): bool {
-    field::exists_<K>(&map.id, k)
+    field::exists<K>(&map.id, k)
 }
 
 /// Returns the size of the map, the number of key-value pairs
